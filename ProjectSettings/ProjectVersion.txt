@@ -1,2 +1,2 @@
-m_EditorVersion: 2022.3.62f1
-m_EditorVersionWithRevision: 2022.3.62f1 (b1b91bde5b17)
+m_EditorVersion: 6000.4.4f1
+m_EditorVersionWithRevision: 6000.4.4f1 (unknown)
