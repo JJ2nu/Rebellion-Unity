@@ -1,12 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Rebellion.Utils;
 
 namespace Rebellion.Core
 {
     /// <summary>
     /// Manages global game state and coordinates between major systems.
     /// Acts as the central hub for game flow (boot, main menu, gameplay, pause, game over).
+    /// Listens for <see cref="BattleFinishedEvent"/> from the EventBus to react to
+    /// tactical battle outcomes — mirrors the C++ GameManager listening to Map callbacks.
     /// </summary>
     public class GameManager : MonoBehaviour
     {
@@ -17,7 +20,8 @@ namespace Rebellion.Core
 
         public GameState CurrentState => currentState;
 
-        public event System.Action<GameState> OnGameStateChanged;
+        public event System.Action<GameState>     OnGameStateChanged;
+        public event System.Action<bool, int>     OnBattleResultDecided;
 
         private void Awake()
         {
@@ -29,6 +33,16 @@ namespace Rebellion.Core
 
             Instance = this;
             DontDestroyOnLoad(gameObject);
+        }
+
+        private void OnEnable()
+        {
+            EventBus.Subscribe<BattleFinishedEvent>(HandleBattleFinished);
+        }
+
+        private void OnDisable()
+        {
+            EventBus.Unsubscribe<BattleFinishedEvent>(HandleBattleFinished);
         }
 
         private void Start()
@@ -85,6 +99,8 @@ namespace Rebellion.Core
             Time.timeScale = 0f;
         }
 
+        // ── Game flow ─────────────────────────────────────────────────────
+
         public void StartGame()
         {
             ChangeState(GameState.Playing);
@@ -105,6 +121,19 @@ namespace Rebellion.Core
         public void TriggerGameOver()
         {
             ChangeState(GameState.GameOver);
+        }
+
+        // ── Battle result handler (via EventBus — decoupled from Gameplay) ─
+
+        /// <summary>
+        /// Handles a <see cref="BattleFinishedEvent"/> published by BattleManager.
+        /// Mirrors the C++ flow where GameLevel::SetBattleResult drives
+        /// scene transitions after the action phase ends.
+        /// </summary>
+        private void HandleBattleFinished(BattleFinishedEvent e)
+        {
+            OnBattleResultDecided?.Invoke(e.IsVictory, e.ResultCode);
+            ChangeState(e.IsVictory ? GameState.Playing : GameState.GameOver);
         }
     }
 

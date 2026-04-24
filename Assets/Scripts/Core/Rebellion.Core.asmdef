@@ -1,7 +1,9 @@
 {
     "name": "Rebellion.Core",
     "rootNamespace": "Rebellion.Core",
-    "references": [],
+    "references": [
+        "Rebellion.Utils"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

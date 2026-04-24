@@ -44,9 +44,28 @@ namespace Rebellion.Utils
         }
     }
 
-    // Example event structs – add more as needed.
+    // ── Built-in event structs ─────────────────────────────────────────────
     public struct PlayerDeathEvent { }
     public struct EnemyKilledEvent { public int ExpValue; }
     public struct LevelCompleteEvent { public int Score; }
     public struct BossEncounterEvent { public string BossName; }
+
+    // ── Tactical battle events (adapted from 4Q-Rebellion game flow) ───────
+
+    /// <summary>
+    /// Published by BattleManager when the action phase ends.
+    /// IsVictory = true  → all enemies defeated (any of the win conditions).
+    /// IsVictory = false → all allies defeated (Lose / AllyDeadLose).
+    /// ResultCode mirrors the eBattleResult enum from 4Q-Rebellion.
+    /// </summary>
+    public struct BattleFinishedEvent
+    {
+        public bool IsVictory;
+        public int  ResultCode; // Matches BattleResult enum value.
+    }
+
+    /// <summary>
+    /// Published when the player requests to retry (ResetGame).
+    /// </summary>
+    public struct BattleRetryRequestedEvent { }
 }
