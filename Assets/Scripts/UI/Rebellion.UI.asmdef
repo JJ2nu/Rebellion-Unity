@@ -1,0 +1,17 @@
+{
+    "name": "Rebellion.UI",
+    "rootNamespace": "Rebellion.UI",
+    "references": [
+        "Rebellion.Core",
+        "Rebellion.Gameplay"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

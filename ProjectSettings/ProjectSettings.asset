@@ -1,0 +1,163 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!129 &1
+PlayerSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 24
+  productGUID: a1b2c3d4e5f6789012345678901234ab
+  AndroidProfiler: 0
+  AndroidFilterTouchesWhenObscured: 0
+  AndroidEnableSustainedPerformanceMode: 0
+  defaultScreenOrientation: 4
+  targetDevice: 2
+  useOnDemandResources: 0
+  accelerometerFrequency: 60
+  companyName: JJ2nu
+  productName: Rebellion
+  defaultCursor: {fileID: 0}
+  cursorHotspot: {x: 0, y: 0}
+  m_SplashScreenBackgroundColor: {r: 0.13725491, g: 0.12156863, b: 0.1254902, a: 1}
+  m_ShowUnitySplashScreen: 1
+  m_ShowUnitySplashLogo: 1
+  m_SplashScreenOverlayOpacity: 1
+  m_SplashScreenAnimation: 1
+  m_SplashScreenLogoStyle: 1
+  m_SplashScreenDrawMode: 0
+  m_SplashScreenBackgroundAnimationZoom: 1
+  m_SplashScreenLogoAnimationZoom: 1
+  m_SplashScreenBackgroundLandscapeAspect: 1
+  m_SplashScreenBackgroundPortraitAspect: 1
+  m_SplashScreenBackgroundLandscapeUvs:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  m_SplashScreenBackgroundPortraitUvs:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  m_SplashScreenLogos: []
+  m_VirtualRealitySplashScreen: {fileID: 0}
+  m_HolographicTrackingLossScreen: {fileID: 0}
+  defaultScreenWidth: 1920
+  defaultScreenHeight: 1080
+  defaultScreenWidthWeb: 960
+  defaultScreenHeightWeb: 600
+  m_StereoRenderingPath: 0
+  m_ActiveColorSpace: 1
+  m_SpritePacker: 1
+  m_SpritePackerPaddingPower: 1
+  m_EtcTextureCompressorBehavior: 1
+  m_EtcTextureFastCompressor: 1
+  m_EtcTextureNormalCompressor: 2
+  m_EtcTextureBestCompressor: 4
+  m_ResolutionSelectorLaunched: 0
+  m_FullscreenMode: 1
+  m_AllowedAutorotateToPortrait: 1
+  m_AllowedAutorotateToPortraitUpsideDown: 1
+  m_AllowedAutorotateToLandscapeRight: 1
+  m_AllowedAutorotateToLandscapeLeft: 1
+  m_UseOSAutorotation: 1
+  m_Use32BitDisplayBuffer: 1
+  m_PreserveFramebufferAlpha: 0
+  m_DisableDepthAndStencilBuffers: 0
+  m_androidStartInFullscreen: 1
+  m_androidRenderOutsideSafeArea: 1
+  m_androidUseSwappy: 1
+  m_androidBlitType: 0
+  m_androidResizableWindow: 0
+  m_androidDefaultWindowWidth: 1920
+  m_androidDefaultWindowHeight: 1080
+  m_androidMinimumWindowWidth: 400
+  m_androidMinimumWindowHeight: 300
+  m_androidFullscreenMode: 1
+  m_defaultIsNativeResolution: 1
+  m_macRetinaSupport: 1
+  m_runInBackground: 1
+  m_captureSingleScreen: 0
+  m_MuteOtherAudioSources: 0
+  m_Prepare IOS For Recording: 0
+  m_Force IOS Speakers When Recording: 0
+  m_deferSystemGesturesMode: 0
+  m_hideHomeButton: 0
+  m_submitAnalytics: 1
+  m_UsePlayerLog: 1
+  m_BuildAppBundle: 0
+  m_KeepLoadedShadersAlive: 0
+  m_Bake Collision Meshes: 0
+  m_ResizableWindow: 0
+  m_UseMacAppStoreValidation: 0
+  m_MacAppStoreCategory: public.app-category.games
+  m_D3D9FullscreenMode: 1
+  m_D3D11FullscreenMode: 1
+  m_visibleInBackground: 1
+  m_allowFullscreenSwitch: 1
+  m_fullscreenMode: 1
+  m_xboxSpeechDB: 0
+  m_xboxEnableHeadOrientation: 0
+  m_xboxEnableGuest: 0
+  m_xboxEnableKinect: 0
+  m_xboxEnableKinectAutoTracking: 0
+  m_xboxEnableFitness: 0
+  m_visibleInBackground: 1
+  m_macFullscreenMode: 2
+  m_d3d11ForceExclusiveMode: 0
+  m_skipUnusedShaderVariants: 1
+  m_xboxOneResolution: 0
+  m_xboxOneSResolution: 0
+  m_xboxOneXResolution: 3
+  m_xboxOneMonoLoggingLevel: 0
+  m_xboxOneLoggingLevel: 1
+  m_xboxOneDisableEsram: 0
+  m_xboxOneEnableTypeOptimization: 0
+  m_xboxOnePresentImmediateThreshold: 0
+  m_switchQueueCommandMemory: 1048576
+  m_switchQueueControlMemory: 16384
+  m_switchQueueComputeMemory: 262144
+  m_switchNVNShaderPoolsGranularity: 33554432
+  m_switchNVNDefaultPoolsGranularity: 16777216
+  m_switchNVNOtherPoolsGranularity: 16777216
+  m_stadiaPresentMode: 0
+  m_stadiaTargetFramerate: 0
+  m_vulkanNumSwapchainBuffers: 3
+  m_vulkanEnableLateAcquireNextImage: 0
+  m_vulkanEnableCommandBufferRecycling: 1
+  m_numberOfMipsStripped: 0
+  m_MipStripping: 0
+  m_TemplateCustomTags: {}
+  m_Capturing: 0
+  m_EnableFrameTimingStats: 0
+  m_EnableOpenGLProfilerGPURecorders: 1
+  m_UseHDRDisplay: 0
+  m_HDRBitDepth: 0
+  m_ColorGamuts: 00000000
+  m_targetPixelDensity: 30
+  m_resolutionScalingMode: 0
+  m_androidSupportedAspectRatio: 1
+  m_androidMaxAspectRatio: 2.1
+  m_applicationIdentifier:
+    Android: com.JJ2nu.Rebellion
+    Standalone: com.JJ2nu.Rebellion
+    iPhone: com.JJ2nu.Rebellion
+    tvOS: com.JJ2nu.Rebellion
+  m_buildNumber:
+    iPhone: 0
+    tvOS: 0
+    Standalone: 0
+    VisionOS: 0
+  m_overrideDefaultApplicationIdentifier: 0
+  m_AOTOptions:
+  m_apiCompatibilityLevelPerPlatform: {}
+  m_cloudProjectId:
+  m_framebufferDepthMemorylessMode: 0
+  m_qualitySettingsNames: []
+  m_projectName:
+  m_organizationId:
+  m_cloudEnabled: 0
+  m_legacyClampBlendShapeWeights: 0
+  m_hdrpBakedSkyAmbientMode: 1
+  m_customFramebufferFormat: 0
+  m_activeInputHandler: 1
