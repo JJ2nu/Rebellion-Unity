@@ -6,7 +6,7 @@ Unity 포팅 프로젝트 — 4Q-Rebellion 프로토타입을 Unity로 새롭게
 
 기존 [4Q-Rebellion](https://github.com/JJ2nu/4Q-Rebellion) 프로토타입을 참고하되, 코드를 재사용하지 않고 Unity에서 새로 구현하는 포팅 프로젝트입니다.
 
-- **엔진**: Unity 6.4 LTS (6000.4.4f1)
+- **엔진**: Unity 6.4 LTS (6000.4.2f1)
 - **언어**: C# (.NET Standard 2.1)
 - **렌더 파이프라인**: Built-in Render Pipeline (2D)
 
@@ -104,6 +104,6 @@ ProjectSettings/        # 프로젝트 설정 (렌더, 물리, 태그/레이어 
 
 ## 시작하기
 
-1. **Unity Hub**에서 Unity 6.4 LTS (6000.4.4f1) 버전으로 이 프로젝트 폴더를 엽니다.
+1. **Unity Hub**에서 Unity 6.4 LTS (6000.4.2f1) 버전으로 이 프로젝트 폴더를 엽니다.
 2. 패키지가 자동으로 설치됩니다 (`Packages/manifest.json` 기준).
 3. `Assets/Scenes/` 폴더에 씬을 생성하고 개발을 시작합니다.
