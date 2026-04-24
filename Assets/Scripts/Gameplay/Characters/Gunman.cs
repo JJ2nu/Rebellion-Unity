@@ -107,8 +107,11 @@ namespace Rebellion.Gameplay
                                             spawnPoint.position,
                                             spawnPoint.rotation);
 
-            // Initialise the bullet with direction, speed and damage.
-            bullet.Init(transform.forward * -1f, bulletSpeed, bulletDamage, gameObject);
+            // Direction is negated because the character models face -Z in local space
+            // (matching the C++ original: bullet->SetDirection(-GetGlobalFront())).
+            // At rotation 180° (North-facing), transform.forward = world (0,0,-1),
+            // so -transform.forward = world (0,0,1) = North — the correct fire direction.
+            bullet.Init(-transform.forward, bulletSpeed, bulletDamage, gameObject);
         }
 
         // ── Helper ────────────────────────────────────────────────────────

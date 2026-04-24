@@ -193,7 +193,7 @@ namespace Rebellion.Gameplay
 
             // Disable any Collider so weapons pass through dead bodies.
             var col = GetComponent<Collider>();
-            if (col) col.enabled = false;
+            if (col != null) col.enabled = false;
         }
 
         /// <summary>

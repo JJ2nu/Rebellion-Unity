@@ -310,9 +310,9 @@ namespace Rebellion.Gameplay
         {
             return type switch
             {
-                CharacterType.Brawler => allyBrawlerPrefab ? Instantiate(allyBrawlerPrefab) : null,
-                CharacterType.Slasher => allySlasherPrefab ? Instantiate(allySlasherPrefab) : null,
-                CharacterType.Gunman  => allyGunmanPrefab  ? Instantiate(allyGunmanPrefab)  : null,
+                CharacterType.Brawler => allyBrawlerPrefab != null ? Instantiate(allyBrawlerPrefab) : null,
+                CharacterType.Slasher => allySlasherPrefab != null ? Instantiate(allySlasherPrefab) : null,
+                CharacterType.Gunman  => allyGunmanPrefab  != null ? Instantiate(allyGunmanPrefab)  : null,
                 _                     => null,
             };
         }
@@ -321,8 +321,8 @@ namespace Rebellion.Gameplay
         {
             return type switch
             {
-                CharacterType.Brawler => enemyBrawlerPrefab ? Instantiate(enemyBrawlerPrefab) : null,
-                CharacterType.Gunman  => enemyGunmanPrefab  ? Instantiate(enemyGunmanPrefab)  : null,
+                CharacterType.Brawler => enemyBrawlerPrefab != null ? Instantiate(enemyBrawlerPrefab) : null,
+                CharacterType.Gunman  => enemyGunmanPrefab  != null ? Instantiate(enemyGunmanPrefab)  : null,
                 _                     => null,
             };
         }
