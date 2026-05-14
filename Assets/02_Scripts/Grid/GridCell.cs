@@ -20,30 +20,25 @@ public class GridCell : MonoBehaviour
         End
     }
 
-    [SerializeField]
-    GameObject defaultTile;
-    [SerializeField]
-    GameObject activeTile;
-    [SerializeField]
-    GameObject occupiedTile;
-    [SerializeField]
-    GameObject directionTile;
-    [SerializeField]
-    GameObject emptyTile;
-    [SerializeField]
-    private float offset = 1.3f;
+    [SerializeField]    GameObject defaultTile;
+    [SerializeField]    GameObject activeTile;
+    [SerializeField]    GameObject occupiedTile;
+    [SerializeField]    GameObject directionTile;
+    [SerializeField]    GameObject emptyTile;
+    [SerializeField]    private float offset = 1.3f;
 
     private bool isDirty = false;
+    private TileState _tileState;
     private TileState tileState
     {
         get
         {
-            return tileState;
+            return _tileState;
         }
         set
         {
             isDirty = true;
-            tileState = value;
+            _tileState = value;
         }
     }
     private TileDirection tileDirection { get; set; }
@@ -52,6 +47,13 @@ public class GridCell : MonoBehaviour
     {
         tileState = TileState.Default;
         tileDirection = TileDirection.Up;
+    }
+    public float cellSize
+    {
+        get
+        {
+            return offset;
+        }
     }
 
 }

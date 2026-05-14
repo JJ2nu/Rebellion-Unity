@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "boardSize": 6,
+  "mapIndex": 0,
+  "entities": [
+    {
+      "entityKind": 0,
+      "detailType": 0,
+      "facing": 3,
+      "cellIndex": 1
+    },
+    {
+      "entityKind": 0,
+      "detailType": 2,
+      "facing": 3,
+      "cellIndex": 8
+    }
+    {
+      "entityKind": 1,
+      "detailType": 0,
+      "facing": 2,
+      "cellIndex": 22
+    }
+    {
+      "entityKind": 2,
+      "detailType": 100,
+      "facing": 0,
+      "cellIndex": 13
+    },
+    {
+      "entityKind": 2,
+      "detailType": 101,
+      "facing": 0,
+      "cellIndex": 29
+    }
+  ]
+}

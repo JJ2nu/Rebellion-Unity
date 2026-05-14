@@ -25,6 +25,6 @@ namespace Rebellion
         /// <summary>
         /// 스킬 효과를 코루틴으로 실행한다.
         /// </summary>
-        public abstract IEnumerator Execute(SimulationController controller, IReadOnlyList<PieceBase> allPieces);
+        //public abstract IEnumerator Execute(SimulationController controller, IReadOnlyList<PieceBase> allPieces);
     }
 }

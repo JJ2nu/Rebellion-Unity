@@ -26,23 +26,23 @@ namespace Rebellion
             return allPieces.Any(p => p.Faction == Faction.Enemy && !p.IsDead);
         }
 
-        public override IEnumerator Execute(SimulationController controller, IReadOnlyList<PieceBase> allPieces)
-        {
-            // 플레이어가 적을 선택할 때까지 대기
-            PieceBase selectedTarget = null;
+        // public override IEnumerator Execute(SimulationController controller, IReadOnlyList<PieceBase> allPieces)
+        // {
+        //     // 플레이어가 적을 선택할 때까지 대기
+        //     PieceBase selectedTarget = null;
 
-            var enemies = allPieces
-                .Where(p => p.Faction == Faction.Enemy && !p.IsDead)
-                .ToList();
+        //     var enemies = allPieces
+        //         .Where(p => p.Faction == Faction.Enemy && !p.IsDead)
+        //         .ToList();
 
-            // SimulationController를 통해 선택 UI를 열고 결과를 받아온다
-            yield return controller.WaitForPlayerSelection(enemies, picked => selectedTarget = picked);
+        //     // SimulationController를 통해 선택 UI를 열고 결과를 받아온다
+        //     yield return controller.WaitForPlayerSelection(enemies, picked => selectedTarget = picked);
 
-            if (selectedTarget != null)
-            {
-                selectedTarget.Die();
-                UnityEngine.Debug.Log($"[시작의 총성] {selectedTarget.name} 제거");
-            }
-        }
+        //     if (selectedTarget != null)
+        //     {
+        //         selectedTarget.Die();
+        //         UnityEngine.Debug.Log($"[시작의 총성] {selectedTarget.name} 제거");
+        //     }
+        // }
     }
 }
