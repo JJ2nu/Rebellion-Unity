@@ -295,7 +295,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!20 &1413033650 stripped
+--- !u!20 &1605487766 stripped
 Camera:
   m_CorrespondingSourceObject: {fileID: 1717871216010249088, guid: 0334cd302c3852147b59912b9aeae5d7, type: 3}
   m_PrefabInstance: {fileID: 1134927813564549269}
@@ -460,7 +460,7 @@ PrefabInstance:
     - target: {fileID: 8006600841717635771, guid: f0e9e1a4490476f4e83197bb34b20713, type: 3}
       propertyPath: raycastCamera
       value: 
-      objectReference: {fileID: 1413033650}
+      objectReference: {fileID: 1605487766}
     - target: {fileID: 8006600841717635771, guid: f0e9e1a4490476f4e83197bb34b20713, type: 3}
       propertyPath: leftClickAction
       value: 
@@ -469,10 +469,6 @@ PrefabInstance:
       propertyPath: rightClickAction
       value: 
       objectReference: {fileID: 624618501342684686, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-    - target: {fileID: 8006600841717635771, guid: f0e9e1a4490476f4e83197bb34b20713, type: 3}
-      propertyPath: raycastLayers.m_Bits
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 8006600841717635771, guid: f0e9e1a4490476f4e83197bb34b20713, type: 3}
       propertyPath: pointerPositionAction
       value: 
