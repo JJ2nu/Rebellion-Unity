@@ -1,6 +1,6 @@
-using UnityEngine;
+﻿using UnityEngine;
 
-public class GridCell : MonoBehaviour
+public class GridCell : MonoBehaviour, IWorldInputTarget
 {
     enum TileDirection
     {
@@ -56,4 +56,25 @@ public class GridCell : MonoBehaviour
         }
     }
 
+    #region 3D Input Events
+    public void OnWorldHover(WorldInputEventData eventData)
+    {
+        Debug.Log($"[WorldInput] Hover GridCell: {name}", this);
+    }
+
+    public void OnWorldUnHover(WorldInputEventData eventData)
+    {
+        Debug.Log($"[WorldInput] UnHover GridCell: {name}", this);
+    }
+
+    public void OnWorldLeftClick(WorldInputEventData eventData)
+    {
+        Debug.Log($"[WorldInput] LeftClick GridCell: {name}", this);
+    }
+
+    public void OnWorldRightClick(WorldInputEventData eventData)
+    {
+        Debug.Log($"[WorldInput] RightClick GridCell: {name}", this);
+    }
+    #endregion
 }
