@@ -173,7 +173,7 @@ MonoBehaviour:
   m_ScaleFactor: 1
   m_ReferenceResolution: {x: 1920, y: 1080}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0
+  m_MatchWidthOrHeight: 0.5
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
@@ -216,11 +216,11 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 754922650}
+  - {fileID: 2089442375}
+  - {fileID: 1083438256}
   - {fileID: 1179672876}
   - {fileID: 729500548}
   - {fileID: 1022490515}
-  - {fileID: 2089442375}
-  - {fileID: 1083438256}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -241,7 +241,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InGameUIController
   uiDataCsv: {fileID: 4900000, guid: 1fcbeb7a848ce954c981fb55db00a514, type: 3}
-  currentLevel: Campaign 4
+  currentLevel: Campaign 6
   missionRoot: {fileID: 729500548}
   mainMissionPrefab: {fileID: 1718751954819697394, guid: d14ba8b93a94ad14cb100ecd886bb1d9, type: 3}
   subMissionPrefab: {fileID: 6153926711214791119, guid: 1da463e8a1579df418d2ed66f3268e15, type: 3}
