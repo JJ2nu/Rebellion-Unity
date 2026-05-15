@@ -43,7 +43,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: -2474113961476506421, guid: 7eb76088d2ade4b448a33c6fd77b2816, type: 3}
+  m_Motion: {fileID: -2474113961476506421, guid: c938c50441b0da84191da0da5841198c, type: 3}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -85,7 +85,7 @@ AnimatorController:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: AllyBrawler
+  m_Name: AllyGunman
   serializedVersion: 6
   m_AnimatorParameters:
   - m_Name: Attack
@@ -140,7 +140,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: -5193681874456876713, guid: d005111fa6e468348b61cf0339c5d7b9, type: 3}
+  m_Motion: {fileID: -5193681874456876713, guid: c938c50441b0da84191da0da5841198c, type: 3}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -203,7 +203,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Punch
+  m_Name: Shoot
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions:
@@ -217,7 +217,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: -8573610390741714287, guid: d005111fa6e468348b61cf0339c5d7b9, type: 3}
+  m_Motion: {fileID: -1825981536202050021, guid: c938c50441b0da84191da0da5841198c, type: 3}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 

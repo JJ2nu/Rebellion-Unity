@@ -7,18 +7,12 @@ public class GameManager : MonoBehaviour
     // 그리드 셀을 생성할 때 사용할 원본 프리팹
     [SerializeField] private GameObject gridCellPrefab;
 
-    // 맵을 최초 1회 생성할 때 사용할 원본 프리팹 목록
-    [SerializeField] private GameObject[] mapPrefabs = Array.Empty<GameObject>();
-
     // 생성된 셀들을 정리해서 담아둘 부모 루트
     private Transform gridCellRoot;
 
-    // 생성된 맵들을 정리해서 담아둘 부모 루트
-    private Transform mapRoot;
-
     [Header("Stage")]
-    // 자동 시작 시 처음 활성화할 맵 인덱스
-    [SerializeField] private int initialMapIndex;
+    // 자동 시작 시 처음 불러올 스테이지 경로
+    [SerializeField] private string initialStagePath = "Stages/stage_001.json";
 
     // 게임 시작과 동시에 첫 스테이지를 열지 여부
     [SerializeField] private bool autoStartFirstStage = true;
@@ -35,17 +29,6 @@ public class GameManager : MonoBehaviour
 
     // 실제로 생성해서 재사용 중인 셀 인스턴스 목록
     private GameObject[] loadedGridCells = Array.Empty<GameObject>();
-
-    // 실제로 생성해서 재사용 중인 맵 인스턴스 목록
-    private GameObject[] loadedMaps = Array.Empty<GameObject>();
-
-    // 현재 활성화해야 하는 맵 인덱스
-    private int currentMapIndex;
-
-    //현재 스테이지 정보
-    private string currentStagePath;
-
-    [SerializeField] private SimulationController simulationController;
     [SerializeField] private StageManager stageManager;
 
 
@@ -62,49 +45,51 @@ public class GameManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         EnsureRoots();
-        EnsureMapInstancesLoaded();
         EnsureGridCellsLoaded();
         SetAllCellsActive(false);
-        SetAllMapsActive(false);
     }
 
     // 옵션에 따라 첫 스테이지를 자동으로 시작
     private void Start()
     {
-        if (autoStartFirstStage)
+        if (autoStartFirstStage && !string.IsNullOrWhiteSpace(initialStagePath))
         {
-            StartStage(initialMapIndex);
+            LoadStage(initialStagePath);
         }
     }
 
-    // 스테이지 시작 시 필요한 셀/맵을 준비하고 현재 맵만 활성화
-    public void StartStage(int mapIndex)
+    public void LoadStage(string stagePath)
     {
         EnsureRoots();
-        EnsureMapInstancesLoaded();
         EnsureGridCellsLoaded();
+        SetAllCellsActive(true);
 
-        if (loadedMaps.Length == 0)
+        if (stageManager == null)
         {
-            currentMapIndex = -1;
-            SetAllCellsActive(true);
+            stageManager = StageManager.Instance;
+        }
+
+        if (stageManager == null)
+        {
+            Debug.LogWarning("GameManager has no StageManager assigned.", this);
             return;
         }
 
-        currentMapIndex = Mathf.Clamp(mapIndex, 0, loadedMaps.Length - 1);
-
-        SetAllCellsActive(true);
-        ActivateCurrentMap();
+        stageManager.LoadStage(stagePath);
     }
 
     // 스테이지 종료 시 셀과 맵을 전부 비활성화
     public void EndStage()
     {
         SetAllCellsActive(false);
-        SetAllMapsActive(false);
+
+        if (stageManager != null)
+        {
+            stageManager.EndStage();
+        }
     }
 
-    // 셀 루트와 맵 루트가 없으면 런타임에 자동 생성
+    // 셀 루트가 없으면 런타임에 자동 생성
     private void EnsureRoots()
     {
         if (gridCellRoot == null)
@@ -112,13 +97,6 @@ public class GameManager : MonoBehaviour
             GameObject rootObject = new GameObject("GridCellRoot");
             rootObject.transform.SetParent(transform, false);
             gridCellRoot = rootObject.transform;
-        }
-
-        if (mapRoot == null)
-        {
-            GameObject rootObject = new GameObject("MapRoot");
-            rootObject.transform.SetParent(transform, false);
-            mapRoot = rootObject.transform;
         }
     }
 
@@ -175,68 +153,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // 맵 인스턴스가 비어 있거나 일부 없으면 생성해서 채움
-    private void EnsureMapInstancesLoaded()
-    {
-        if (mapPrefabs == null || mapPrefabs.Length == 0)
-        {
-            Debug.LogWarning("GameManager has no map prefabs assigned.", this);
-            loadedMaps = Array.Empty<GameObject>();
-            return;
-        }
-
-        if (loadedMaps == null || loadedMaps.Length != mapPrefabs.Length)
-        {
-            ClearLoadedObjects(loadedMaps);
-            loadedMaps = new GameObject[mapPrefabs.Length];
-        }
-
-        bool hasMissingMap = Array.Exists(loadedMaps, map => map == null);
-        if (!hasMissingMap)
-        {
-            return;
-        }
-
-        for (int index = 0; index < mapPrefabs.Length; index++)
-        {
-            if (loadedMaps[index] != null)
-            {
-                continue;
-            }
-
-            GameObject mapPrefab = mapPrefabs[index];
-            if (mapPrefab == null)
-            {
-                continue;
-            }
-
-            GameObject mapInstance = Instantiate(mapPrefab, mapRoot);
-            mapInstance.name = mapPrefab.name;
-            DontDestroyOnLoad(mapInstance);
-            loadedMaps[index] = mapInstance;
-        }
-    }
-
-    // 현재 맵 인덱스에 해당하는 맵만 켜고 나머지는 끔
-    private void ActivateCurrentMap()
-    {
-        if (loadedMaps == null)
-        {
-            return;
-        }
-
-        for (int index = 0; index < loadedMaps.Length; index++)
-        {
-            GameObject map = loadedMaps[index];
-            if (map == null)
-            {
-                continue;
-            }
-
-            map.SetActive(index == currentMapIndex);
-        }
-    }
-
     // 로드된 모든 셀 인스턴스의 활성 상태를 한 번에 변경
     private void SetAllCellsActive(bool isActive)
     {
@@ -253,25 +169,6 @@ public class GameManager : MonoBehaviour
             }
 
             cell.SetActive(isActive);
-        }
-    }
-
-    // 로드된 모든 맵 인스턴스의 활성 상태를 한 번에 변경
-    private void SetAllMapsActive(bool isActive)
-    {
-        if (loadedMaps == null)
-        {
-            return;
-        }
-
-        foreach (GameObject map in loadedMaps)
-        {
-            if (map == null)
-            {
-                continue;
-            }
-
-            map.SetActive(isActive);
         }
     }
 

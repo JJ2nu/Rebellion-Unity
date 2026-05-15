@@ -2,8 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Rebellion
-{
     /// <summary>
     /// 민간인 기물. 적대 행동 없이 생존 여부만 판정에 영향을 준다.
     /// </summary>
@@ -18,4 +16,3 @@ namespace Rebellion
             yield break;
         }
     }
-}

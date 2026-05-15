@@ -2,8 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Rebellion
-{
     /// <summary>
     /// 건맨(총) 기물. 정면 직선 사정거리 내 가장 가까운 적을 사격한다.
     /// 시작의 총성 스킬의 주체.
@@ -59,4 +57,3 @@ namespace Rebellion
             FinishAction();
         }
     }
-}

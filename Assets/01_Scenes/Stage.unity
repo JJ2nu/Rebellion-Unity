@@ -295,6 +295,17 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1268240185 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5090292573414555690, guid: b1597b33949e01b4ebfeae783bb0a719, type: 3}
+  m_PrefabInstance: {fileID: 7023987448846966257}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5ee32927a8926a41a5d9bf7e61c8d2b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StageLoader
 --- !u!20 &1413033650 stripped
 Camera:
   m_CorrespondingSourceObject: {fileID: 1717871216010249088, guid: 0334cd302c3852147b59912b9aeae5d7, type: 3}
@@ -454,6 +465,10 @@ PrefabInstance:
       value: GameManager
       objectReference: {fileID: 0}
     - target: {fileID: 6562320009633688067, guid: f0e9e1a4490476f4e83197bb34b20713, type: 3}
+      propertyPath: stageManager
+      value: 
+      objectReference: {fileID: 1268240185}
+    - target: {fileID: 6562320009633688067, guid: f0e9e1a4490476f4e83197bb34b20713, type: 3}
       propertyPath: initialMapIndex
       value: 1
       objectReference: {fileID: 0}
@@ -547,6 +562,38 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 5090292573414555690, guid: b1597b33949e01b4ebfeae783bb0a719, type: 3}
+      propertyPath: mapPrefabs.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5090292573414555690, guid: b1597b33949e01b4ebfeae783bb0a719, type: 3}
+      propertyPath: 'mapPrefabs.Array.data[0]'
+      value: 
+      objectReference: {fileID: 5455071742382695461, guid: 76cc0c066ccc14545aa382e0ee1a4c72, type: 3}
+    - target: {fileID: 5090292573414555690, guid: b1597b33949e01b4ebfeae783bb0a719, type: 3}
+      propertyPath: 'mapPrefabs.Array.data[1]'
+      value: 
+      objectReference: {fileID: 5573549547454476352, guid: fdcb0907192a3b242b72aa57b238d064, type: 3}
+    - target: {fileID: 5090292573414555690, guid: b1597b33949e01b4ebfeae783bb0a719, type: 3}
+      propertyPath: 'mapPrefabs.Array.data[2]'
+      value: 
+      objectReference: {fileID: 3491224688107528927, guid: 33d8eeeb6ea2fa44a8c7373fe7a669a9, type: 3}
+    - target: {fileID: 5090292573414555690, guid: b1597b33949e01b4ebfeae783bb0a719, type: 3}
+      propertyPath: enemyPiecePrefabs.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5090292573414555690, guid: b1597b33949e01b4ebfeae783bb0a719, type: 3}
+      propertyPath: 'enemyPiecePrefabs.Array.data[0]'
+      value: 
+      objectReference: {fileID: 8771929361919017144, guid: 2e8213972fb07fe4f8c62a6e82bd2c5b, type: 3}
+    - target: {fileID: 5090292573414555690, guid: b1597b33949e01b4ebfeae783bb0a719, type: 3}
+      propertyPath: 'enemyPiecePrefabs.Array.data[1]'
+      value: 
+      objectReference: {fileID: 3921962521532312310, guid: f6c562c8b9640fc4fa7e2934b83acec9, type: 3}
+    - target: {fileID: 5090292573414555690, guid: b1597b33949e01b4ebfeae783bb0a719, type: 3}
+      propertyPath: 'enemyPiecePrefabs.Array.data[2]'
+      value: 
+      objectReference: {fileID: 3328458296932663347, guid: 1a442a92bab579b428bb82f71776a462, type: 3}
     - target: {fileID: 6388868170064121488, guid: b1597b33949e01b4ebfeae783bb0a719, type: 3}
       propertyPath: m_Name
       value: StageManager
