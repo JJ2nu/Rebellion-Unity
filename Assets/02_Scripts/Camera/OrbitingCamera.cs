@@ -3,8 +3,7 @@ using UnityEngine.InputSystem;
 
 public class OrbitingCamera : MonoBehaviour
 {
-    [SerializeField] InputActionReference orbitLeftAction;
-    [SerializeField] InputActionReference orbitRightAction;
+    [SerializeField] InputActionReference orbitAction;
     [SerializeField] private float orbitSpeed = 90f;
 
     private Coroutine orbitCoroutine;
@@ -14,22 +13,22 @@ public class OrbitingCamera : MonoBehaviour
 
     private void OnEnable()
     {
-        orbitLeftAction.action.started  += OnOrbitLeftStarted;
-        orbitLeftAction.action.canceled += OnOrbitStopped;
-        orbitRightAction.action.started  += OnOrbitRightStarted;
-        orbitRightAction.action.canceled += OnOrbitStopped;
+        orbitAction.action.started  += OnOrbitStarted;
+        orbitAction.action.canceled += OnOrbitStopped;
     }
 
     private void OnDisable()
     {
-        orbitLeftAction.action.started  -= OnOrbitLeftStarted;
-        orbitLeftAction.action.canceled -= OnOrbitStopped;
-        orbitRightAction.action.started  -= OnOrbitRightStarted;
-        orbitRightAction.action.canceled -= OnOrbitStopped;
+        orbitAction.action.started  -= OnOrbitStarted;
+        orbitAction.action.canceled -= OnOrbitStopped;
     }
 
-    private void OnOrbitLeftStarted(InputAction.CallbackContext ctx)  => StartOrbit(1f);
-    private void OnOrbitRightStarted(InputAction.CallbackContext ctx) => StartOrbit(-1f);
+    private void OnOrbitStarted(InputAction.CallbackContext ctx)
+    {
+        float orbitDirection = orbitAction.action.ReadValue<float>();
+        StartOrbit(orbitDirection);
+
+    } 
     private void OnOrbitStopped(InputAction.CallbackContext ctx)
     {
         if (orbitCoroutine != null) StopCoroutine(orbitCoroutine);

@@ -368,9 +368,13 @@ PrefabInstance:
       value: 25.18
       objectReference: {fileID: 0}
     - target: {fileID: 6638064837252542534, guid: 0334cd302c3852147b59912b9aeae5d7, type: 3}
+      propertyPath: orbitAction
+      value: 
+      objectReference: {fileID: -4734345760614983005, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+    - target: {fileID: 6638064837252542534, guid: 0334cd302c3852147b59912b9aeae5d7, type: 3}
       propertyPath: orbitLeftAction
       value: 
-      objectReference: {fileID: 2411907206095950430, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+      objectReference: {fileID: -4734345760614983005, guid: 052faaac586de48259a63d0c4782560b, type: 3}
     - target: {fileID: 6638064837252542534, guid: 0334cd302c3852147b59912b9aeae5d7, type: 3}
       propertyPath: orbitRightAction
       value: 
