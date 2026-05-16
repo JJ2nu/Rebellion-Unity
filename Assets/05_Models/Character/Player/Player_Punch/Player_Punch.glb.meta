@@ -12,7 +12,7 @@ ScriptedImporter:
     generateSecondaryUVSet: 0
   importSettings:
     nodeNameMethod: 1
-    animationMethod: 1
+    animationMethod: 2
     generateMipMaps: 1
     texturesReadable: 0
     defaultMinFilterMode: 9729
@@ -25,7 +25,4 @@ ScriptedImporter:
     lightIntensityFactor: 1
     sceneObjectCreation: 2
   assetDependencies: []
-  reportItems:
-  - type: 3
-    code: 36
-    messages: []
+  reportItems: []
