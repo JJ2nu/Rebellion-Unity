@@ -91,7 +91,7 @@ public sealed class InGameUIDataTable
 
         for (int index = 0; index < headerRow.Length; index++)
         {
-            string key = headerRow[index].Trim();
+            string key = Sanitize(headerRow[index]);
             if (!string.IsNullOrEmpty(key))
             {
                 headers[key] = index;
@@ -109,7 +109,7 @@ public sealed class InGameUIDataTable
             return string.Empty;
         }
 
-        return row[index].Trim();
+        return Sanitize(row[index]);
     }
 
     private static int ReadInt(string[] row, Dictionary<string, int> headers, string key)
@@ -210,6 +210,13 @@ public sealed class InGameUIDataTable
         }
 
         return true;
+    }
+
+    private static string Sanitize(string value)
+    {
+        return string.IsNullOrEmpty(value)
+            ? string.Empty
+            : value.Trim().Trim('\uFEFF');
     }
 
     #endregion

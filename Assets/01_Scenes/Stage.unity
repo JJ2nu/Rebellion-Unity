@@ -119,6 +119,20 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!114 &72058764
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc1515ab76e54f068e2f2207940fab32, type: 3}
+  m_Name: Player/CrewRotate
+  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
+  m_Asset: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  m_ActionId: 9a8c1661-091b-495c-ba92-2d840d518804
 --- !u!1001 &188949895
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -234,6 +248,7 @@ GameObject:
   - component: {fileID: 372993844}
   - component: {fileID: 372993843}
   - component: {fileID: 372993847}
+  - component: {fileID: 372993848}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -360,6 +375,23 @@ MonoBehaviour:
   storageHorizontalSpacing: 180
   skillRoot: {fileID: 529355088}
   orderSkillButtonPrefab: {fileID: 9129578763818932144, guid: b28f665980c3ccb4dbd8248b7206ca47, type: 3}
+  placementController: {fileID: 372993848}
+--- !u!114 &372993848
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 372993842}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e84af34c1deb344a97a8dadd9fb0c88, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AllyPiecePlacementController
+  stageManager: {fileID: 0}
+  previewHeight: 0.2
+  defaultFacingDirection: 0
+  rotateAction: {fileID: 72058764}
 --- !u!1 &529355087
 GameObject:
   m_ObjectHideFlags: 0
@@ -1033,6 +1065,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CameraOrbitPoint
       objectReference: {fileID: 0}
+    - target: {fileID: 8386485110916463597, guid: 0334cd302c3852147b59912b9aeae5d7, type: 3}
+      propertyPath: m_TagString
+      value: MainCamera
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1093,7 +1129,7 @@ PrefabInstance:
     - target: {fileID: 6562320009633688067, guid: f0e9e1a4490476f4e83197bb34b20713, type: 3}
       propertyPath: stageManager
       value: 
-      objectReference: {fileID: 1268240185}
+      objectReference: {fileID: 0}
     - target: {fileID: 6562320009633688067, guid: f0e9e1a4490476f4e83197bb34b20713, type: 3}
       propertyPath: initialMapIndex
       value: 1
@@ -1205,21 +1241,41 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 3491224688107528927, guid: 33d8eeeb6ea2fa44a8c7373fe7a669a9, type: 3}
     - target: {fileID: 5090292573414555690, guid: b1597b33949e01b4ebfeae783bb0a719, type: 3}
-      propertyPath: enemyPiecePrefabs.Array.size
+      propertyPath: allyPiecePrefabs.Array.size
       value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 5090292573414555690, guid: b1597b33949e01b4ebfeae783bb0a719, type: 3}
-      propertyPath: 'enemyPiecePrefabs.Array.data[0]'
+      propertyPath: enemyPiecePrefabs.Array.size
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5090292573414555690, guid: b1597b33949e01b4ebfeae783bb0a719, type: 3}
+      propertyPath: 'allyPiecePrefabs.Array.data[0]'
       value: 
       objectReference: {fileID: 8771929361919017144, guid: 2e8213972fb07fe4f8c62a6e82bd2c5b, type: 3}
     - target: {fileID: 5090292573414555690, guid: b1597b33949e01b4ebfeae783bb0a719, type: 3}
-      propertyPath: 'enemyPiecePrefabs.Array.data[1]'
+      propertyPath: 'allyPiecePrefabs.Array.data[1]'
       value: 
       objectReference: {fileID: 3921962521532312310, guid: f6c562c8b9640fc4fa7e2934b83acec9, type: 3}
     - target: {fileID: 5090292573414555690, guid: b1597b33949e01b4ebfeae783bb0a719, type: 3}
-      propertyPath: 'enemyPiecePrefabs.Array.data[2]'
+      propertyPath: 'allyPiecePrefabs.Array.data[2]'
       value: 
       objectReference: {fileID: 3328458296932663347, guid: 1a442a92bab579b428bb82f71776a462, type: 3}
+    - target: {fileID: 5090292573414555690, guid: b1597b33949e01b4ebfeae783bb0a719, type: 3}
+      propertyPath: 'enemyPiecePrefabs.Array.data[0]'
+      value: 
+      objectReference: {fileID: 5570943943485575194, guid: c135df083d556ca4a99429a38bee7547, type: 3}
+    - target: {fileID: 5090292573414555690, guid: b1597b33949e01b4ebfeae783bb0a719, type: 3}
+      propertyPath: 'enemyPiecePrefabs.Array.data[1]'
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5090292573414555690, guid: b1597b33949e01b4ebfeae783bb0a719, type: 3}
+      propertyPath: 'enemyPiecePrefabs.Array.data[2]'
+      value: 
+      objectReference: {fileID: 8018666167684502777, guid: f5efe5145518a9149a1f956a74e7c2d4, type: 3}
+    - target: {fileID: 5090292573414555690, guid: b1597b33949e01b4ebfeae783bb0a719, type: 3}
+      propertyPath: 'enemyPiecePrefabs.Array.data[3]'
+      value: 
+      objectReference: {fileID: 1193745007004039138, guid: 423a7935d8b6e0a4b9917f6a34a069f7, type: 3}
     - target: {fileID: 6388868170064121488, guid: b1597b33949e01b4ebfeae783bb0a719, type: 3}
       propertyPath: m_Name
       value: StageManager

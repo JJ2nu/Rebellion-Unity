@@ -40,6 +40,9 @@ public sealed class InGameUIController : MonoBehaviour
     [SerializeField] private Transform skillRoot;
     [SerializeField] private GameObject orderSkillButtonPrefab;
 
+    [Header("Placement")]
+    [SerializeField] private PlacementController placementController;
+
     private InGameUIDataTable dataTable;
     private bool isInitialized;
 
@@ -87,6 +90,10 @@ public sealed class InGameUIController : MonoBehaviour
         }
 
         dataTable = InGameUIDataTable.FromCsv(uiDataCsv);
+        if (placementController == null)
+        {
+            placementController = FindObjectOfType<PlacementController>();
+        }
         isInitialized = true;
     }
 
@@ -182,6 +189,7 @@ public sealed class InGameUIController : MonoBehaviour
 
         InGameUnitStorageSlotUI slot = Instantiate(prefab, storageRoot, false);
         slot.Bind(unitType, deployableCount);
+        slot.Clicked += HandleStorageSlotClicked;
     }
 
     private void AlignStoragesFromRight()
@@ -221,6 +229,21 @@ public sealed class InGameUIController : MonoBehaviour
         }
 
         return null;
+    }
+
+    #endregion
+
+    #region Placement
+
+    private void HandleStorageSlotClicked(InGameUnitStorageSlotUI slot)
+    {
+        if (placementController == null)
+        {
+            Debug.LogWarning("Placement controller is not assigned.", this);
+            return;
+        }
+
+        placementController.BeginPlacement(slot);
     }
 
     #endregion

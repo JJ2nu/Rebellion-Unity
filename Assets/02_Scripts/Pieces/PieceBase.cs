@@ -7,7 +7,7 @@ using UnityEngine;
 /// 모든 기물의 베이스 클래스. 그리드 위에 배치되어 시뮬레이션에 참여한다.
 /// 새로운 기물 추가 시 이 클래스를 상속하고 ExecuteAction()과 FindTarget()을 구현한다.
 /// </summary>
-public abstract class PieceBase : MonoBehaviour
+public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
 {
     // ─── Inspector ──────────────────────────────────────────────────
     [Header("Piece Config")]
@@ -118,7 +118,27 @@ public abstract class PieceBase : MonoBehaviour
 
     // ─── Protected Utilities ─────────────────────────────────────────
 
-    protected void FinishAction()
+    #region IWorldInputTarget
+
+    public void OnWorldHover(WorldInputEventData eventData) { }
+    public void OnWorldUnHover(WorldInputEventData eventData) { }
+    public void OnWorldLeftClick(WorldInputEventData eventData) { }
+
+    public void OnWorldRightClick(WorldInputEventData eventData)
+    {
+        if (_faction != Faction.Ally)
+        {
+            return;
+        }
+
+        PlacementController ctrl = UnityEngine.Object.FindObjectOfType<PlacementController>();
+        ctrl?.HandleAllyPieceRightClick(this);
+    }
+
+    #endregion
+
+    
+protected void FinishAction()
     {
         IsActionFinished = true;
         OnActionFinished?.Invoke(this);
