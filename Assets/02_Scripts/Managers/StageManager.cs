@@ -545,9 +545,24 @@ private void SpawnObjects(StageData stageData)
             if (objectPool.TryGetValue(objectEntity.detailType, out Queue<GameObject> pool) && pool.Count > 0)
             {
                 spawnedObject = pool.Dequeue();
-                spawnedObject.transform.SetParent(objectParent);
-                spawnedObject.transform.SetPositionAndRotation(spawnPosition, spawnRotation);
-                spawnedObject.SetActive(true);
+
+                if (spawnedObject == null || !string.Equals(spawnedObject.name, objectPrefab.name, StringComparison.Ordinal))
+                {
+                    if (spawnedObject != null)
+                    {
+                        Debug.LogWarning($"Discarding pooled object for detailType {objectEntity.detailType} because it does not match prefab {objectPrefab.name} on map {currentMapIndex}.", this);
+                        Destroy(spawnedObject);
+                    }
+
+                    spawnedObject = Instantiate(objectPrefab, spawnPosition, spawnRotation, objectParent);
+                    spawnedObject.name = objectPrefab.name;
+                }
+                else
+                {
+                    spawnedObject.transform.SetParent(objectParent);
+                    spawnedObject.transform.SetPositionAndRotation(spawnPosition, spawnRotation);
+                    spawnedObject.SetActive(true);
+                }
             }
             else
             {
