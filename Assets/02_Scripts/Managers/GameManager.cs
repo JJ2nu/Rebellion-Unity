@@ -147,6 +147,11 @@ public class GameManager : MonoBehaviour
                 float zPosition = (z * 2f - originOffset) * halfCellSize;
                 GameObject cell = Instantiate(gridCellPrefab, new Vector3(xPosition, gridYPosition, zPosition), Quaternion.identity, gridCellRoot);
                 cell.name = $"GridCell_{index}";
+                GridCell gridCell = cell.GetComponent<GridCell>();
+                if (gridCell != null)
+                {
+                    gridCell.Initialize(index, gridSize);
+                }
                 DontDestroyOnLoad(cell);
                 loadedGridCells[index] = cell;
             }

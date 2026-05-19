@@ -44,5 +44,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c5ee32927a8926a41a5d9bf7e61c8d2b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StageLoader
-  allyPiecePrefabs: []
-  enemyPiecePrefabs: []
+  allyPiecePrefabs:
+  - {fileID: 8771929361919017144, guid: 2e8213972fb07fe4f8c62a6e82bd2c5b, type: 3}
+  - {fileID: 3921962521532312310, guid: f6c562c8b9640fc4fa7e2934b83acec9, type: 3}
+  - {fileID: 3328458296932663347, guid: 1a442a92bab579b428bb82f71776a462, type: 3}
+  enemyPiecePrefabs:
+  - {fileID: 5570943943485575194, guid: c135df083d556ca4a99429a38bee7547, type: 3}
+  - {fileID: 0}
+  - {fileID: 8018666167684502777, guid: f5efe5145518a9149a1f956a74e7c2d4, type: 3}
+  - {fileID: 1193745007004039138, guid: 423a7935d8b6e0a4b9917f6a34a069f7, type: 3}
+  mapPrefabs:
+  - {fileID: 5455071742382695461, guid: 76cc0c066ccc14545aa382e0ee1a4c72, type: 3}
+  - {fileID: 5573549547454476352, guid: fdcb0907192a3b242b72aa57b238d064, type: 3}
+  - {fileID: 3491224688107528927, guid: 33d8eeeb6ea2fa44a8c7373fe7a669a9, type: 3}

@@ -29,8 +29,13 @@ public class StageManager : MonoBehaviour
     private readonly List<StageEntityData> enemyEntities = new();
     private readonly List<StageEntityData> civilianEntities = new();
     private readonly List<StageEntityData> objectEntities = new();
-    private readonly List<PieceBase> spawnedEnemyPieces = new();
-    private readonly List<GameObject> spawnedObjects = new();
+    private readonly List<PieceBase> spawnedAllyPieces = new();
+    private readonly List<(int detailType, PieceBase piece)> spawnedEnemyPieces = new();
+    private readonly List<(int detailType, GameObject obj)> spawnedObjects = new();
+
+    // 풀: 스테이지 클리어 전까지 보관하고 재배치
+    private readonly List<Queue<PieceBase>> enemyPool = new();
+    private readonly Dictionary<int, Queue<GameObject>> objectPool = new();
 
     private PieceBase[][] allyPieces;
     private PieceBase[][] enemyPieces;
@@ -48,9 +53,9 @@ public class StageManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         gameManager = GameManager.Instance;
-        EnsureMapRoot();
-        EnsureMapInstancesLoaded();
-        SetAllMapsActive(false);
+        MapRootCheck();
+        MapCacheCheck();
+        SetMapsActive(false);
     }
 
     public void LoadStage(string stagePath)
@@ -65,7 +70,7 @@ public class StageManager : MonoBehaviour
             return;
         }
 
-        string fullPath = GetStageFilePath(currentStagePath);
+        string fullPath = ResolveStagePath(currentStagePath);
         if (!File.Exists(fullPath))
         {
             Debug.LogWarning($"Stage file not found: {fullPath}", this);
@@ -86,11 +91,12 @@ public class StageManager : MonoBehaviour
             return;
         }
 
+        ClearSpawnedAllyPieces();
         currentStageData = parsedData;
-        RebuildEntityBuckets(parsedData);
+        CacheStageEntities(parsedData);
 
-        EnsureMapRoot();
-        EnsureMapInstancesLoaded();
+        MapRootCheck();
+        MapCacheCheck();
 
         if (loadedMaps.Length == 0)
         {
@@ -99,8 +105,8 @@ public class StageManager : MonoBehaviour
         }
 
         currentMapIndex = Mathf.Clamp(parsedData.mapIndex, 0, loadedMaps.Length - 1);
-    Debug.Log($"[StageManager] Activating map index: {currentMapIndex}", this);
-        ActivateCurrentMap();
+        Debug.Log($"[StageManager] Activating map index: {currentMapIndex}", this);
+        UpdateActiveMap();
 
         SpawnEnemies(parsedData);
         SpawnObjects(parsedData);
@@ -110,10 +116,122 @@ public class StageManager : MonoBehaviour
 
     public void EndStage()
     {
-        SetAllMapsActive(false);
+        SetMapsActive(false);
+        ClearPools();
     }
 
-    private string GetStageFilePath(string stagePath)
+    public GameObject GetAllyPiecePrefab(PieceType pieceType)
+    {
+        int prefabIndex = (int)pieceType;
+        if (allyPiecePrefabs == null || prefabIndex < 0 || prefabIndex >= allyPiecePrefabs.Length)
+        {
+            Debug.LogWarning($"Ally prefab is out of range. PieceType: {pieceType}", this);
+            return null;
+        }
+
+        return allyPiecePrefabs[prefabIndex];
+    }
+
+    public bool IsCellOccupied(int cellIndex)
+    {
+        if (cellIndex < 0)
+        {
+            return true;
+        }
+
+        for (int index = 0; index < spawnedAllyPieces.Count; index++)
+        {
+            PieceBase allyPiece = spawnedAllyPieces[index];
+            if (allyPiece == null || !allyPiece.gameObject.activeInHierarchy)
+            {
+                continue;
+            }
+
+            int allyCellIndex = StageGridIndexUtility.ToCellIndex(GetBoardSize(), allyPiece.GridX, allyPiece.GridY);
+            if (allyCellIndex == cellIndex)
+            {
+                return true;
+            }
+        }
+
+        if (currentStageData?.entities == null)
+        {
+            return false;
+        }
+
+        for (int index = 0; index < currentStageData.entities.Length; index++)
+        {
+            StageEntityData entity = currentStageData.entities[index];
+            if (entity != null && entity.cellIndex == cellIndex)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public bool TryRemoveAllyPiece(PieceBase piece)
+    {
+        if (piece == null)
+        {
+            return false;
+        }
+
+        bool removed = spawnedAllyPieces.Remove(piece);
+        if (removed)
+        {
+            Destroy(piece.gameObject);
+        }
+
+        return removed;
+    }
+
+    
+public bool TrySpawnAllyPiece(PieceType pieceType, int cellIndex, Direction facingDirection)
+    {
+        if (IsCellOccupied(cellIndex))
+        {
+            return false;
+        }
+
+        GameObject allyPrefab = GetAllyPiecePrefab(pieceType);
+        if (allyPrefab == null)
+        {
+            return false;
+        }
+
+        if (gameManager == null)
+        {
+            gameManager = GameManager.Instance;
+        }
+
+        if (gameManager == null)
+        {
+            Debug.LogWarning("StageManager could not find GameManager.", this);
+            return false;
+        }
+
+        Vector3 spawnPosition = gameManager.GetCellPosition(cellIndex);
+        Quaternion spawnRotation = Quaternion.Euler(0f, (int)facingDirection * 90f, 0f);
+        GameObject allyObject = Instantiate(allyPrefab, spawnPosition, spawnRotation, transform);
+        PieceBase allyPiece = allyObject.GetComponent<PieceBase>();
+        if (allyPiece == null)
+        {
+            Debug.LogWarning($"Ally prefab has no PieceBase component: {allyPrefab.name}", this);
+            Destroy(allyObject);
+            return false;
+        }
+
+        Vector2Int gridCoord = StageGridIndexUtility.ToGridCoord(GetBoardSize(), cellIndex);
+        allyPiece.GridX = gridCoord.x;
+        allyPiece.GridY = gridCoord.y;
+        allyPiece.FacingDirection = facingDirection;
+        spawnedAllyPieces.Add(allyPiece);
+        return true;
+    }
+
+    private string ResolveStagePath(string stagePath)
     {
         if (Path.IsPathRooted(stagePath))
         {
@@ -123,7 +241,7 @@ public class StageManager : MonoBehaviour
         return Path.Combine(Application.streamingAssetsPath, stagePath);
     }
 
-    private void RebuildEntityBuckets(StageData stageData)
+    private void CacheStageEntities(StageData stageData)
     {
         enemyEntities.Clear();
         civilianEntities.Clear();
@@ -162,7 +280,7 @@ public class StageManager : MonoBehaviour
             }
         }
     }
-    private void EnsureMapRoot()
+    private void MapRootCheck()
     {
         if (mapRoot == null)
         {
@@ -171,7 +289,7 @@ public class StageManager : MonoBehaviour
             mapRoot = rootObject.transform;
         }
     }
-    private void EnsureMapInstancesLoaded()
+    private void MapCacheCheck()
     {
         if (mapPrefabs == null || mapPrefabs.Length == 0)
         {
@@ -183,7 +301,7 @@ public class StageManager : MonoBehaviour
 
         if (loadedMaps == null || loadedMaps.Length != mapPrefabs.Length)
         {
-            ClearLoadedMaps();
+            ClearMaps();
             loadedMaps = new GameObject[mapPrefabs.Length];
             objectPrefabs = new GameObject[mapPrefabs.Length][];
         }
@@ -262,7 +380,7 @@ public class StageManager : MonoBehaviour
             }
         }
     }
-    private void ActivateCurrentMap()
+    private void UpdateActiveMap()
     {
         for (int index = 0; index < loadedMaps.Length; index++)
         {
@@ -276,7 +394,7 @@ public class StageManager : MonoBehaviour
             Debug.Log($"[StageManager] Map '{map.name}' active={index == currentMapIndex}", this);
         }
     }
-    private void SetAllMapsActive(bool isActive)
+    private void SetMapsActive(bool isActive)
     {
         if (loadedMaps == null)
         {
@@ -306,7 +424,10 @@ public class StageManager : MonoBehaviour
             return;
         }
 
-        ClearSpawnedEnemies();
+        PoolEnemies();
+
+        while (enemyPool.Count < enemyPiecePrefabs.Length)
+            enemyPool.Add(new Queue<PieceBase>());
 
         int[] enemyTypeCounts = new int[enemyPiecePrefabs.Length];
         foreach (StageEntityData enemyEntity in enemyEntities)
@@ -342,13 +463,25 @@ public class StageManager : MonoBehaviour
 
             Vector3 spawnPosition = gameManager.GetCellPosition(enemyEntity.cellIndex);
             Quaternion spawnRotation = Quaternion.Euler(0f, enemyEntity.facing * 90f, 0f);
-            GameObject enemyObject = Instantiate(enemyPrefab, spawnPosition, spawnRotation, transform);
-            PieceBase enemyPiece = enemyObject.GetComponent<PieceBase>();
-            if (enemyPiece == null)
+
+            PieceBase enemyPiece;
+            Queue<PieceBase> pool = enemyPool[enemyEntity.detailType];
+            if (pool.Count > 0)
             {
-                Debug.LogWarning($"Enemy prefab has no PieceBase component: {enemyPrefab.name}", this);
-                Destroy(enemyObject);
-                continue;
+                enemyPiece = pool.Dequeue();
+                enemyPiece.transform.SetPositionAndRotation(spawnPosition, spawnRotation);
+                enemyPiece.gameObject.SetActive(true);
+            }
+            else
+            {
+                GameObject enemyObject = Instantiate(enemyPrefab, spawnPosition, spawnRotation, transform);
+                enemyPiece = enemyObject.GetComponent<PieceBase>();
+                if (enemyPiece == null)
+                {
+                    Debug.LogWarning($"Enemy prefab has no PieceBase component: {enemyPrefab.name}", this);
+                    Destroy(enemyObject);
+                    continue;
+                }
             }
 
             Vector2Int gridCoord = StageGridIndexUtility.ToGridCoord(stageData.boardSize, enemyEntity.cellIndex);
@@ -358,10 +491,10 @@ public class StageManager : MonoBehaviour
 
             int enemyTypeIndex = enemyTypeIndices[enemyEntity.detailType]++;
             enemyPieces[enemyEntity.detailType][enemyTypeIndex] = enemyPiece;
-            spawnedEnemyPieces.Add(enemyPiece);
+            spawnedEnemyPieces.Add((enemyEntity.detailType, enemyPiece));
         }
     }
-    private void SpawnObjects(StageData stageData)
+private void SpawnObjects(StageData stageData)
     {
         if (gameManager == null)
         {
@@ -374,7 +507,7 @@ public class StageManager : MonoBehaviour
             return;
         }
 
-        ClearSpawnedObjects();
+        PoolObjects();
 
         if (currentMapIndex < 0 || objectPrefabs == null || currentMapIndex >= objectPrefabs.Length)
         {
@@ -408,36 +541,116 @@ public class StageManager : MonoBehaviour
 
             Vector3 spawnPosition = gameManager.GetCellPosition(objectEntity.cellIndex);
             Quaternion spawnRotation = Quaternion.Euler(0f, objectEntity.facing * 90f, 0f);
-            GameObject spawnedObject = Instantiate(objectPrefab, spawnPosition, spawnRotation, objectParent);
-            spawnedObject.name = objectPrefab.name;
-            spawnedObjects.Add(spawnedObject);
+
+            GameObject spawnedObject;
+            if (objectPool.TryGetValue(objectEntity.detailType, out Queue<GameObject> pool) && pool.Count > 0)
+            {
+                spawnedObject = pool.Dequeue();
+
+                if (spawnedObject == null || !string.Equals(spawnedObject.name, objectPrefab.name, StringComparison.Ordinal))
+                {
+                    if (spawnedObject != null)
+                    {
+                        Debug.LogWarning($"Discarding pooled object for detailType {objectEntity.detailType} because it does not match prefab {objectPrefab.name} on map {currentMapIndex}.", this);
+                        Destroy(spawnedObject);
+                    }
+
+                    spawnedObject = Instantiate(objectPrefab, spawnPosition, spawnRotation, objectParent);
+                    spawnedObject.name = objectPrefab.name;
+                }
+                else
+                {
+                    spawnedObject.transform.SetParent(objectParent);
+                    spawnedObject.transform.SetPositionAndRotation(spawnPosition, spawnRotation);
+                    spawnedObject.SetActive(true);
+                }
+            }
+            else
+            {
+                spawnedObject = Instantiate(objectPrefab, spawnPosition, spawnRotation, objectParent);
+                spawnedObject.name = objectPrefab.name;
+            }
+
+            spawnedObjects.Add((objectEntity.detailType, spawnedObject));
         }
     }
-    private void ClearSpawnedEnemies()
+    private void PoolEnemies()
     {
-        foreach (PieceBase spawnedEnemyPiece in spawnedEnemyPieces)
+        foreach ((int detailType, PieceBase enemy) in spawnedEnemyPieces)
         {
-            if (spawnedEnemyPiece != null)
-            {
-                Destroy(spawnedEnemyPiece.gameObject);
-            }
+            if (enemy == null) continue;
+            enemy.gameObject.SetActive(false);
+            while (enemyPool.Count <= detailType)
+                enemyPool.Add(new Queue<PieceBase>());
+            enemyPool[detailType].Enqueue(enemy);
         }
-
         spawnedEnemyPieces.Clear();
     }
-    private void ClearSpawnedObjects()
+
+    private void PoolObjects()
     {
-        foreach (GameObject spawnedObject in spawnedObjects)
+        foreach ((int detailType, GameObject obj) in spawnedObjects)
         {
-            if (spawnedObject != null)
+            if (obj == null) continue;
+            obj.SetActive(false);
+            if (!objectPool.ContainsKey(detailType))
             {
-                Destroy(spawnedObject);
+                objectPool[detailType] = new Queue<GameObject>();
+            }
+            objectPool[detailType].Enqueue(obj);
+        }
+        spawnedObjects.Clear();
+    }
+
+    private void ClearPools()
+    {
+        ClearSpawnedAllyPieces();
+
+        foreach ((int _, PieceBase enemy) in spawnedEnemyPieces)
+        {
+            if (enemy != null) Destroy(enemy.gameObject);
+        }
+        spawnedEnemyPieces.Clear();
+
+        foreach (Queue<PieceBase> pool in enemyPool)
+        {
+            while (pool.Count > 0)
+            {
+                PieceBase pooled = pool.Dequeue();
+                if (pooled != null) Destroy(pooled.gameObject);
             }
         }
 
+        foreach ((int _, GameObject obj) in spawnedObjects)
+        {
+            if (obj != null) Destroy(obj);
+        }
         spawnedObjects.Clear();
+
+        foreach (Queue<GameObject> pool in objectPool.Values)
+        {
+            while (pool.Count > 0)
+            {
+                GameObject pooled = pool.Dequeue();
+                if (pooled != null) Destroy(pooled);
+            }
+        }
+        objectPool.Clear();
     }
-    private void ClearLoadedMaps()
+
+    private void ClearSpawnedAllyPieces()
+    {
+        for (int index = 0; index < spawnedAllyPieces.Count; index++)
+        {
+            PieceBase allyPiece = spawnedAllyPieces[index];
+            if (allyPiece != null)
+            {
+                Destroy(allyPiece.gameObject);
+            }
+        }
+        spawnedAllyPieces.Clear();
+    }
+    private void ClearMaps()
     {
         if (loadedMaps == null)
         {
@@ -451,5 +664,12 @@ public class StageManager : MonoBehaviour
                 Destroy(loadedMap);
             }
         }
+    }
+
+    private int GetBoardSize()
+    {
+        return currentStageData != null && currentStageData.boardSize > 0
+            ? currentStageData.boardSize
+            : 6;
     }
 }

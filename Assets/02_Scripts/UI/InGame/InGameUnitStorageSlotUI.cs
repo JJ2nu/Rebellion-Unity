@@ -1,6 +1,7 @@
 // 대원 배치 버튼의 남은 배치 수를 표시하고 클릭에 따라 수량과 이미지를 갱신한다.
 
 using System.Collections;
+using System;
 using Rebellion;
 using TMPro;
 using UnityEngine;
@@ -20,6 +21,8 @@ public sealed class InGameUnitStorageSlotUI : MonoBehaviour, IPointerUpHandler
     public PieceType UnitType { get; private set; }
     public int MaxDeployableCount { get; private set; }
     public int RemainingDeployableCount { get; private set; }
+
+    public event Action<InGameUnitStorageSlotUI> Clicked;
 
     #endregion
 
@@ -72,7 +75,14 @@ public sealed class InGameUnitStorageSlotUI : MonoBehaviour, IPointerUpHandler
 
     private void HandleClick()
     {
-        if (TryConsumeOne() && RemainingDeployableCount > 0)
+        if (RemainingDeployableCount <= 0)
+        {
+            return;
+        }
+
+        Clicked?.Invoke(this);
+
+        if (RemainingDeployableCount > 0)
         {
             StartCoroutine(ResetActiveSpriteAfterClick());
         }
