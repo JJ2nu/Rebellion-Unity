@@ -124,6 +124,8 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
     public void OnWorldUnHover(WorldInputEventData eventData) { }
     public void OnWorldLeftClick(WorldInputEventData eventData) { }
 
+    public static event System.Action<PieceBase> AllyRightClicked;
+
     public void OnWorldRightClick(WorldInputEventData eventData)
     {
         if (_faction != Faction.Ally)
@@ -131,8 +133,7 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
             return;
         }
 
-        PlacementController ctrl = UnityEngine.Object.FindObjectOfType<PlacementController>();
-        ctrl?.HandleAllyPieceRightClick(this);
+        AllyRightClicked?.Invoke(this);
     }
 
     #endregion

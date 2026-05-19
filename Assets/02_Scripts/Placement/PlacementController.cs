@@ -1,4 +1,5 @@
 using Rebellion;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -17,11 +18,14 @@ public sealed class PlacementController : MonoBehaviour
     private InGameUnitStorageSlotUI pendingSlot;
     private GameObject previewObject;
     private Direction currentFacingDirection;
+    private readonly Dictionary<PieceType, InGameUnitStorageSlotUI> slotMap = new();
 
     public bool IsPlacing => pendingSlot != null;
 
     private void OnDestroy()
     {
+        PieceBase.AllyRightClicked -= HandleAllyPieceRightClick;
+
         if (rotateAction?.action != null)
         {
             rotateAction.action.performed -= OnRotatePerformed;
@@ -33,6 +37,8 @@ public sealed class PlacementController : MonoBehaviour
 private void Awake()
     {
         ResolveDependencies();
+
+        PieceBase.AllyRightClicked += HandleAllyPieceRightClick;
 
         if (rotateAction != null)
         {
@@ -189,14 +195,17 @@ public void HandleAllyPieceRightClick(PieceBase piece)
             return;
         }
 
-        InGameUnitStorageSlotUI[] slots = Object.FindObjectsOfType<InGameUnitStorageSlotUI>();
-        foreach (InGameUnitStorageSlotUI slot in slots)
+        if (slotMap.TryGetValue(pieceType, out InGameUnitStorageSlotUI slot))
         {
-            if (slot.UnitType == pieceType)
-            {
-                slot.TryRestoreOne();
-                break;
-            }
+            slot.TryRestoreOne();
+        }
+    }
+
+    public void RegisterSlot(InGameUnitStorageSlotUI slot)
+    {
+        if (slot != null)
+        {
+            slotMap[slot.UnitType] = slot;
         }
     }
 

@@ -190,6 +190,7 @@ public sealed class InGameUIController : MonoBehaviour
         InGameUnitStorageSlotUI slot = Instantiate(prefab, storageRoot, false);
         slot.Bind(unitType, deployableCount);
         slot.Clicked += HandleStorageSlotClicked;
+        placementController?.RegisterSlot(slot);
     }
 
     private void AlignStoragesFromRight()
