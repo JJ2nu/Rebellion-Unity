@@ -38,12 +38,14 @@ private void Awake()
     {
         ResolveDependencies();
 
-        PieceBase.AllyRightClicked += HandleAllyPieceRightClick;
-
-        if (rotateAction != null)
+        if (rotateAction?.action != null)
         {
             rotateAction.action.Enable();
             rotateAction.action.performed += OnRotatePerformed;
+        }
+        else
+        {
+            Debug.LogWarning("PlacementController: rotateAction is not assigned or does not reference a valid InputAction.", this);
         }
     }
 
