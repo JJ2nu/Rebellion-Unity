@@ -22,9 +22,10 @@ public sealed class PlacementController : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (rotateAction != null)
+        if (rotateAction?.action != null)
         {
             rotateAction.action.performed -= OnRotatePerformed;
+            rotateAction.action.Disable();
         }
     }
 

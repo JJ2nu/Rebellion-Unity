@@ -31,11 +31,11 @@ public class StageManager : MonoBehaviour
     private readonly List<StageEntityData> objectEntities = new();
     private readonly List<PieceBase> spawnedAllyPieces = new();
     private readonly List<(int detailType, PieceBase piece)> spawnedEnemyPieces = new();
-    private readonly List<GameObject> spawnedObjects = new();
+    private readonly List<(int detailType, GameObject obj)> spawnedObjects = new();
 
     // 풀: 스테이지 클리어 전까지 보관하고 재배치
     private readonly List<Queue<PieceBase>> enemyPool = new();
-    private readonly Queue<GameObject> objectPool = new();
+    private readonly Dictionary<int, Queue<GameObject>> objectPool = new();
 
     private PieceBase[][] allyPieces;
     private PieceBase[][] enemyPieces;
@@ -493,7 +493,7 @@ public bool TrySpawnAllyPiece(PieceType pieceType, int cellIndex, Direction faci
             spawnedEnemyPieces.Add((enemyEntity.detailType, enemyPiece));
         }
     }
-    private void SpawnObjects(StageData stageData)
+private void SpawnObjects(StageData stageData)
     {
         if (gameManager == null)
         {
@@ -542,19 +542,20 @@ public bool TrySpawnAllyPiece(PieceType pieceType, int cellIndex, Direction faci
             Quaternion spawnRotation = Quaternion.Euler(0f, objectEntity.facing * 90f, 0f);
 
             GameObject spawnedObject;
-            if (objectPool.Count > 0)
+            if (objectPool.TryGetValue(objectEntity.detailType, out Queue<GameObject> pool) && pool.Count > 0)
             {
-                spawnedObject = objectPool.Dequeue();
+                spawnedObject = pool.Dequeue();
+                spawnedObject.transform.SetParent(objectParent);
                 spawnedObject.transform.SetPositionAndRotation(spawnPosition, spawnRotation);
                 spawnedObject.SetActive(true);
             }
             else
             {
                 spawnedObject = Instantiate(objectPrefab, spawnPosition, spawnRotation, objectParent);
+                spawnedObject.name = objectPrefab.name;
             }
 
-            spawnedObject.name = objectPrefab.name;
-            spawnedObjects.Add(spawnedObject);
+            spawnedObjects.Add((objectEntity.detailType, spawnedObject));
         }
     }
     private void PoolEnemies()
@@ -572,11 +573,15 @@ public bool TrySpawnAllyPiece(PieceType pieceType, int cellIndex, Direction faci
 
     private void PoolObjects()
     {
-        foreach (GameObject obj in spawnedObjects)
+        foreach ((int detailType, GameObject obj) in spawnedObjects)
         {
             if (obj == null) continue;
             obj.SetActive(false);
-            objectPool.Enqueue(obj);
+            if (!objectPool.ContainsKey(detailType))
+            {
+                objectPool[detailType] = new Queue<GameObject>();
+            }
+            objectPool[detailType].Enqueue(obj);
         }
         spawnedObjects.Clear();
     }
@@ -608,17 +613,21 @@ public bool TrySpawnAllyPiece(PieceType pieceType, int cellIndex, Direction faci
             }
         }
 
-        foreach (GameObject obj in spawnedObjects)
+        foreach ((int _, GameObject obj) in spawnedObjects)
         {
             if (obj != null) Destroy(obj);
         }
         spawnedObjects.Clear();
 
-        while (objectPool.Count > 0)
+        foreach (Queue<GameObject> pool in objectPool.Values)
         {
-            GameObject pooled = objectPool.Dequeue();
-            if (pooled != null) Destroy(pooled);
+            while (pool.Count > 0)
+            {
+                GameObject pooled = pool.Dequeue();
+                if (pooled != null) Destroy(pooled);
+            }
         }
+        objectPool.Clear();
     }
     private void ClearMaps()
     {
