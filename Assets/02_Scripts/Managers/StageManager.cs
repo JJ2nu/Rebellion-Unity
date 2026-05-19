@@ -91,6 +91,7 @@ public class StageManager : MonoBehaviour
             return;
         }
 
+        ClearSpawnedAllyPieces();
         currentStageData = parsedData;
         CacheStageEntities(parsedData);
 
@@ -603,15 +604,7 @@ private void SpawnObjects(StageData stageData)
 
     private void ClearPools()
     {
-        for (int index = 0; index < spawnedAllyPieces.Count; index++)
-        {
-            PieceBase allyPiece = spawnedAllyPieces[index];
-            if (allyPiece != null)
-            {
-                Destroy(allyPiece.gameObject);
-            }
-        }
-        spawnedAllyPieces.Clear();
+        ClearSpawnedAllyPieces();
 
         foreach ((int _, PieceBase enemy) in spawnedEnemyPieces)
         {
@@ -643,6 +636,19 @@ private void SpawnObjects(StageData stageData)
             }
         }
         objectPool.Clear();
+    }
+
+    private void ClearSpawnedAllyPieces()
+    {
+        for (int index = 0; index < spawnedAllyPieces.Count; index++)
+        {
+            PieceBase allyPiece = spawnedAllyPieces[index];
+            if (allyPiece != null)
+            {
+                Destroy(allyPiece.gameObject);
+            }
+        }
+        spawnedAllyPieces.Clear();
     }
     private void ClearMaps()
     {
