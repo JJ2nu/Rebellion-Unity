@@ -3,47 +3,40 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// 슬래셔(돌격 칼) 기물. 정면으로 돌진하며 경로상 적을 공격하고
-/// 빈 셀이면 해당 위치를 점령한다.
+/// 슬래셔(단검) 기물. 페이즈 2에서 행동.
+/// "Attack" 애니메이터 트리거 → _slashDelay 후 Knife 히트박스 활성화 → 충돌로 데미지.
+/// 대상이 죽으면 해당 칸을 점령한다.
 /// </summary>
 public class SlasherPiece : PieceBase
 {
     [Header("Slasher Config")]
-    [SerializeField] private float dashDuration = 0.4f;
+    [SerializeField] private float _slashDelay = 0.3f;
 
-    [SerializeField] private GameObject knife;
-    void Start()
+    private Animator _animator;
+    private AttackHitbox _knifeHitbox;
+
+    private void Awake()
     {
-        if (knife != null)
-        {
-            knife.SetActive(false);
-        }
+        _animator = GetComponentInChildren<Animator>();
+        _knifeHitbox = GetComponentInChildren<AttackHitbox>();
+        _knifeHitbox?.Initialize(this);
+    }
+
+    public override int SimulationPhaseIndex => 2;
+
+    public override void OnSimulationStart()
+    {
+        base.OnSimulationStart();
     }
 
     protected override PieceBase FindTarget(IReadOnlyList<PieceBase> allPieces)
     {
-        var (dx, dy) = GetFacingDelta();
-        PieceBase closest = null;
-        int minDist = int.MaxValue;
-
-        foreach (var piece in allPieces)
-        {
-            if (piece.IsDead || piece.Faction == Faction) continue;
-            if (!IsInLineOfFire(piece)) continue;
-
-            int dist = ManhattanDistanceTo(piece);
-            if (dist < minDist)
-            {
-                minDist = dist;
-                closest = piece;
-            }
-        }
-        return closest;
+        PieceBase closest = FindClosestInLine(allPieces);
+        return (closest != null && IsEnemy(closest)) ? closest : null;
     }
 
-    public override IEnumerator ExecuteAction(IReadOnlyList<PieceBase> allPieces)
+    public override IEnumerator ExecuteAction(IReadOnlyList<PieceBase> allPieces, float stepDuration)
     {
-        knife.SetActive(true);
         var target = FindTarget(allPieces);
         if (target == null)
         {
@@ -51,12 +44,19 @@ public class SlasherPiece : PieceBase
             yield break;
         }
 
-        // 돌진 연출
-        yield return WaitForSeconds(dashDuration);
+        _animator?.SetTrigger("Attack");
 
-        target.TakeDamage(1);
+        yield return new WaitForSeconds(_slashDelay);
 
-        // 대상 칸 점령 (대상이 죽으면 해당 칸으로 이동)
+        _knifeHitbox?.BeginAttack();
+
+        yield return new WaitForSeconds(stepDuration - _slashDelay > 0
+            ? stepDuration - _slashDelay
+            : 0.05f);
+
+        _knifeHitbox?.EndAttack();
+
+        // 대상이 죽었으면 해당 칸 점령
         if (target.IsDead)
         {
             GridX = target.GridX;

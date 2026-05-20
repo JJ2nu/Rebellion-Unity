@@ -24,12 +24,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2294483296815915735}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0.25}
+  m_LocalRotation: {x: -0.60759807, y: -0.3345482, z: -0.36734998, w: -0.61964196}
+  m_LocalPosition: {x: 0.012, y: 1.638, z: 0.899}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1619434447680570678}
+  m_Father: {fileID: 621426806876614996}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3099253971447899916
 GameObject:
@@ -74,6 +74,7 @@ GameObject:
   - component: {fileID: 621426806876614996}
   - component: {fileID: 4800108941332995536}
   - component: {fileID: 2107143673293165923}
+  - component: {fileID: 5553220485179253141}
   m_Layer: 0
   m_Name: Enemy_Gunman
   m_TagString: EnemyBody
@@ -95,6 +96,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3865220890054184537}
+  - {fileID: 8682034936236316889}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!65 &4800108941332995536
@@ -135,7 +137,21 @@ MonoBehaviour:
   _maxHealth: 1
   _attackRange: 1
   _aimDelay: 0.5
-  _fireDelay: 0.2
+  bulletPrefab: {fileID: 8928382629762728089, guid: fa43c05b015c9bd498cff2ee74030960, type: 3}
+  _flarePoint: {fileID: 8682034936236316889}
+--- !u!114 &5553220485179253141
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8018666167684502777}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85f88137e6f7d6a4a84c2cadc6c4fa29, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::OutlineEffect
+  outlineMaterial: {fileID: 2100000, guid: 39ba32dcfd39e3e42bf08e488a328526, type: 2}
 --- !u!1001 &2779609666921836322
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -190,10 +206,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects:
-    - targetCorrespondingSourceObject: {fileID: -5698659575472444908, guid: 0e1ef4ef7b0cfac4d86e9d296e09b6f2, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 8682034936236316889}
+    m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: -4161369568681901532, guid: 0e1ef4ef7b0cfac4d86e9d296e09b6f2, type: 3}
 --- !u!4 &1619434447680570678 stripped

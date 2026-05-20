@@ -9,9 +9,13 @@ public class StageManager : MonoBehaviour
     private const string ObjectGroupTag = "ObjectGroup";
 
     public static StageManager Instance { get; private set; }
+    public static event System.Action<StageData> StageLoaded;
+
+    public StageData CurrentStageData => currentStageData;
 
     [SerializeField] private GameObject[] allyPiecePrefabs;
     [SerializeField] private GameObject[] enemyPiecePrefabs;
+    [SerializeField] private GameObject[] civilianPiecePrefabs;
     [SerializeField] private GameObject[] mapPrefabs;
 
     [SerializeField] private GameObject[][] objectPrefabs;
@@ -34,6 +38,7 @@ public class StageManager : MonoBehaviour
     private readonly List<(int detailType, GameObject obj)> spawnedObjects = new();
 
     // 풀: 스테이지 클리어 전까지 보관하고 재배치
+    private readonly List<Queue<PieceBase>> allyPool = new();
     private readonly List<Queue<PieceBase>> enemyPool = new();
     private readonly Dictionary<int, Queue<GameObject>> objectPool = new();
 
@@ -56,6 +61,7 @@ public class StageManager : MonoBehaviour
         MapRootCheck();
         MapCacheCheck();
         SetMapsActive(false);
+        PrewarmAllyPool();
     }
 
     public void LoadStage(string stagePath)
@@ -109,15 +115,50 @@ public class StageManager : MonoBehaviour
         UpdateActiveMap();
 
         SpawnEnemies(parsedData);
+        SpawnCivilians(parsedData);
         SpawnObjects(parsedData);
 
         Debug.Log($"Stage parsed: mapIndex={parsedData.mapIndex}, entityCount={parsedData.entities.Length}", this);
+        StageLoaded?.Invoke(currentStageData);
     }
 
     public void EndStage()
     {
         SetMapsActive(false);
         ClearPools();
+    }
+
+    /// <summary>
+    /// 시뮬레이션 직전 상태로 되돌린다.
+    /// 아군 기물은 위치/방향을 유지한 채 상태만 초기화하고,
+    /// 적/민간인은 원래 위치에 다시 스폰한다.
+    /// </summary>
+    public void ResetForRetry()
+    {
+        if (currentStageData == null) return;
+
+        // 아군: 위치 유지, 상태만 초기화
+        foreach (var ally in spawnedAllyPieces)
+        {
+            if (ally == null) continue;
+            ally.gameObject.SetActive(true);
+            ally.OnSimulationStart();
+
+            var animator = ally.GetComponentInChildren<Animator>();
+            animator?.SetTrigger("Reset");
+        }
+
+        // 적: 풀로 반환 후 재스폰
+        SpawnEnemies(currentStageData);
+
+        // 민간인: 파괴 후 재스폰
+        if (civilianPieces != null)
+        {
+            foreach (var civilian in civilianPieces)
+                if (civilian != null) Destroy(civilian.gameObject);
+        }
+        civilianPieces = null;
+        SpawnCivilians(currentStageData);
     }
 
     public GameObject GetAllyPiecePrefab(PieceType pieceType)
@@ -181,7 +222,7 @@ public class StageManager : MonoBehaviour
         bool removed = spawnedAllyPieces.Remove(piece);
         if (removed)
         {
-            Destroy(piece.gameObject);
+            ReturnAllyToPool(piece);
         }
 
         return removed;
@@ -195,8 +236,8 @@ public bool TrySpawnAllyPiece(PieceType pieceType, int cellIndex, Direction faci
             return false;
         }
 
-        GameObject allyPrefab = GetAllyPiecePrefab(pieceType);
-        if (allyPrefab == null)
+        int prefabIndex = (int)pieceType;
+        if (allyPiecePrefabs == null || prefabIndex < 0 || prefabIndex >= allyPiecePrefabs.Length)
         {
             return false;
         }
@@ -214,13 +255,35 @@ public bool TrySpawnAllyPiece(PieceType pieceType, int cellIndex, Direction faci
 
         Vector3 spawnPosition = gameManager.GetCellPosition(cellIndex);
         Quaternion spawnRotation = Quaternion.Euler(0f, (int)facingDirection * 90f, 0f);
-        GameObject allyObject = Instantiate(allyPrefab, spawnPosition, spawnRotation, transform);
-        PieceBase allyPiece = allyObject.GetComponent<PieceBase>();
-        if (allyPiece == null)
+
+        PieceBase allyPiece;
+        while (allyPool.Count <= prefabIndex)
+            allyPool.Add(new Queue<PieceBase>());
+
+        Queue<PieceBase> pool = allyPool[prefabIndex];
+        if (pool.Count > 0)
         {
-            Debug.LogWarning($"Ally prefab has no PieceBase component: {allyPrefab.name}", this);
-            Destroy(allyObject);
-            return false;
+            allyPiece = pool.Dequeue();
+            allyPiece.transform.SetPositionAndRotation(spawnPosition, spawnRotation);
+            allyPiece.gameObject.SetActive(true);
+        }
+        else
+        {
+            GameObject allyPrefab = allyPiecePrefabs[prefabIndex];
+            if (allyPrefab == null)
+            {
+                Debug.LogWarning($"Ally prefab is missing for PieceType: {pieceType}", this);
+                return false;
+            }
+
+            GameObject allyObject = Instantiate(allyPrefab, spawnPosition, spawnRotation, transform);
+            allyPiece = allyObject.GetComponent<PieceBase>();
+            if (allyPiece == null)
+            {
+                Debug.LogWarning($"Ally prefab has no PieceBase component: {allyPrefab.name}", this);
+                Destroy(allyObject);
+                return false;
+            }
         }
 
         Vector2Int gridCoord = StageGridIndexUtility.ToGridCoord(GetBoardSize(), cellIndex);
@@ -494,7 +557,62 @@ public bool TrySpawnAllyPiece(PieceType pieceType, int cellIndex, Direction faci
             spawnedEnemyPieces.Add((enemyEntity.detailType, enemyPiece));
         }
     }
-private void SpawnObjects(StageData stageData)
+
+    private void SpawnCivilians(StageData stageData)
+    {
+        if (gameManager == null)
+            gameManager = GameManager.Instance;
+
+        if (gameManager == null)
+        {
+            Debug.LogWarning("StageManager could not find GameManager.", this);
+            return;
+        }
+
+        if (civilianPiecePrefabs == null || civilianPiecePrefabs.Length == 0)
+        {
+            Debug.LogWarning("StageManager: civilianPiecePrefabs is not assigned.", this);
+            return;
+        }
+
+        civilianPieces = new PieceBase[civilianEntities.Count];
+
+        for (int i = 0; i < civilianEntities.Count; i++)
+        {
+            StageEntityData civilian = civilianEntities[i];
+
+            if (civilian.detailType < 0 || civilian.detailType >= civilianPiecePrefabs.Length)
+            {
+                Debug.LogWarning($"Civilian detailType is out of range: {civilian.detailType}", this);
+                continue;
+            }
+
+            GameObject prefab = civilianPiecePrefabs[civilian.detailType];
+            if (prefab == null)
+            {
+                Debug.LogWarning($"Civilian prefab is missing for detailType: {civilian.detailType}", this);
+                continue;
+            }
+
+            Vector3 spawnPosition = gameManager.GetCellPosition(civilian.cellIndex);
+            Quaternion spawnRotation = Quaternion.Euler(0f, civilian.facing * 90f, 0f);
+
+            GameObject civilianObject = Instantiate(prefab, spawnPosition, spawnRotation, transform);
+            civilianObject.name = prefab.name;
+
+            PieceBase piece = civilianObject.GetComponent<PieceBase>();
+            if (piece != null)
+            {
+                Vector2Int gridCoord = StageGridIndexUtility.ToGridCoord(stageData.boardSize, civilian.cellIndex);
+                piece.GridX = gridCoord.x;
+                piece.GridY = gridCoord.y;
+                piece.FacingDirection = (Direction)civilian.facing;
+                civilianPieces[i] = piece;
+            }
+        }
+    }
+
+    private void SpawnObjects(StageData stageData)
     {
         if (gameManager == null)
         {
@@ -606,6 +724,16 @@ private void SpawnObjects(StageData stageData)
     {
         ClearSpawnedAllyPieces();
 
+        foreach (Queue<PieceBase> pool in allyPool)
+        {
+            while (pool.Count > 0)
+            {
+                PieceBase pooled = pool.Dequeue();
+                if (pooled != null) Destroy(pooled.gameObject);
+            }
+        }
+        allyPool.Clear();
+
         foreach ((int _, PieceBase enemy) in spawnedEnemyPieces)
         {
             if (enemy != null) Destroy(enemy.gameObject);
@@ -645,7 +773,7 @@ private void SpawnObjects(StageData stageData)
             PieceBase allyPiece = spawnedAllyPieces[index];
             if (allyPiece != null)
             {
-                Destroy(allyPiece.gameObject);
+                ReturnAllyToPool(allyPiece);
             }
         }
         spawnedAllyPieces.Clear();
@@ -671,5 +799,76 @@ private void SpawnObjects(StageData stageData)
         return currentStageData != null && currentStageData.boardSize > 0
             ? currentStageData.boardSize
             : 6;
+    }
+
+    /// <summary>
+    /// 현재 씬에 활성화된 모든 기물(아군+적군+민간인)을 반환한다.
+    /// </summary>
+    public IReadOnlyList<PieceBase> GetAllActivePieces()
+    {
+        var result = new List<PieceBase>();
+
+        foreach (var piece in spawnedAllyPieces)
+            if (piece != null && piece.gameObject.activeInHierarchy)
+                result.Add(piece);
+
+        foreach ((_, var piece) in spawnedEnemyPieces)
+            if (piece != null && piece.gameObject.activeInHierarchy)
+                result.Add(piece);
+
+        if (civilianPieces != null)
+            foreach (var piece in civilianPieces)
+                if (piece != null && piece.gameObject.activeInHierarchy)
+                    result.Add(piece);
+
+        return result.AsReadOnly();
+    }
+
+    private void PrewarmAllyPool()
+    {
+        if (allyPiecePrefabs == null)
+        {
+            return;
+        }
+
+        while (allyPool.Count < allyPiecePrefabs.Length)
+            allyPool.Add(new Queue<PieceBase>());
+
+        for (int index = 0; index < allyPiecePrefabs.Length; index++)
+        {
+            GameObject prefab = allyPiecePrefabs[index];
+            if (prefab == null)
+            {
+                continue;
+            }
+
+            GameObject instance = Instantiate(prefab, transform);
+            PieceBase piece = instance.GetComponent<PieceBase>();
+            if (piece == null)
+            {
+                Debug.LogWarning($"Ally prefab has no PieceBase component: {prefab.name}", this);
+                Destroy(instance);
+                continue;
+            }
+
+            instance.SetActive(false);
+            allyPool[index].Enqueue(piece);
+        }
+    }
+
+    private void ReturnAllyToPool(PieceBase piece)
+    {
+        if (piece == null)
+        {
+            return;
+        }
+
+        piece.gameObject.SetActive(false);
+
+        int prefabIndex = (int)piece.PieceType;
+        while (allyPool.Count <= prefabIndex)
+            allyPool.Add(new Queue<PieceBase>());
+
+        allyPool[prefabIndex].Enqueue(piece);
     }
 }

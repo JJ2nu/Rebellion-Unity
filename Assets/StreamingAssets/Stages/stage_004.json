@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "boardSize": 6,
+  "mapIndex": 1,
+  "mainMission": "협정 참가자 명단 확보",
+  "subMission1": "전투원 희생 없이 작전 수행",
+  "subMission2": "",
+  "hasOrder": false,
+  "allySlots": [
+    { "pieceType": 0, "count": 1 },
+    { "pieceType": 1, "count": 1 },
+    { "pieceType": 2, "count": 2 }
+  ],
+  "entities": [
+    { "entityKind": 0, "detailType": 0, "facing": 2, "cellIndex": 3 },
+    { "entityKind": 0, "detailType": 2, "facing": 2, "cellIndex": 7 },
+    { "entityKind": 0, "detailType": 2, "facing": 2, "cellIndex": 15 },
+    { "entityKind": 2, "detailType": 0, "facing": 0, "cellIndex": 14 }
+  ]
+}

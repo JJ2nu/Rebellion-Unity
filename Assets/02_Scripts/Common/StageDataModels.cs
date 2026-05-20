@@ -2,10 +2,18 @@ using System;
 using UnityEngine;
 
 [Serializable]
+public class AllySlotData
+{
+    // PieceType enum 값 (0=Brawler, 1=Slasher, 2=Gunman)
+    public int pieceType;
+    public int count;
+}
+
+[Serializable]
 public class StageData
 {
     // 포맷 버전. 나중에 구조가 바뀌면 업그레이드 분기 기준으로 사용
-    public int version = 1;
+    public int version = 2;
 
     // 현재는 6x6 고정이지만 이후 확장을 위해 포함
     public int boardSize = 6;
@@ -13,8 +21,38 @@ public class StageData
     // 어떤 맵 프리팹을 활성화할지 결정하는 인덱스
     public int mapIndex;
 
+    // 미션 텍스트
+    public string mainMission = "";
+    public string subMission1 = "";
+    public string subMission2 = "";
+
+    // 오더 스킬 사용 가능 여부
+    public bool hasOrder = false;
+
+    // 스테이지에서 사용 가능한 아군 기물 종류별 슬롯 수
+    public AllySlotData[] allySlots = Array.Empty<AllySlotData>();
+
     // 적/시민/오브젝트를 한 배열로 저장
     public StageEntityData[] entities = Array.Empty<StageEntityData>();
+
+    public int GetAllyCount(PieceType type)
+    {
+        if (allySlots == null)
+        {
+            return 0;
+        }
+
+        int typeInt = (int)type;
+        for (int i = 0; i < allySlots.Length; i++)
+        {
+            if (allySlots[i] != null && allySlots[i].pieceType == typeInt)
+            {
+                return allySlots[i].count;
+            }
+        }
+
+        return 0;
+    }
 }
 
 [Serializable]

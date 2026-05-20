@@ -1,4 +1,4 @@
-﻿// CSV에서 현재 레벨의 UI 데이터를 읽고 미션, 대원 배치 버튼, 스킬 버튼을 생성한다.
+// 스테이지 JSON에서 현재 레벨의 UI 데이터를 읽고 미션, 대원 배치 버튼, 스킬 버튼을 생성한다.
 
 using System;
 using System.Collections.Generic;
@@ -20,10 +20,6 @@ public sealed class InGameUIController : MonoBehaviour
 
     #region Fields
 
-    [Header("Data")]
-    [SerializeField] private TextAsset uiDataCsv;
-    [SerializeField] private string currentLevel = "Campaign 1";
-
     [Header("Missions")]
     [SerializeField] private Transform missionRoot;
     [SerializeField] private InGameMissionSlotUI mainMissionPrefab;
@@ -43,89 +39,80 @@ public sealed class InGameUIController : MonoBehaviour
     [Header("Placement")]
     [SerializeField] private PlacementController placementController;
 
-    private InGameUIDataTable dataTable;
-    private bool isInitialized;
-
     #endregion
 
     #region Unity Events
 
     private void Awake()
     {
-        Initialize();
-    }
-
-    private void Start()
-    {
-        ApplyLevel(currentLevel);
-    }
-
-    #endregion
-
-    #region Public Methods
-
-    public void ApplyLevel(string level)
-    {
-        Initialize();
-
-        if (!dataTable.TryGet(level, out InGameUIData data))
-        {
-            Debug.LogError($"InGame UI data was not found. Level: {level}", this);
-            return;
-        }
-
-        currentLevel = level;
-        Bind(data);
-    }
-
-    #endregion
-
-    #region Initialization
-
-    private void Initialize()
-    {
-        if (isInitialized)
-        {
-            return;
-        }
-
-        dataTable = InGameUIDataTable.FromCsv(uiDataCsv);
         if (placementController == null)
         {
             placementController = FindObjectOfType<PlacementController>();
         }
-        isInitialized = true;
+
+        StageManager.StageLoaded += HandleStageLoaded;
+    }
+
+    private void Start()
+    {
+        StageData current = StageManager.Instance?.CurrentStageData;
+        if (current != null)
+        {
+            Bind(current);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        StageManager.StageLoaded -= HandleStageLoaded;
+    }
+
+    #endregion
+
+    #region Stage Events
+
+    private void HandleStageLoaded(StageData data)
+    {
+        Bind(data);
     }
 
     #endregion
 
     #region Binding
 
-    private void Bind(InGameUIData data)
+    private void Bind(StageData data)
     {
         ClearChildren(missionRoot);
         ClearChildren(storageRoot);
         ClearChildren(skillRoot);
 
-        CreateMission(mainMissionPrefab, data.MainMission, 0f);
+        CreateMission(mainMissionPrefab, data.mainMission, 0f);
 
         int subMissionIndex = 0;
-        if (data.HasSubMission1)
+        if (!string.IsNullOrWhiteSpace(data.subMission1))
         {
-            CreateSubMission(data.SubMission1, subMissionIndex++);
+            CreateSubMission(data.subMission1, subMissionIndex++);
         }
 
-        if (data.HasSubMission2)
+        if (!string.IsNullOrWhiteSpace(data.subMission2))
         {
-            CreateSubMission(data.SubMission2, subMissionIndex);
+            CreateSubMission(data.subMission2, subMissionIndex);
         }
 
-        CreateStorage(PieceType.Brawler, data.Brawler);
-        CreateStorage(PieceType.Slasher, data.Slasher);
-        CreateStorage(PieceType.Gunman, data.Gunman);
+        if (data.allySlots != null)
+        {
+            foreach (AllySlotData slot in data.allySlots)
+            {
+                if (slot != null && slot.count > 0)
+                {
+                    CreateStorage((PieceType)slot.pieceType, slot.count);
+                }
+            }
+        }
+
         AlignStoragesFromRight();
 
-        if (data.CanUseOrder)
+        if (data.hasOrder)
         {
             CreateOrderSkillButton();
         }

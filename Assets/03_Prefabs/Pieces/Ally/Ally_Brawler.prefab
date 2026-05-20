@@ -10,6 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 8053482029448098433}
   - component: {fileID: 9063209008596563258}
+  - component: {fileID: 1545084441972443921}
+  - component: {fileID: 2797552105209995872}
   m_Layer: 0
   m_Name: Fist
   m_TagString: AllyFist
@@ -53,6 +55,45 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.2
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1545084441972443921
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2614757254832485362}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd180253f9b9f284293b7fa9d4847d70, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AttackHitbox
+--- !u!54 &2797552105209995872
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2614757254832485362}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1 &8771929361919017144
 GameObject:
   m_ObjectHideFlags: 0
@@ -64,6 +105,7 @@ GameObject:
   - component: {fileID: 6201843739746615896}
   - component: {fileID: 7578522682882743365}
   - component: {fileID: 6767258956993246767}
+  - component: {fileID: -3147251462821525758}
   m_Layer: 0
   m_Name: Ally_Brawler
   m_TagString: AllyBody
@@ -125,6 +167,19 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.5, y: 2.12, z: 0.43}
   m_Center: {x: 0, y: 1.06, z: 0}
+--- !u!114 &-3147251462821525758
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8771929361919017144}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85f88137e6f7d6a4a84c2cadc6c4fa29, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::OutlineEffect
+  outlineMaterial: {fileID: 2100000, guid: fa53e17525caf054caa089214dbbc35f, type: 2}
 --- !u!1001 &7273624679842244976
 PrefabInstance:
   m_ObjectHideFlags: 0

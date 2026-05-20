@@ -9,7 +9,7 @@ using UnityEngine;
     {
         protected override PieceBase FindTarget(IReadOnlyList<PieceBase> allPieces) => null;
 
-        public override IEnumerator ExecuteAction(IReadOnlyList<PieceBase> allPieces)
+        public override IEnumerator ExecuteAction(IReadOnlyList<PieceBase> allPieces, float stepDuration)
         {
             // 민간인은 행동 없이 대기
             FinishAction();
