@@ -959,6 +959,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 880000000000000001, guid: 4afdea8b1abb9b641a1d80c50ab7290a, type: 3}
+      propertyPath: playPreviewOnStart
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 880000000000000001, guid: 4afdea8b1abb9b641a1d80c50ab7290a, type: 3}
       propertyPath: playerSpeakerAlpha
       value: 0.2
       objectReference: {fileID: 0}

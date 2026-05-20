@@ -69,7 +69,7 @@ MonoBehaviour:
   dialogueCsv: {fileID: 4900000, guid: 9ed36fa6d81f4aacbc0ae85a67f38db7, type: 3}
   previewLevel: stage_001
   previewResult: 0
-  playPreviewOnStart: 1
+  playPreviewOnStart: 0
   previewInEditMode: 1
   characterAnimator: {fileID: 2537701242092708995}
   characterCanvasGroup: {fileID: 880000000000000002}

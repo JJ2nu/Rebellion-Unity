@@ -62,8 +62,10 @@ public sealed class AudioDramaPlayer : MonoBehaviour
         if (playRoutine != null)
         {
             StopCoroutine(playRoutine);
+            playRoutine = null;
         }
 
+        HideImmediate();
         playRoutine = StartCoroutine(PlayByStageIdAndWait(stageId));
     }
 
@@ -74,6 +76,7 @@ public sealed class AudioDramaPlayer : MonoBehaviour
         if (!dataTable.TryGetByStageId(stageId, out AudioDramaData data))
         {
             Debug.LogWarning($"AudioDrama data was not found. Stage ID: {stageId}", this);
+            HideImmediate();
             playRoutine = null;
             yield break;
         }
@@ -82,6 +85,7 @@ public sealed class AudioDramaPlayer : MonoBehaviour
         if (clip == null)
         {
             Debug.LogWarning($"AudioDrama audio clip was not found. Audio ID: {data.AudioId}", this);
+            HideImmediate();
             playRoutine = null;
             yield break;
         }

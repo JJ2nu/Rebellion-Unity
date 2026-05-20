@@ -77,7 +77,7 @@ public sealed class DialoguePlayer : MonoBehaviour
 
     private void Start()
     {
-        if (playPreviewOnStart || currentLines == null || currentLines.Count == 0)
+        if (playPreviewOnStart)
         {
             PlayPreviewDialogue();
         }
@@ -166,17 +166,6 @@ public sealed class DialoguePlayer : MonoBehaviour
         }
 
         lastAdvanceFrame = Application.isPlaying ? Time.frameCount : -1;
-
-        if (currentLines == null || currentLines.Count == 0)
-        {
-            PlayPreviewDialogue();
-
-            if (currentLines == null || currentLines.Count == 0)
-            {
-                Debug.LogWarning("Dialogue textbox clicked, but no dialogue is playing.");
-                return;
-            }
-        }
 
         AdvanceCurrentLine();
     }

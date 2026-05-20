@@ -93,13 +93,18 @@ public sealed class DialogueDataTable
 
     private bool IsImpossibleCivilianResult(string level, SimulationController.SimulationResult result)
     {
-        if (result != SimulationController.SimulationResult.CivilianDeadWin &&
-            result != SimulationController.SimulationResult.BothDeadWin)
+        if (result == SimulationController.SimulationResult.CivilianDeadWin)
         {
-            return false;
+            return !HasSpecificResultLines(level, CivilianDeadWinKey);
         }
 
-        return !HasSpecificResultLines(level, CivilianDeadWinKey);
+        if (result == SimulationController.SimulationResult.BothDeadWin)
+        {
+            return !HasSpecificResultLines(level, BothDeadWinKey) &&
+                   !HasSpecificResultLines(level, CivilianDeadWinKey);
+        }
+
+        return false;
     }
 
     private bool HasSpecificResultLines(string level, string resultKey)
