@@ -62,6 +62,7 @@ public sealed class DialoguePlayer : MonoBehaviour
 
     public string PreviewLevel => previewLevel;
     public SimulationController.SimulationResult PreviewResult => previewResult;
+    public bool PreviewInEditMode => previewInEditMode;
     public int CurrentLineCount => currentLines?.Count ?? 0;
     public int CurrentIndex => currentIndex;
 
@@ -72,7 +73,6 @@ public sealed class DialoguePlayer : MonoBehaviour
     private void Awake()
     {
         EnsureInitialized();
-        BindTextboxButton();
     }
 
     private void Start()
@@ -94,14 +94,6 @@ public sealed class DialoguePlayer : MonoBehaviour
         EditorApplication.delayCall -= PlayPreviewDialogueInEditor;
         EditorApplication.delayCall += PlayPreviewDialogueInEditor;
 #endif
-    }
-
-    private void OnDestroy()
-    {
-        if (textboxButton != null)
-        {
-            textboxButton.onClick.RemoveListener(OnTextboxClicked);
-        }
     }
 
     #endregion
@@ -208,7 +200,6 @@ public sealed class DialoguePlayer : MonoBehaviour
     {
         Transform speaker = FindChildRecursive(transform, "Txt_Speaker");
         Transform dialogue = FindChildRecursive(transform, "Txt_Dialogue");
-        Transform textbox = FindChildRecursive(transform, "Btn_Textbox");
         Transform character = FindChildRecursive(transform, "Img_Char");
         Transform textboxImage = FindChildRecursive(transform, "Img_Textbox");
 
@@ -222,20 +213,15 @@ public sealed class DialoguePlayer : MonoBehaviour
             dialogueText = dialogue.GetComponent<TMP_Text>();
         }
 
-        if (textbox != null)
-        {
-            textboxButton = textbox.GetComponent<Button>();
-        }
-
         if (character != null)
         {
             characterAnimator = character.GetComponent<Animator>();
             characterCanvasGroup = character.GetComponent<CanvasGroup>();
         }
 
-        if (textboxImage != null && textboxImage.TryGetComponent(out Button textboxImageButton))
+        if (textboxImage != null)
         {
-            BindButton(textboxImageButton);
+            textboxButton = textboxImage.GetComponent<Button>();
         }
 
         ValidateBindings();
@@ -260,37 +246,8 @@ public sealed class DialoguePlayer : MonoBehaviour
 
         if (textboxButton == null)
         {
-            Debug.LogError("Dialogue binding missing: Btn_Textbox Button.");
+            Debug.LogError("Dialogue binding missing: Img_Textbox Button.");
         }
-    }
-
-    private void BindTextboxButton()
-    {
-        Button[] buttons = GetComponentsInChildren<Button>(true);
-
-        if (buttons.Length == 0 && textboxButton == null)
-        {
-            Debug.LogError("Dialogue advance button is not assigned.");
-            return;
-        }
-
-        BindButton(textboxButton);
-
-        for (int index = 0; index < buttons.Length; index++)
-        {
-            BindButton(buttons[index]);
-        }
-    }
-
-    private void BindButton(Button button)
-    {
-        if (button == null)
-        {
-            return;
-        }
-
-        button.onClick.RemoveListener(OnTextboxClicked);
-        button.onClick.AddListener(OnTextboxClicked);
     }
 
     private static Transform FindChildRecursive(Transform root, string childName)
@@ -354,11 +311,6 @@ public sealed class DialoguePlayer : MonoBehaviour
         ApplyCharacterAlpha(line);
 
         Debug.Log($"Dialogue line {currentIndex + 1}/{currentLines.Count}: {line.SpeakerName} / {line.NextAction}");
-    }
-
-    private void OnTextboxClicked()
-    {
-        AdvanceDialogue();
     }
 
     private void AdvanceCurrentLine()

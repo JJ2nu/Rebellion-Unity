@@ -15,7 +15,7 @@ public sealed class DialoguePlayerEditor : Editor
 
         DialoguePlayer player = (DialoguePlayer)target;
 
-        if (changed)
+        if (changed && player.PreviewInEditMode)
         {
             player.PlayPreviewDialogue();
             EditorUtility.SetDirty(player);
