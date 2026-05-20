@@ -950,6 +950,22 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 880000000000000001, guid: 4afdea8b1abb9b641a1d80c50ab7290a, type: 3}
+      propertyPath: previewLevel
+      value: stage_001
+      objectReference: {fileID: 0}
+    - target: {fileID: 880000000000000001, guid: 4afdea8b1abb9b641a1d80c50ab7290a, type: 3}
+      propertyPath: previewResult
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 880000000000000001, guid: 4afdea8b1abb9b641a1d80c50ab7290a, type: 3}
+      propertyPath: playerSpeakerAlpha
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 880000000000000002, guid: 4afdea8b1abb9b641a1d80c50ab7290a, type: 3}
+      propertyPath: m_Alpha
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 985894119115480000, guid: 4afdea8b1abb9b641a1d80c50ab7290a, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.9
@@ -969,6 +985,16 @@ PrefabInstance:
     - target: {fileID: 985894119115480000, guid: 4afdea8b1abb9b641a1d80c50ab7290a, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -269
+      objectReference: {fileID: 0}
+    - target: {fileID: 6162189193158832846, guid: 4afdea8b1abb9b641a1d80c50ab7290a, type: 3}
+      propertyPath: m_text
+      value: "\uC644\uBCBD\uD55C \uC791\uC804\uC774\uC5C8\uC2B5\uB2C8\uB2E4. \uD55C
+        \uC21C\uAC04\uC5D0 \uC801\uC744 \uBB34\uB825\uD654\uD558\uC2DC\uB2E4\uB2C8,
+        \uB300\uB2E8\uD558\uAD70\uC694 \uB300\uC7A5."
+      objectReference: {fileID: 0}
+    - target: {fileID: 6931706720714731479, guid: 4afdea8b1abb9b641a1d80c50ab7290a, type: 3}
+      propertyPath: m_text
+      value: "\uBD80\uAD00 \uC5D8\uB9AC\uC790"
       objectReference: {fileID: 0}
     - target: {fileID: 7897794399696459983, guid: 4afdea8b1abb9b641a1d80c50ab7290a, type: 3}
       propertyPath: m_AnchorMax.x
@@ -3307,7 +3333,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 0.627451}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
