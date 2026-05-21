@@ -4,34 +4,73 @@ using UnityEngine;
 
 /// <summary>
 /// 슬래셔(단검) 기물. 페이즈 2에서 행동.
-/// "Attack" 애니메이터 트리거 → _slashDelay 후 Knife 히트박스 활성화 → 충돌로 데미지.
-/// 대상이 죽으면 해당 칸을 점령한다.
+/// 가장 가까운 적(최대 2칸)을 향해 돌진, 도착 시 데미지 → 해당 칸을 점령한다.
 /// </summary>
 public class SlasherPiece : PieceBase
 {
     [Header("Slasher Config")]
-    [SerializeField] private float _slashDelay = 0.3f;
+    [SerializeField, Range(0f, 1f)] private float _dashFraction = 0.6f;
+    [SerializeField, Range(0.1f, 2f)] private float _animSpeedMultiplier = 0.8f; // 애니메이션 속도 조절용
 
     private Animator _animator;
-    private AttackHitbox _knifeHitbox;
+    private float _attack1ClipLength = -1f;
+    private float _attack2ClipLength = -1f;
+
+    private Vector3 _spawnWorldPos;
+    private int _spawnGridX;
+    private int _spawnGridY;
+    private bool _spawnRecorded;
+
+    private void OnDisable()
+    {
+        // 기물이 슬롯으로 되돌아갔을 때(비활성화 시) 기록을 초기화하여
+        // 다음에 다시 배치될 때 새로운 위치를 정상적으로 기록하도록 합니다.
+        _spawnRecorded = false;
+    }
 
     private void Awake()
     {
         _animator = GetComponentInChildren<Animator>();
-        _knifeHitbox = GetComponentInChildren<AttackHitbox>();
-        _knifeHitbox?.Initialize(this);
+
+        if (_animator != null && _animator.runtimeAnimatorController != null)
+        {
+            foreach (var clip in _animator.runtimeAnimatorController.animationClips)
+            {
+                string n = clip.name.ToLower();
+                if (n.Contains("knife01") || n.Contains("knife_01") || n.Contains("attack_01"))
+                    _attack1ClipLength = clip.length;
+                else if (n.Contains("knife02") || n.Contains("knife_02") || n.Contains("attack_02"))
+                    _attack2ClipLength = clip.length;
+            }
+        }
     }
 
     public override int SimulationPhaseIndex => 2;
 
     public override void OnSimulationStart()
     {
+        // 시뮬레이션 최초 시작 시 배치 위치 기록
+        if (!_spawnRecorded)
+        {
+            _spawnWorldPos = transform.position;
+            _spawnGridX = GridX;
+            _spawnGridY = GridY;
+            _spawnRecorded = true;
+        }
+        else
+        {
+            // 리셋: 초기 배치 위치로 복원
+            transform.position = _spawnWorldPos;
+            GridX = _spawnGridX;
+            GridY = _spawnGridY;
+        }
+
         base.OnSimulationStart();
     }
 
     protected override PieceBase FindTarget(IReadOnlyList<PieceBase> allPieces)
     {
-        PieceBase closest = FindClosestInLine(allPieces);
+        var closest = FindClosestInLine(allPieces);
         return (closest != null && IsEnemy(closest)) ? closest : null;
     }
 
@@ -44,25 +83,56 @@ public class SlasherPiece : PieceBase
             yield break;
         }
 
-        _animator?.SetTrigger("Attack");
+        int dist = ManhattanDistanceTo(target);
+        bool is1Cell = dist <= 1;
+        float clipLen = is1Cell ? _attack1ClipLength : _attack2ClipLength;
 
-        yield return new WaitForSeconds(_slashDelay);
+        int targetGX = target.GridX;
+        int targetGY = target.GridY;
 
-        _knifeHitbox?.BeginAttack();
+        int boardSize = StageManager.Instance?.CurrentStageData?.boardSize ?? 6;
+        int cellIdx = StageGridIndexUtility.ToCellIndex(boardSize, targetGX, targetGY);
+        Vector3 targetWorldPos = GameManager.Instance != null
+            ? GameManager.Instance.GetCellPosition(cellIdx)
+            : transform.position;
 
-        yield return new WaitForSeconds(stepDuration - _slashDelay > 0
-            ? stepDuration - _slashDelay
-            : 0.05f);
+        if (_animator != null && clipLen > 0f)
+            _animator.speed = (clipLen / stepDuration) * _animSpeedMultiplier;
 
-        _knifeHitbox?.EndAttack();
+        _animator?.SetTrigger(is1Cell ? "Attack" : "Attack2");
 
-        // 대상이 죽었으면 해당 칸 점령
-        if (target.IsDead)
+        Vector3 startPos = transform.position;
+        float dashTime = stepDuration * _dashFraction;
+        float elapsed = 0f;
+
+        // 돌진 시간 동안 부드럽게 위치 이동
+        while (elapsed < dashTime)
         {
-            GridX = target.GridX;
-            GridY = target.GridY;
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / dashTime);
+            // 빠르고 역동적인 느낌을 위한 Ease-Out 곡선 적용
+            float easeT = 1f - Mathf.Pow(1f - t, 3f);
+            
+            transform.position = Vector3.Lerp(startPos, targetWorldPos, easeT);
+            yield return null;
         }
 
+        // 목적지 도착 완료 처리
+        transform.position = targetWorldPos;
+        GridX = targetGX;
+        GridY = targetGY;
+
+        if (!target.IsDead)
+            target.TakeDamage(1);
+
+        // 남은 stepDuration 동안 애니메이션 마무리 대기
+        float remainingTime = stepDuration - dashTime;
+        if (remainingTime > 0f)
+        {
+            yield return new WaitForSeconds(remainingTime);
+        }
+
+        if (_animator != null) _animator.speed = 1f;
         FinishAction();
     }
 }

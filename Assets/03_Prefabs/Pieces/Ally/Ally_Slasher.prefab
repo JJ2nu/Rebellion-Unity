@@ -50,9 +50,8 @@ MonoBehaviour:
   _faction: 0
   _pieceType: 1
   _maxHealth: 1
-  _attackRange: 1
-  dashDuration: 0.4
-  knife: {fileID: 4202315879867577487}
+  _attackRange: 2
+  _dashFraction: 0.6
 --- !u!65 &991906837811491064
 BoxCollider:
   m_ObjectHideFlags: 0
