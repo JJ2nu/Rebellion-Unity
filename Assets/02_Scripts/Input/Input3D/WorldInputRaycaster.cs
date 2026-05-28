@@ -5,6 +5,8 @@ using UnityEngine.InputSystem;
 
 public class WorldInputRaycaster : MonoBehaviour
 {
+    public static WorldInputRaycaster Instance { get; private set; }
+
     [SerializeField] private Camera raycastCamera;
     [SerializeField] private LayerMask raycastLayers = ~0;
     [SerializeField] private float maxDistance = 500f;
@@ -19,6 +21,13 @@ public class WorldInputRaycaster : MonoBehaviour
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+
         if (raycastCamera == null)
         {
             raycastCamera = Camera.main;
@@ -52,7 +61,7 @@ public class WorldInputRaycaster : MonoBehaviour
         Vector2 pointerPosition = pointerPositionAction.action.ReadValue<Vector2>();
         Ray ray = raycastCamera.ScreenPointToRay(pointerPosition);
 
-	Debug.DrawRay(ray.origin, ray.direction * maxDistance, Color.red);
+        Debug.DrawRay(ray.origin, ray.direction * maxDistance, Color.red);
 
         if (!Physics.Raycast(ray, out RaycastHit hit, maxDistance, raycastLayers))
         {
@@ -67,7 +76,7 @@ public class WorldInputRaycaster : MonoBehaviour
             return;
         }
 
-        WorldInputEventData eventData = new WorldInputEventData( raycastCamera,
+        WorldInputEventData eventData = new WorldInputEventData(raycastCamera,
                                                                  ray,
                                                                  hit,
                                                                  hit.collider.gameObject);
@@ -119,5 +128,10 @@ public class WorldInputRaycaster : MonoBehaviour
 
         currentTarget.OnWorldUnHover(currentEventData);
         currentTarget = null;
+    }
+    public GameObject GetCurrentHoveredObject()
+    {
+
+        return currentEventData.TargetObject;
     }
 }

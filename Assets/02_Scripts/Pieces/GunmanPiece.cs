@@ -50,13 +50,6 @@ public class GunmanPiece : PieceBase
     /// <summary>외부(스킬 등)에서도 직접 발사 가능.</summary>
     public IEnumerator Fire(IReadOnlyList<PieceBase> allPieces, float stepDuration)
     {
-        // var target = FindTarget(allPieces);
-        // if (target == null)
-        // {
-        //     FinishAction();
-        //     yield break;
-        // }
-
         // 총알 스폰 위치: 셀 정중앙 X/Z + FlarePoint 높이
         float spawnY = _flarePoint != null ? _flarePoint.position.y : transform.position.y + 0.5f;
         int selfCellIdx = StageGridIndexUtility.ToCellIndex(StageManager.Instance?.CurrentStageData?.boardSize ?? 6, GridX, GridY);

@@ -1,17 +1,30 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class SimulationController : MonoBehaviour
 {
+    public static SimulationController Instance { get; private set; }
+
     [SerializeField] private float stepDuration = 0.5f;
+    // ... (rest of the code)
 
     [Header("Debug (Read-only)")]
     [SerializeField] private bool _isRunning;
     [SerializeField] private int _currentPhase;
     [SerializeField] private int _currentStep;
     [SerializeField] private string _lastResult = "-";
+
+
+    [SerializeField] InputActionReference _leftClickAction;
+    [SerializeField] InputActionReference _rightClickAction;
+
+    private PieceBase _currentClickedPiece = null;
+    [SerializeField] private List<SkillBase> _skills;
+    public IReadOnlyList<SkillBase> GetStageSkills() => _skills.AsReadOnly();
 
     public enum SimulationResult
     {
@@ -22,6 +35,24 @@ public class SimulationController : MonoBehaviour
         Lose,
     }
 
+    public enum Skills
+    {
+        OpeningShot,
+        RegressorWatch,
+        End
+    }
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+        // DontDestroyOnLoad(gameObject);
+    }
     public void StartSimulation()
     {
         StartCoroutine(RunSimulation());
@@ -30,6 +61,10 @@ public class SimulationController : MonoBehaviour
     public void ResetSimulation()
     {
         StopAllCoroutines();
+        foreach (var skill in _skills)
+        {
+            skill.ResetTarget();
+        }
         _isRunning = false;
         _currentPhase = 0;
         _currentStep = 0;
@@ -53,9 +88,27 @@ public class SimulationController : MonoBehaviour
         _lastResult = "-";
 
         var allPieces = StageManager.Instance.GetAllActivePieces();
+        foreach (var skill in _skills)
+        {
+            if (skill.CanExecute(allPieces))
+            {
+                Debug.Log($"[Simulation] Executing Skill: {skill.SkillName}");
+                skill.Execute(this, allPieces);
+            }
+        }
+        allPieces = StageManager.Instance.GetAllActivePieces();
 
         foreach (var piece in allPieces)
             piece.OnSimulationStart();
+
+        var totalPieces = StageManager.Instance.GetAllPieces();
+        foreach(var piece in totalPieces)
+        {
+            if (piece != null)
+            {
+                piece._HUD.SetActive(false);
+            }
+        }
 
         // Phase 0: 공격 가능 여부 체크
         foreach (var piece in allPieces)
@@ -71,6 +124,7 @@ public class SimulationController : MonoBehaviour
 
         foreach (var phase in phases)
             yield return RunPhase(phase, allPieces);
+
 
         var result = DetermineResult(allPieces);
         _lastResult = result.ToString();
@@ -120,5 +174,73 @@ public class SimulationController : MonoBehaviour
         if (anyCivilianDead) return SimulationResult.CivilianDeadWin;
         return SimulationResult.PerfectWin;
     }
-}
+    public void SetTargetForPreSimulation(int skillIndex)
+    {
+        var pieces = StageManager.Instance.GetAllActivePieces();
+        StartCoroutine(_skills[skillIndex].TargetMode(this, pieces));
+    }
+    private void Update()
+    {
+       SelectTarget();
+    }
+    public void OnClickPiece(PieceBase piece)
+    {
+       PreviousClickAction();
+        _currentClickedPiece = piece;
+        ClickAction();
+       
+    }
+    void PreviousClickAction()
+    {
+         var previousClickedPiece = _currentClickedPiece;
+        if (previousClickedPiece != null)
+        {
+            if (((OpeningShotSkill)_skills[0]).isTargetingMode)
+            {
 
+                if (previousClickedPiece._isTargeted)
+                {
+                    previousClickedPiece._isTargeted = false;
+                }
+            }
+        }
+    }
+    void ClickAction()
+    {
+         if (_currentClickedPiece != null)
+        {
+            if (((OpeningShotSkill)_skills[0]).isTargetingMode)
+            {
+                if (_currentClickedPiece.Faction == Faction.Enemy && !_currentClickedPiece.IsDead)
+                {
+                    ((OpeningShotSkill)_skills[0]).Target = _currentClickedPiece;
+                    ((OpeningShotSkill)_skills[0]).Target._isTargeted = true;
+                    ((OpeningShotSkill)_skills[0]).isTargetingMode = false;
+                }
+            }
+        }
+    }
+
+    void SelectTarget()
+    {
+        // if (((OpeningShotSkill)_skills[0]).isTargetingMode)  
+        // {
+        //     // 선택 모드일 때, 마우스 클릭으로 적을 선택하는 로직
+        //     if (_leftClickAction.action.triggered) // 왼쪽 클릭
+        //     {
+        //         var hit = WorldInputRaycaster.Instance.GetCurrentHoveredObject();
+        //         if (hit != null)
+        //         {
+        //             var piece = hit.GetComponent<PieceBase>();
+        //             if (piece != null && piece.Faction == Faction.Enemy && !piece.IsDead)
+        //             {
+        //                 ((OpeningShotSkill)_skills[0]).Target = piece;
+        //                 ((OpeningShotSkill)_skills[0]).Target._isTargeted = true;
+        //                 ((OpeningShotSkill)_skills[0]).isTargetingMode = false;
+        //             }
+        //         }
+        //     }
+        // }
+    }
+}
+ 

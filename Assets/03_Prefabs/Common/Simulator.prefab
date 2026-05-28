@@ -44,4 +44,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de7d5bdc9f010a84da194b00ca324b6d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Rebellion.SimulationController
-  _pieces: []
+  stepDuration: 0.5
+  _isRunning: 0
+  _currentPhase: 0
+  _currentStep: 0
+  _lastResult: '-'
+  _leftClickAction: {fileID: 0}
+  _rightClickAction: {fileID: 0}
+  _skills:
+  - {fileID: 11400000, guid: 6af0069b787e35d468c50a38383c36f4, type: 2}

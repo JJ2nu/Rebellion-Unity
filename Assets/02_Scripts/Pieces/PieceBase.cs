@@ -15,6 +15,9 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
     [SerializeField] private PieceType _pieceType = PieceType.Brawler;
     [SerializeField] private int _maxHealth = 1;
     [SerializeField] private int _attackRange = 1;
+    public GameObject _HUD{get; set; }
+    public bool _isTargeted = false;
+    public bool _isInRange = false;
 
     // ─── Properties ─────────────────────────────────────────────────
     public Faction Faction => _faction;
@@ -52,6 +55,42 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
 
     // ─── Simulation lifecycle ────────────────────────────────────────
 
+    private void Start()
+    {
+        _HUD = transform.Find("HUD")?.gameObject;
+
+        _HUD?.SetActive(true);
+    }
+
+    public void Update()
+    {
+        if (_HUD != null)
+        {
+            if (_isInRange)
+            {
+                _HUD.GetComponent<InGameHUDUI>().Dead();
+            }
+            else
+            {
+                if (!_isTargeted)
+                {
+                    CheckCanAct(StageManager.Instance.GetAllActivePieces());
+                    if (CanAct)
+                    {
+                        _HUD.GetComponent<InGameHUDUI>().Active();
+                    }
+                    else
+                    {
+                        _HUD.GetComponent<InGameHUDUI>().Inactive();
+                    }
+                }
+                else
+                {
+                    _HUD.GetComponent<InGameHUDUI>().Target();
+                }
+            }
+        }
+    }
     public virtual void OnSimulationStart()
     {
         CurrentHealth = _maxHealth;
@@ -215,6 +254,7 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
     public void OnWorldUnHover(WorldInputEventData eventData)
     {
         GetComponent<OutlineEffect>()?.Hide();
+        StageManager.Instance?.ClearAttackRange();
         GameManager.Instance?.ClearAllRangeHighlights();
     }
 
@@ -223,6 +263,7 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
 
     public void OnWorldLeftClick(WorldInputEventData eventData)
     {
+        SimulationController.Instance?.OnClickPiece(this);
         if (_faction != Faction.Ally) return;
         AllyLeftClicked?.Invoke(this);
     }
@@ -250,8 +291,11 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
             if (tx < 0 || ty < 0 || tx >= boardSize || ty >= boardSize) break;
             indices.Add(StageGridIndexUtility.ToCellIndex(boardSize, tx, ty));
         }
-
-        GameManager.Instance.ShowCellRangeHighlight(indices.ToArray());
+        if (CanAct)
+        {
+            StageManager.Instance.SetAttackRange(indices.ToArray());
+            GameManager.Instance.ShowCellRangeHighlight(indices.ToArray());
+        }
     }
 
     protected void FinishAction()

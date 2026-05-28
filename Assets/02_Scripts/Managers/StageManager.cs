@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
-using Rebellion;
 
 public class StageManager : MonoBehaviour
 {
@@ -37,7 +36,14 @@ public class StageManager : MonoBehaviour
     private readonly List<(int detailType, PieceBase piece)> spawnedEnemyPieces = new();
     private readonly List<(int detailType, GameObject obj)> spawnedObjects = new();
 
+    /// <summary>
+    /// 스킬로 인해 타겟을 선택해야 하는 모드인지 여부를 나타낸다.
+    /// </summary>
+    public bool IsSelectionMode { get; set; }
+
     // 풀: 스테이지 클리어 전까지 보관하고 재배치
+
+
     private readonly List<Queue<PieceBase>> allyPool = new();
     private readonly List<Queue<PieceBase>> enemyPool = new();
     private readonly Dictionary<int, Queue<GameObject>> objectPool = new();
@@ -111,14 +117,14 @@ public class StageManager : MonoBehaviour
         }
 
         currentMapIndex = Mathf.Clamp(parsedData.mapIndex, 0, loadedMaps.Length - 1);
-        Debug.Log($"[StageManager] Activating map index: {currentMapIndex}", this);
+        //Debug.Log($"[StageManager] Activating map index: {currentMapIndex}", this);
         UpdateActiveMap();
 
         SpawnEnemies(parsedData);
         SpawnCivilians(parsedData);
         SpawnObjects(parsedData);
 
-        Debug.Log($"Stage parsed: mapIndex={parsedData.mapIndex}, entityCount={parsedData.entities.Length}", this);
+        //Debug.Log($"Stage parsed: mapIndex={parsedData.mapIndex}, entityCount={parsedData.entities.Length}", this);
         StageLoaded?.Invoke(currentStageData);
     }
 
@@ -136,6 +142,15 @@ public class StageManager : MonoBehaviour
     public void ResetForRetry()
     {
         if (currentStageData == null) return;
+
+        foreach (var ally in spawnedAllyPieces)
+        {
+            ally._HUD.SetActive(true);
+        }
+        foreach (var enemy in spawnedEnemyPieces)
+        {
+            enemy.piece._HUD.SetActive(true);
+        }
 
         // 아군: 위치 유지, 상태만 초기화
         foreach (var ally in spawnedAllyPieces)
@@ -160,7 +175,6 @@ public class StageManager : MonoBehaviour
         civilianPieces = null;
         SpawnCivilians(currentStageData);
     }
-
     public GameObject GetAllyPiecePrefab(PieceType pieceType)
     {
         int prefabIndex = (int)pieceType;
@@ -172,7 +186,6 @@ public class StageManager : MonoBehaviour
 
         return allyPiecePrefabs[prefabIndex];
     }
-
     public bool IsCellOccupied(int cellIndex)
     {
         if (cellIndex < 0)
@@ -211,7 +224,6 @@ public class StageManager : MonoBehaviour
 
         return false;
     }
-
     public bool TryRemoveAllyPiece(PieceBase piece)
     {
         if (piece == null)
@@ -227,9 +239,7 @@ public class StageManager : MonoBehaviour
 
         return removed;
     }
-
-    
-public bool TrySpawnAllyPiece(PieceType pieceType, int cellIndex, Direction facingDirection)
+    public bool TrySpawnAllyPiece(PieceType pieceType, int cellIndex, Direction facingDirection)
     {
         if (IsCellOccupied(cellIndex))
         {
@@ -293,7 +303,6 @@ public bool TrySpawnAllyPiece(PieceType pieceType, int cellIndex, Direction faci
         spawnedAllyPieces.Add(allyPiece);
         return true;
     }
-
     private string ResolveStagePath(string stagePath)
     {
         if (Path.IsPathRooted(stagePath))
@@ -454,7 +463,7 @@ public bool TrySpawnAllyPiece(PieceType pieceType, int cellIndex, Direction faci
             }
 
             map.SetActive(index == currentMapIndex);
-            Debug.Log($"[StageManager] Map '{map.name}' active={index == currentMapIndex}", this);
+            //Debug.Log($"[StageManager] Map '{map.name}' active={index == currentMapIndex}", this);
         }
     }
     private void SetMapsActive(bool isActive)
@@ -479,12 +488,6 @@ public bool TrySpawnAllyPiece(PieceType pieceType, int cellIndex, Direction faci
         if (gameManager == null)
         {
             gameManager = GameManager.Instance;
-        }
-
-        if (gameManager == null)
-        {
-            Debug.LogWarning("StageManager could not find GameManager.", this);
-            return;
         }
 
         PoolEnemies();
@@ -557,7 +560,6 @@ public bool TrySpawnAllyPiece(PieceType pieceType, int cellIndex, Direction faci
             spawnedEnemyPieces.Add((enemyEntity.detailType, enemyPiece));
         }
     }
-
     private void SpawnCivilians(StageData stageData)
     {
         if (gameManager == null)
@@ -611,7 +613,6 @@ public bool TrySpawnAllyPiece(PieceType pieceType, int cellIndex, Direction faci
             }
         }
     }
-
     private void SpawnObjects(StageData stageData)
     {
         if (gameManager == null)
@@ -801,10 +802,26 @@ public bool TrySpawnAllyPiece(PieceType pieceType, int cellIndex, Direction faci
             : 6;
     }
 
-    /// <summary>
-    /// 현재 씬에 활성화된 모든 기물(아군+적군+민간인)을 반환한다.
-    /// </summary>
     public IReadOnlyList<PieceBase> GetAllActivePieces()
+    {
+        var result = new List<PieceBase>();
+
+        foreach (var piece in spawnedAllyPieces)
+            if (piece != null && piece.gameObject.activeInHierarchy && !piece.IsDead)
+                result.Add(piece);
+
+        foreach ((_, var piece) in spawnedEnemyPieces)
+            if (piece != null && piece.gameObject.activeInHierarchy && !piece.IsDead)
+                result.Add(piece);
+
+        if (civilianPieces != null)
+            foreach (var piece in civilianPieces)
+                if (piece != null && piece.gameObject.activeInHierarchy && !piece.IsDead)
+                    result.Add(piece);
+
+        return result.AsReadOnly();
+    }
+    public IReadOnlyList<PieceBase> GetAllPieces()
     {
         var result = new List<PieceBase>();
 
@@ -815,11 +832,6 @@ public bool TrySpawnAllyPiece(PieceType pieceType, int cellIndex, Direction faci
         foreach ((_, var piece) in spawnedEnemyPieces)
             if (piece != null && piece.gameObject.activeInHierarchy)
                 result.Add(piece);
-
-        if (civilianPieces != null)
-            foreach (var piece in civilianPieces)
-                if (piece != null && piece.gameObject.activeInHierarchy)
-                    result.Add(piece);
 
         return result.AsReadOnly();
     }
@@ -870,5 +882,26 @@ public bool TrySpawnAllyPiece(PieceType pieceType, int cellIndex, Direction faci
             allyPool.Add(new Queue<PieceBase>());
 
         allyPool[prefabIndex].Enqueue(piece);
+    }
+    public void SetAttackRange(int[] cellIndices)
+    {
+        foreach (int idx in cellIndices)
+        {
+            var coord = StageGridIndexUtility.ToGridCoord(GetBoardSize(), idx);
+            foreach (var piece in GetAllActivePieces())
+            {
+                if (piece.GridX == coord.x && piece.GridY == coord.y)
+                {
+                    piece._isInRange = true;
+                }
+            }
+        }
+    }
+    public void ClearAttackRange()
+    {
+        foreach (var piece in GetAllActivePieces())
+        {
+            piece._isInRange = false;
+        }
     }
 }

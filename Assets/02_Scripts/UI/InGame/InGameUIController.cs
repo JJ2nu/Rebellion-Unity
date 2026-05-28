@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using Rebellion;
 using UnityEngine;
+using UnityEngine.UI;
 
 public sealed class InGameUIController : MonoBehaviour
 {
@@ -246,7 +247,13 @@ public sealed class InGameUIController : MonoBehaviour
             return;
         }
 
-        Instantiate(orderSkillButtonPrefab, skillRoot, false);
+        GameObject obj = Instantiate(orderSkillButtonPrefab, skillRoot, false);
+        Button btn = obj.GetComponent<Button>();
+        int skillIndex = 0; // Assuming only one order skill for now
+        btn.onClick.AddListener(() => 
+        {
+            SimulationController.Instance?.SetTargetForPreSimulation(skillIndex);
+        });
     }
 
     #endregion

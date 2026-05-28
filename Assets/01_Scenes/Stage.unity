@@ -1212,7 +1212,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6562320009633688067, guid: f0e9e1a4490476f4e83197bb34b20713, type: 3}
       propertyPath: initialStagePath
-      value: Stages/stage_002.json
+      value: Stages/stage_005.json
       objectReference: {fileID: 0}
     - target: {fileID: 8006600841717635771, guid: f0e9e1a4490476f4e83197bb34b20713, type: 3}
       propertyPath: raycastCamera
@@ -1251,6 +1251,22 @@ PrefabInstance:
       propertyPath: stepDuration
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 851078646391461078, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
+      propertyPath: _leftClickAction
+      value: 
+      objectReference: {fileID: 7490723811521843157, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+    - target: {fileID: 851078646391461078, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
+      propertyPath: _rightClickAction
+      value: 
+      objectReference: {fileID: 624618501342684686, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+    - target: {fileID: 851078646391461078, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
+      propertyPath: _skills.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 851078646391461078, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
+      propertyPath: '_skills.Array.data[0]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 6af0069b787e35d468c50a38383c36f4, type: 2}
     - target: {fileID: 5363687376482141591, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
       propertyPath: m_Name
       value: Simulator
