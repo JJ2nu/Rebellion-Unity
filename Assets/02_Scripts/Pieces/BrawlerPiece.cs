@@ -3,27 +3,49 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// 브롤러(근접 강타) 기물. 정면 1칸 적을 공격한다.
+/// 브롤러(주먹) 기물. 페이즈 1에서 행동.
+/// Attack 클립 길이를 stepDuration에 맞게 speed 조정 후 트리거.
 /// </summary>
-
-//test
-
 public class BrawlerPiece : PieceBase
 {
-    
-    [Header("Brawler Config")]
-    [SerializeField] private float _punchDelay = 0.3f;
-    protected override PieceBase FindTarget(IReadOnlyList<PieceBase> allPieces)
+    private Animator _animator;
+    private AttackHitbox _fistHitbox;
+    private float _attackClipLength = -1f;
+
+    private void Awake()
     {
-        foreach (var piece in allPieces)
+        _animator = GetComponentInChildren<Animator>();
+        _fistHitbox = GetComponentInChildren<AttackHitbox>();
+        _fistHitbox?.Initialize(this);
+
+        // Attack 클립 길이 미리 캐싱
+        if (_animator != null)
         {
-            if (piece.IsDead || piece.Faction == Faction) continue;
-            if (IsInLineOfFire(piece)) return piece;
+            foreach (var clip in _animator.runtimeAnimatorController.animationClips)
+            {
+                if (clip.name.Contains("Attack") || clip.name.Contains("attack") || clip.name.Contains("Punch") || clip.name.Contains("punch"))
+                {
+                    _attackClipLength = clip.length;
+                    break;
+                }
+            }
         }
-        return null;
     }
 
-    public override IEnumerator ExecuteAction(IReadOnlyList<PieceBase> allPieces)
+    public override int SimulationPhaseIndex => 1;
+
+    public override void OnSimulationStart()
+    {
+        base.OnSimulationStart();
+    }
+
+    protected override PieceBase FindTarget(IReadOnlyList<PieceBase> allPieces)
+    {
+        var closest = FindClosestInLine(allPieces);
+        return (closest != null && IsEnemy(closest)) ? closest : null;
+    }
+
+    public override IEnumerator ExecuteAction(IReadOnlyList<PieceBase> allPieces, float stepDuration)
     {
         var target = FindTarget(allPieces);
         if (target == null)
@@ -32,14 +54,21 @@ public class BrawlerPiece : PieceBase
             yield break;
         }
 
-        yield return WaitForSeconds(_punchDelay);
+        if (_animator != null && _attackClipLength > 0f)
+            _animator.speed = _attackClipLength / stepDuration;
 
-        target.TakeDamage(1);
+        _animator?.SetTrigger("Attack");
+        _fistHitbox?.BeginAttack();
+
+        // 애니메이션 절반 지점(주먹 뻗는 정점)에서 타격 판정
+        yield return new WaitForSeconds(stepDuration * 0.5f);
+        if (!target.IsDead)
+            target.TakeDamage(1);
+
+        yield return new WaitForSeconds(stepDuration * 0.5f);
+
+        _fistHitbox?.EndAttack();
+        if (_animator != null) _animator.speed = 1f;
         FinishAction();
-    }
-
-    private void Update()
-    {
-
     }
 }

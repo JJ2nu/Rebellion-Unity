@@ -141,6 +141,34 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 372993846}
     m_Modifications:
+    - target: {fileID: 2533409162287649403, guid: 4d45cf272786ea84b84bb83ddc5143ac, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2533409162287649403, guid: 4d45cf272786ea84b84bb83ddc5143ac, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2533409162287649403, guid: 4d45cf272786ea84b84bb83ddc5143ac, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1344161039}
+    - target: {fileID: 2533409162287649403, guid: 4d45cf272786ea84b84bb83ddc5143ac, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2533409162287649403, guid: 4d45cf272786ea84b84bb83ddc5143ac, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: StartSimulation
+      objectReference: {fileID: 0}
+    - target: {fileID: 2533409162287649403, guid: 4d45cf272786ea84b84bb83ddc5143ac, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: SimulationController, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 2533409162287649403, guid: 4d45cf272786ea84b84bb83ddc5143ac, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
     - target: {fileID: 6645526409154212447, guid: 4d45cf272786ea84b84bb83ddc5143ac, type: 3}
       propertyPath: m_Name
       value: Btn_Play
@@ -357,8 +385,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 04c4ba7dd0616184e916f51c310f49d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InGameUIController
-  uiDataCsv: {fileID: 4900000, guid: 1fcbeb7a848ce954c981fb55db00a514, type: 3}
-  currentLevel: Campaign 1
   missionRoot: {fileID: 584075550}
   mainMissionPrefab: {fileID: 1718751954819697394, guid: d14ba8b93a94ad14cb100ecd886bb1d9, type: 3}
   subMissionPrefab: {fileID: 6153926711214791119, guid: 1da463e8a1579df418d2ed66f3268e15, type: 3}
@@ -388,7 +414,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e84af34c1deb344a97a8dadd9fb0c88, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AllyPiecePlacementController
-  stageManager: {fileID: 0}
+  stageManager: {fileID: 1045777020}
   previewHeight: 0.2
   defaultFacingDirection: 0
   rotateAction: {fileID: 72058764}
@@ -717,6 +743,17 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1045777020 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5090292573414555690, guid: b1597b33949e01b4ebfeae783bb0a719, type: 3}
+  m_PrefabInstance: {fileID: 7023987448846966257}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5ee32927a8926a41a5d9bf7e61c8d2b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StageLoader
 --- !u!1001 &1210686282
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -811,7 +848,35 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6749465650491382075, guid: 6f6d04f0de814e84abc172415791e21a, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7070420057443958020, guid: 6f6d04f0de814e84abc172415791e21a, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7070420057443958020, guid: 6f6d04f0de814e84abc172415791e21a, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7070420057443958020, guid: 6f6d04f0de814e84abc172415791e21a, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1344161039}
+    - target: {fileID: 7070420057443958020, guid: 6f6d04f0de814e84abc172415791e21a, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7070420057443958020, guid: 6f6d04f0de814e84abc172415791e21a, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: RetrySimulation
+      objectReference: {fileID: 0}
+    - target: {fileID: 7070420057443958020, guid: 6f6d04f0de814e84abc172415791e21a, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: SimulationController, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 7070420057443958020, guid: 6f6d04f0de814e84abc172415791e21a, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -823,6 +888,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 588745772544068453, guid: 6f6d04f0de814e84abc172415791e21a, type: 3}
   m_PrefabInstance: {fileID: 1210686282}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1344161039 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 851078646391461078, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
+  m_PrefabInstance: {fileID: 6086066311340685293}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: de7d5bdc9f010a84da194b00ca324b6d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Rebellion.SimulationController
 --- !u!20 &1413033650 stripped
 Camera:
   m_CorrespondingSourceObject: {fileID: 1717871216010249088, guid: 0334cd302c3852147b59912b9aeae5d7, type: 3}
@@ -1134,6 +1210,10 @@ PrefabInstance:
       propertyPath: initialMapIndex
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 6562320009633688067, guid: f0e9e1a4490476f4e83197bb34b20713, type: 3}
+      propertyPath: initialStagePath
+      value: Stages/stage_005.json
+      objectReference: {fileID: 0}
     - target: {fileID: 8006600841717635771, guid: f0e9e1a4490476f4e83197bb34b20713, type: 3}
       propertyPath: raycastCamera
       value: 
@@ -1167,6 +1247,26 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 851078646391461078, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
+      propertyPath: stepDuration
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 851078646391461078, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
+      propertyPath: _leftClickAction
+      value: 
+      objectReference: {fileID: 7490723811521843157, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+    - target: {fileID: 851078646391461078, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
+      propertyPath: _rightClickAction
+      value: 
+      objectReference: {fileID: 624618501342684686, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+    - target: {fileID: 851078646391461078, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
+      propertyPath: _skills.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 851078646391461078, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
+      propertyPath: '_skills.Array.data[0]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 6af0069b787e35d468c50a38383c36f4, type: 2}
     - target: {fileID: 5363687376482141591, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
       propertyPath: m_Name
       value: Simulator

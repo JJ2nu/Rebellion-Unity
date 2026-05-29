@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "boardSize": 6,
+  "mapIndex": 2,
+  "mainMission": "도전 모드 7",
+  "subMission1": "",
+  "subMission2": "",
+  "hasOrder": true,
+  "allySlots": [
+    { "pieceType": 0, "count": 1 },
+    { "pieceType": 1, "count": 1 },
+    { "pieceType": 2, "count": 2 }
+  ],
+  "entities": [
+    { "entityKind": 0, "detailType": 0, "facing": 2, "cellIndex": 0 },
+    { "entityKind": 0, "detailType": 0, "facing": 2, "cellIndex": 5 },
+    { "entityKind": 0, "detailType": 2, "facing": 2, "cellIndex": 6 },
+    { "entityKind": 0, "detailType": 2, "facing": 2, "cellIndex": 11 },
+    { "entityKind": 0, "detailType": 2, "facing": 2, "cellIndex": 12 }
+  ]
+}

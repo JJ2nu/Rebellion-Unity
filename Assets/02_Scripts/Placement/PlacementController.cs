@@ -1,4 +1,5 @@
 using Rebellion;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -17,11 +18,19 @@ public sealed class PlacementController : MonoBehaviour
     private InGameUnitStorageSlotUI pendingSlot;
     private GameObject previewObject;
     private Direction currentFacingDirection;
+    private readonly Dictionary<PieceType, InGameUnitStorageSlotUI> slotMap = new();
+
+    private bool isCellHovered;
+    private float gridPlaneY;
+    private Camera mainCamera;
 
     public bool IsPlacing => pendingSlot != null;
 
     private void OnDestroy()
     {
+        PieceBase.AllyRightClicked -= HandleAllyPieceRightClick;
+        PieceBase.AllyLeftClicked  -= HandleAllyPieceLeftClick;
+
         if (rotateAction?.action != null)
         {
             rotateAction.action.performed -= OnRotatePerformed;
@@ -33,6 +42,10 @@ public sealed class PlacementController : MonoBehaviour
 private void Awake()
     {
         ResolveDependencies();
+        mainCamera = Camera.main;
+
+        PieceBase.AllyRightClicked += HandleAllyPieceRightClick;
+        PieceBase.AllyLeftClicked  += HandleAllyPieceLeftClick;
 
         if (rotateAction?.action != null)
         {
@@ -55,6 +68,12 @@ private void Update()
         if (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame)
         {
             CancelPlacement();
+            return;
+        }
+
+        if (!isCellHovered)
+        {
+            MovePreviewToMouseOnGridPlane();
         }
     }
 
@@ -71,12 +90,19 @@ public void BeginPlacement(InGameUnitStorageSlotUI slot)
 
         currentFacingDirection = defaultFacingDirection;
         pendingSlot = slot;
+        slot.TryConsumeOne();
         CreatePreview(slot.UnitType);
     }
 
     public void CancelPlacement()
     {
+        if (pendingSlot != null)
+        {
+            pendingSlot.TryRestoreOne();
+        }
+
         pendingSlot = null;
+        isCellHovered = false;
         ClearPreview();
     }
 
@@ -103,6 +129,9 @@ public void HandleCellHover(GridCell cell)
             return;
         }
 
+        isCellHovered = true;
+        gridPlaneY = cell.transform.position.y;
+
         cell.ShowPlacementAvailability(CanPlaceOn(cell));
 
         if (previewObject != null)
@@ -120,6 +149,7 @@ public void HandleCellHover(GridCell cell)
             return;
         }
 
+        isCellHovered = false;
         cell.ResetVisual();
     }
 
@@ -146,7 +176,6 @@ public void HandleCellLeftClick(GridCell cell)
             return;
         }
 
-        pendingSlot.TryConsumeOne();
         pendingSlot = null;
         cell.ResetVisual();
         ClearPreview();
@@ -169,38 +198,49 @@ public void HandleCellLeftClick(GridCell cell)
 
 public void HandleAllyPieceRightClick(PieceBase piece)
     {
-        if (piece == null)
-        {
-            return;
-        }
+        if (piece == null) return;
 
         ResolveDependencies();
+        if (stageManager == null) return;
 
-        if (stageManager == null)
-        {
-            return;
-        }
-
-        if (IsPlacing)
-        {
-            CancelPlacement();
-        }
+        if (IsPlacing) CancelPlacement();
 
         PieceType pieceType = piece.PieceType;
+        if (!stageManager.TryRemoveAllyPiece(piece)) return;
 
-        if (!stageManager.TryRemoveAllyPiece(piece))
+        if (slotMap.TryGetValue(pieceType, out InGameUnitStorageSlotUI slot))
+            slot.TryRestoreOne();
+    }
+
+    private void HandleAllyPieceLeftClick(PieceBase piece)
+    {
+        if (piece == null) return;
+
+        var prevDirection = piece.FacingDirection;
+
+        ResolveDependencies();
+        if (stageManager == null) return;
+
+        if (IsPlacing) CancelPlacement();
+
+        PieceType pieceType = piece.PieceType;
+        if (!stageManager.TryRemoveAllyPiece(piece)) return;
+
+        // 슬롯 복원 후 바로 배치 시작 (BeginPlacement가 다시 소모)
+        if (slotMap.TryGetValue(pieceType, out InGameUnitStorageSlotUI slot))
         {
-            return;
+            slot.TryRestoreOne();
+            BeginPlacement(slot);
+            currentFacingDirection = prevDirection; // 이전 방향 유지
+
         }
+    }
 
-        InGameUnitStorageSlotUI[] slots = Object.FindObjectsOfType<InGameUnitStorageSlotUI>();
-        foreach (InGameUnitStorageSlotUI slot in slots)
+    public void RegisterSlot(InGameUnitStorageSlotUI slot)
+    {
+        if (slot != null)
         {
-            if (slot.UnitType == pieceType)
-            {
-                slot.TryRestoreOne();
-                break;
-            }
+            slotMap[slot.UnitType] = slot;
         }
     }
 
@@ -249,6 +289,35 @@ public void HandleAllyPieceRightClick(PieceBase piece)
     }
 
 
+
+    private void MovePreviewToMouseOnGridPlane()
+    {
+        if (previewObject == null)
+        {
+            return;
+        }
+
+        Camera cam = mainCamera != null ? mainCamera : Camera.main;
+        if (cam == null)
+        {
+            return;
+        }
+
+        Vector2 mouseScreen = Mouse.current != null
+            ? Mouse.current.position.ReadValue()
+            : (Vector2)Input.mousePosition;
+
+        Ray ray = cam.ScreenPointToRay(mouseScreen);
+        Plane gridPlane = new Plane(Vector3.up, new Vector3(0f, gridPlaneY, 0f));
+
+        if (gridPlane.Raycast(ray, out float distance))
+        {
+            Vector3 worldPos = ray.GetPoint(distance);
+            previewObject.transform.SetPositionAndRotation(
+                worldPos + Vector3.up * previewHeight,
+                Quaternion.Euler(0f, (int)currentFacingDirection * 90f, 0f));
+        }
+    }
 
     private void ClearPreview()
     {

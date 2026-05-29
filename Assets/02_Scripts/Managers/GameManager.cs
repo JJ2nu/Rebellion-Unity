@@ -206,4 +206,34 @@ public class GameManager : MonoBehaviour
 
         return loadedGridCells[index].transform.position;
     }
+
+    public void ShowCellRangeHighlight(int[] cellIndices)
+    {
+        if (loadedGridCells == null) return;
+
+        foreach (int idx in cellIndices)
+        {
+            if (idx >= 0 && idx < loadedGridCells.Length && loadedGridCells[idx] != null)
+                loadedGridCells[idx].GetComponent<GridCell>()?.ShowRangeHighlight(true);
+        }
+    }
+    public void ShowMoveRangeHighlight(int[] cellIndices, Quaternion pieceRotation)
+    {
+        if (loadedGridCells == null) return;
+
+        foreach (int idx in cellIndices)
+        {
+            if (idx >= 0 && idx < loadedGridCells.Length && loadedGridCells[idx] != null)
+                loadedGridCells[idx].GetComponent<GridCell>()?.ShowMoveHighlight(true, pieceRotation);
+        }
+    }
+
+    public void ClearAllRangeHighlights()
+    {
+        if (loadedGridCells == null) return;
+
+        foreach (var cell in loadedGridCells)
+            if (cell != null)
+                cell.GetComponent<GridCell>()?.ShowRangeHighlight(false);
+    }
 }

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class GridCell : MonoBehaviour, IWorldInputTarget
 {
@@ -74,6 +74,19 @@ public class GridCell : MonoBehaviour, IWorldInputTarget
         ApplyVisualState();
     }
 
+    public void ShowRangeHighlight(bool show)
+    {
+        tileState = show ? TileState.Active : TileState.Default;
+        ApplyVisualState();
+    }
+    public void ShowMoveHighlight(bool show, Quaternion pieceRotation)
+    {
+        tileState = show ? TileState.Direction : TileState.Default;
+        transform.rotation = pieceRotation;
+        ApplyVisualState();
+    }
+
+
     public void ResetVisual()
     {
         tileState = TileState.Default;
@@ -81,7 +94,7 @@ public class GridCell : MonoBehaviour, IWorldInputTarget
     }
 
     #region 3D Input Events
-    public void OnWorldHover(WorldInputEventData eventData)
+public void OnWorldHover(WorldInputEventData eventData)
     {
         TryGetPlacementController()?.HandleCellHover(this);
     }
