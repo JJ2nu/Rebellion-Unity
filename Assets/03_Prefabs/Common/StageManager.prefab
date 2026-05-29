@@ -53,6 +53,9 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 8018666167684502777, guid: f5efe5145518a9149a1f956a74e7c2d4, type: 3}
   - {fileID: 1193745007004039138, guid: 423a7935d8b6e0a4b9917f6a34a069f7, type: 3}
+  civilianPiecePrefabs:
+  - {fileID: 8771929361919017144, guid: 42d08f411c35259438f85db9942bf139, type: 3}
+  - {fileID: 8771929361919017144, guid: 7dcd3c795ee349c42be80c2ceca18bb0, type: 3}
   mapPrefabs:
   - {fileID: 5455071742382695461, guid: 76cc0c066ccc14545aa382e0ee1a4c72, type: 3}
   - {fileID: 5573549547454476352, guid: fdcb0907192a3b242b72aa57b238d064, type: 3}

@@ -46,15 +46,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   gridCellPrefab: {fileID: 6135763539530983894, guid: 2efdefc720dd1bb4e8330b74b02bc920, type: 3}
-  mapPrefabs:
-  - {fileID: 5455071742382695461, guid: 76cc0c066ccc14545aa382e0ee1a4c72, type: 3}
-  - {fileID: 5573549547454476352, guid: fdcb0907192a3b242b72aa57b238d064, type: 3}
-  - {fileID: 3491224688107528927, guid: 33d8eeeb6ea2fa44a8c7373fe7a669a9, type: 3}
-  initialMapIndex: 0
+  initialStagePath: Stages/stage_001.json
   autoStartFirstStage: 1
   gridSize: 6
   gridYPosition: 0.1
-  simulationController: {fileID: 0}
   stageManager: {fileID: 0}
 --- !u!1 &6852896599080827130
 GameObject:
@@ -103,8 +98,8 @@ MonoBehaviour:
   raycastCamera: {fileID: 0}
   raycastLayers:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 1
   maxDistance: 500
-  pointerPositionAction: {fileID: 0}
-  leftClickAction: {fileID: 0}
-  rightClickAction: {fileID: 0}
+  pointerPositionAction: {fileID: -1899296094067532810, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  leftClickAction: {fileID: 7490723811521843157, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  rightClickAction: {fileID: 624618501342684686, guid: 052faaac586de48259a63d0c4782560b, type: 3}

@@ -13,12 +13,22 @@ public class OrbitingCamera : MonoBehaviour
 
     private void OnEnable()
     {
+        if (orbitAction?.action == null)
+        {
+            return;
+        }
+
         orbitAction.action.started  += OnOrbitStarted;
         orbitAction.action.canceled += OnOrbitStopped;
     }
 
     private void OnDisable()
     {
+        if (orbitAction?.action == null)
+        {
+            return;
+        }
+
         orbitAction.action.started  -= OnOrbitStarted;
         orbitAction.action.canceled -= OnOrbitStopped;
     }
