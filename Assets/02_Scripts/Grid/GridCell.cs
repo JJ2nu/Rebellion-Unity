@@ -79,6 +79,13 @@ public class GridCell : MonoBehaviour, IWorldInputTarget
         tileState = show ? TileState.Active : TileState.Default;
         ApplyVisualState();
     }
+    public void ShowMoveHighlight(bool show, Quaternion pieceRotation)
+    {
+        tileState = show ? TileState.Direction : TileState.Default;
+        transform.rotation = pieceRotation;
+        ApplyVisualState();
+    }
+
 
     public void ResetVisual()
     {

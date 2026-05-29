@@ -18,7 +18,7 @@ public class OpeningShotSkill : SkillBase
         "시뮬레이션 시작 전, 적 한 명을 선택하여 즉시 제거한다.";
 
     public override SkillTiming Timing => SkillTiming.PreSimulation;
-    public PieceBase Target { get; set; }
+    [SerializeField] public PieceBase Target = null;
     public bool isTargetingMode = false;
     /// <summary>
     /// 살아있는 적이 한 명 이상일 때만 발동 가능.
@@ -56,7 +56,7 @@ public class OpeningShotSkill : SkillBase
         {
             Debug.Log($"[Simulation] Phase -1: Executing Pre-Simulation Skill on {Target.name}");
             Target.Die();
-            Target = null;
+            //Target = null;
         }
         else
         {

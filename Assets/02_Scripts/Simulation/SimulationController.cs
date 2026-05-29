@@ -61,10 +61,17 @@ public class SimulationController : MonoBehaviour
     public void ResetSimulation()
     {
         StopAllCoroutines();
-        foreach (var skill in _skills)
-        {
-            skill.ResetTarget();
-        }
+        // foreach (var skill in _skills)
+        // {
+        //     skill.ResetTarget();
+        // }
+            foreach (var piece in StageManager.Instance.GetAllPieces())
+            {
+                if (piece != null)
+                {
+                    piece.IsDead = false;
+                }
+            }
         _isRunning = false;
         _currentPhase = 0;
         _currentStep = 0;

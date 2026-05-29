@@ -216,6 +216,8 @@ public void HandleAllyPieceRightClick(PieceBase piece)
     {
         if (piece == null) return;
 
+        var prevDirection = piece.FacingDirection;
+
         ResolveDependencies();
         if (stageManager == null) return;
 
@@ -229,6 +231,8 @@ public void HandleAllyPieceRightClick(PieceBase piece)
         {
             slot.TryRestoreOne();
             BeginPlacement(slot);
+            currentFacingDirection = prevDirection; // 이전 방향 유지
+
         }
     }
 

@@ -217,6 +217,16 @@ public class GameManager : MonoBehaviour
                 loadedGridCells[idx].GetComponent<GridCell>()?.ShowRangeHighlight(true);
         }
     }
+    public void ShowMoveRangeHighlight(int[] cellIndices, Quaternion pieceRotation)
+    {
+        if (loadedGridCells == null) return;
+
+        foreach (int idx in cellIndices)
+        {
+            if (idx >= 0 && idx < loadedGridCells.Length && loadedGridCells[idx] != null)
+                loadedGridCells[idx].GetComponent<GridCell>()?.ShowMoveHighlight(true, pieceRotation);
+        }
+    }
 
     public void ClearAllRangeHighlights()
     {

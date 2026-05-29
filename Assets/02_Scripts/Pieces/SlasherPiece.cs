@@ -21,6 +21,8 @@ public class SlasherPiece : PieceBase
     private int _spawnGridY;
     private bool _spawnRecorded;
 
+    private int _currentAttackRange = 1;
+
     private void OnDisable()
     {
         // 기물이 슬롯으로 되돌아갔을 때(비활성화 시) 기록을 초기화하여
@@ -135,4 +137,29 @@ public class SlasherPiece : PieceBase
         if (_animator != null) _animator.speed = 1f;
         FinishAction();
     }
+
+    public override void ShowAttackRangeCells()
+    {
+        if (GameManager.Instance == null) return;
+
+        int boardSize = StageManager.Instance?.CurrentStageData?.boardSize ?? 6;
+        var (dx, dy) = GetFacingDelta();
+        var indices = new System.Collections.Generic.List<int>();
+        _currentAttackRange = ManhattanDistanceTo( FindTarget(StageManager.Instance?.GetAllActivePieces()));   
+
+        for (int i = 1; i <= _currentAttackRange; i++)
+        {
+            int tx = GridX + dx * i;
+            int ty = GridY + dy * i;
+            if (tx < 0 || ty < 0 || tx >= boardSize || ty >= boardSize) break;
+            indices.Add(StageGridIndexUtility.ToCellIndex(boardSize, tx, ty));
+        }
+        if (CanAct)
+        {
+            StageManager.Instance.SetAttackRange(indices.ToArray());
+            GameManager.Instance.ShowMoveRangeHighlight(indices.ToArray(), GetFacingRotation());
+        }
+    }
+
+
 }

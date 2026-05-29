@@ -11,10 +11,10 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
 {
     // ─── Inspector ──────────────────────────────────────────────────
     [Header("Piece Config")]
-    [SerializeField] private Faction _faction = Faction.Ally;
-    [SerializeField] private PieceType _pieceType = PieceType.Brawler;
-    [SerializeField] private int _maxHealth = 1;
-    [SerializeField] private int _attackRange = 1;
+    [SerializeField] protected Faction _faction = Faction.Ally;
+    [SerializeField] protected PieceType _pieceType = PieceType.Brawler;
+    [SerializeField] protected int _maxHealth = 1;
+    [SerializeField] protected int _attackRange = 1;
     public GameObject _HUD{get; set; }
     public bool _isTargeted = false;
     public bool _isInRange = false;
@@ -30,7 +30,7 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
     public Direction FacingDirection { get; set; } = Direction.East;
 
     public int CurrentHealth { get; private set; }
-    public bool IsDead { get; private set; }
+    [SerializeField] public bool IsDead = false;
     public bool IsActionFinished { get; protected set; }
 
     /// <summary>페이즈 인덱스 (Brawler=1, Slasher=2, Gunman=3, 미행동=0)</summary>
@@ -86,7 +86,7 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
                 }
                 else
                 {
-                    _HUD.GetComponent<InGameHUDUI>().Target();
+                    _HUD.GetComponent<InGameHUDUI>().Dead();
                 }
             }
         }
@@ -181,6 +181,7 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
     /// </summary>
     public int ManhattanDistanceTo(PieceBase other)
     {
+        if (other == null) return 0;
         return Mathf.Abs(GridX - other.GridX) + Mathf.Abs(GridY - other.GridY);
     }
 
@@ -276,7 +277,7 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
 
     #endregion
 
-    private void ShowAttackRangeCells()
+    public virtual void ShowAttackRangeCells()
     {
         if (GameManager.Instance == null) return;
 
@@ -307,5 +308,17 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
     protected IEnumerator WaitForSeconds(float seconds)
     {
         yield return new WaitForSeconds(seconds);
+    }
+
+    public Quaternion GetFacingRotation()
+    {
+        return FacingDirection switch
+        {
+            Direction.North => Quaternion.Euler(0, 0, 0),
+            Direction.East => Quaternion.Euler(0, 90, 0),
+            Direction.South => Quaternion.Euler(0, 180, 0),
+            Direction.West => Quaternion.Euler(0, 270, 0),
+            _ => Quaternion.identity,
+        };
     }
 }
