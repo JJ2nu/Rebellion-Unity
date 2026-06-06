@@ -13,7 +13,7 @@ public class SimulationController : MonoBehaviour
     // ... (rest of the code)
 
     [Header("Debug (Read-only)")]
-    [SerializeField] private bool _isRunning;
+    public bool _isRunning;
     [SerializeField] private int _currentPhase;
     [SerializeField] private int _currentStep;
     [SerializeField] private string _lastResult = "-";
@@ -34,6 +34,8 @@ public class SimulationController : MonoBehaviour
         BothDeadWin,
         Lose,
     }
+
+    [SerializeField] public SimulationResult LastSimulationResult = SimulationResult.Lose; 
 
     public enum Skills
     {
@@ -61,17 +63,15 @@ public class SimulationController : MonoBehaviour
     public void ResetSimulation()
     {
         StopAllCoroutines();
-        // foreach (var skill in _skills)
-        // {
-        //     skill.ResetTarget();
-        // }
-            foreach (var piece in StageManager.Instance.GetAllPieces())
+        foreach (var piece in StageManager.Instance.GetAllPieces())
+        {
+            if (piece != null)
             {
-                if (piece != null)
-                {
-                    piece.IsDead = false;
-                }
+                piece.ResetState();
+                piece.IsDead = false;
             }
+        }
+        GameManager.Instance.ResetAllTile();
         _isRunning = false;
         _currentPhase = 0;
         _currentStep = 0;
@@ -94,6 +94,7 @@ public class SimulationController : MonoBehaviour
         _currentStep = 0;
         _lastResult = "-";
 
+        GameManager.Instance.ClearAllTile();
         var allPieces = StageManager.Instance.GetAllActivePieces();
         foreach (var skill in _skills)
         {
@@ -186,10 +187,6 @@ public class SimulationController : MonoBehaviour
         var pieces = StageManager.Instance.GetAllActivePieces();
         StartCoroutine(_skills[skillIndex].TargetMode(this, pieces));
     }
-    private void Update()
-    {
-       SelectTarget();
-    }
     public void OnClickPiece(PieceBase piece)
     {
        PreviousClickAction();
@@ -228,26 +225,5 @@ public class SimulationController : MonoBehaviour
         }
     }
 
-    void SelectTarget()
-    {
-        // if (((OpeningShotSkill)_skills[0]).isTargetingMode)  
-        // {
-        //     // 선택 모드일 때, 마우스 클릭으로 적을 선택하는 로직
-        //     if (_leftClickAction.action.triggered) // 왼쪽 클릭
-        //     {
-        //         var hit = WorldInputRaycaster.Instance.GetCurrentHoveredObject();
-        //         if (hit != null)
-        //         {
-        //             var piece = hit.GetComponent<PieceBase>();
-        //             if (piece != null && piece.Faction == Faction.Enemy && !piece.IsDead)
-        //             {
-        //                 ((OpeningShotSkill)_skills[0]).Target = piece;
-        //                 ((OpeningShotSkill)_skills[0]).Target._isTargeted = true;
-        //                 ((OpeningShotSkill)_skills[0]).isTargetingMode = false;
-        //             }
-        //         }
-        //     }
-        // }
-    }
 }
  

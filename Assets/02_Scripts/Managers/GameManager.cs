@@ -236,4 +236,19 @@ public class GameManager : MonoBehaviour
             if (cell != null)
                 cell.GetComponent<GridCell>()?.ShowRangeHighlight(false);
     }
+    public void ClearAllTile()
+    {
+        if(loadedGridCells == null) return;
+        foreach (var cell in loadedGridCells)
+            if (cell != null)
+                cell.GetComponent<GridCell>()?.ClearTile();
+    }
+    public void ResetAllTile()
+    {
+        if (loadedGridCells == null) return;
+        foreach (var cell in loadedGridCells)
+            if (cell != null)
+                cell.GetComponent<GridCell>()?.ResetVisual();
+    }
 }
+

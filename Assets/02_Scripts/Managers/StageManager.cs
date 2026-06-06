@@ -117,7 +117,7 @@ public class StageManager : MonoBehaviour
         }
 
         currentMapIndex = Mathf.Clamp(parsedData.mapIndex, 0, loadedMaps.Length - 1);
-        //Debug.Log($"[StageManager] Activating map index: {currentMapIndex}", this);
+        Debug.Log($"[StageManager] Activating map index: {currentMapIndex}", this);
         UpdateActiveMap();
 
         SpawnEnemies(parsedData);

@@ -21,24 +21,7 @@
         }
     ],
     "entities": [
-        {
-            "entityKind": 2,
-            "detailType": 0,
-            "facing": 0,
-            "cellIndex": 6
-        },
-        {
-            "entityKind": 2,
-            "detailType": 1,
-            "facing": 0,
-            "cellIndex": 0
-        },
-        {
-            "entityKind": 2,
-            "detailType": 2,
-            "facing": 0,
-            "cellIndex": 4
-        },
+
         {
             "entityKind": 0,
             "detailType": 2,

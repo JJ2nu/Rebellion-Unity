@@ -26,7 +26,7 @@ public sealed class StageEditorController : MonoBehaviour
     [SerializeField] private GameObject[] civilianPiecePrefabs;
 
     [Header("Prefab Folders")]
-    [SerializeField] private string mapPrefabFolder = "Assets/03_Prefabs/Maps";
+    [SerializeField] private string mapPrefabFolder = "Assets/03_Prefabs/Maps/InGame";
     [SerializeField] private string enemyPrefabFolder = "Assets/03_Prefabs/Pieces/Enemy";
     [SerializeField] private string civilianPrefabFolder = "Assets/03_Prefabs/Pieces/Civilian";
 
