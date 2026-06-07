@@ -2,8 +2,8 @@
     "version": 2,
     "boardSize": 6,
     "mapIndex": 1,
-    "mainMission": "도전 모드 2",
-    "subMission1": "",
+    "mainMission": "회의장 내 칼트 병력 제거",
+    "subMission1": "전투원 희생 없이 작전 수행",
     "subMission2": "",
     "hasOrder": false,
     "allySlots": [
@@ -17,7 +17,7 @@
         },
         {
             "pieceType": 2,
-            "count": 2
+            "count": 1
         }
     ],
     "entities": [

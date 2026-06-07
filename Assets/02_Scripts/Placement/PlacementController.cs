@@ -124,7 +124,7 @@ private void OnRotatePerformed(InputAction.CallbackContext context)
 
 public void HandleCellHover(GridCell cell)
     {
-        if (!IsPlacing || cell == null)
+        if (!IsPlacing || cell == null || SimulationController.Instance?._isRunning == true)
         {
             return;
         }
@@ -144,7 +144,7 @@ public void HandleCellHover(GridCell cell)
 
     public void HandleCellUnhover(GridCell cell)
     {
-        if (cell == null)
+        if (cell == null || SimulationController.Instance?._isRunning == true)
         {
             return;
         }
@@ -155,7 +155,7 @@ public void HandleCellHover(GridCell cell)
 
 public void HandleCellLeftClick(GridCell cell)
     {
-        if (!IsPlacing || cell == null)
+        if (!IsPlacing || cell == null || SimulationController.Instance?._isRunning == true)
         {
             return;
         }
@@ -183,7 +183,7 @@ public void HandleCellLeftClick(GridCell cell)
 
     public void HandleCellRightClick(GridCell cell)
     {
-        if (!IsPlacing)
+        if (!IsPlacing || cell == null || SimulationController.Instance?._isRunning == true)
         {
             return;
         }
@@ -198,7 +198,7 @@ public void HandleCellLeftClick(GridCell cell)
 
 public void HandleAllyPieceRightClick(PieceBase piece)
     {
-        if (piece == null) return;
+        if (piece == null || SimulationController.Instance?._isRunning == true) return;
 
         ResolveDependencies();
         if (stageManager == null) return;
@@ -214,7 +214,7 @@ public void HandleAllyPieceRightClick(PieceBase piece)
 
     private void HandleAllyPieceLeftClick(PieceBase piece)
     {
-        if (piece == null) return;
+        if (piece == null || SimulationController.Instance?._isRunning == true) return;
 
         var prevDirection = piece.FacingDirection;
 
