@@ -32,6 +32,12 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
     public int CurrentHealth { get; private set; }
     [SerializeField] public bool IsDead = false;
     public bool IsActionFinished { get; protected set; }
+    private bool _hasSpawnState;
+    private Vector3 _spawnPosition;
+    private Quaternion _spawnRotation;
+    private int _spawnGridX;
+    private int _spawnGridY;
+    private Direction _spawnFacingDirection;
 
     /// <summary>페이즈 인덱스 (Brawler=1, Slasher=2, Gunman=3, 미행동=0)</summary>
     public virtual int SimulationPhaseIndex => 0;
@@ -60,8 +66,8 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
         _HUD = transform.Find("HUD")?.gameObject;
 
         _HUD?.SetActive(true);
+        ResetColliderState();
     }
-
     public void Update()
     {
         if (_HUD != null)
@@ -99,13 +105,8 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
         IsActionFinished = false;
         CanAct = false;
         PhaseOffset = 0;
-
-        foreach (var col in GetComponentsInChildren<Collider>())
-        {
-            // AttackHitbox 전용 콜라이더는 BeginAttack/EndAttack으로만 제어
-            if (col.GetComponent<AttackHitbox>() != null) continue;
-            col.enabled = true;
-        }
+        ResetAnimatorState(false);
+        ResetColliderState();
     }
 
     /// <summary>Phase 0에서 호출. FindTarget 결과로 CanAct를 설정한다.</summary>
@@ -145,8 +146,8 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
         IsDead = true;
         IsActionFinished = true;
 
-        foreach (var col in GetComponentsInChildren<Collider>())
-            col.enabled = false;
+        // foreach (var col in GetComponentsInChildren<Collider>())
+        //     col.enabled = false;
 
         PlayDeathAnimation();
         OnDied?.Invoke(this);
@@ -168,11 +169,48 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
         IsActionFinished = false;
         CanAct = false;
         PhaseOffset = 0;
-        var animator = GetComponentInChildren<Animator>();
+        ResetAnimatorState(true);
+        ResetColliderState();
+    }
 
-        animator?.Play("Idle", 0, 0f);
-        foreach (var col in GetComponentsInChildren<Collider>())
-            col.enabled = true;
+    public void CaptureSpawnState()
+    {
+        _hasSpawnState = true;
+        _spawnPosition = transform.position;
+        _spawnRotation = transform.rotation;
+        _spawnGridX = GridX;
+        _spawnGridY = GridY;
+        _spawnFacingDirection = FacingDirection;
+    }
+
+    public void RestoreSpawnState()
+    {
+        if (!_hasSpawnState)
+        {
+            return;
+        }
+
+        transform.SetPositionAndRotation(_spawnPosition, _spawnRotation);
+        GridX = _spawnGridX;
+        GridY = _spawnGridY;
+        FacingDirection = _spawnFacingDirection;
+    }
+
+    public void PlayResetAnimation()
+    {
+        var animator = GetComponentInChildren<Animator>();
+        if (animator == null)
+        {
+            return;
+        }
+
+        if (HasTriggerParameter(animator, "Reset"))
+        {
+            animator.SetTrigger("Reset");
+            return;
+        }
+
+        animator.Play("Idle", 0, 0f);
     }
 
     // ─── Grid Helpers ────────────────────────────────────────────────
@@ -249,9 +287,8 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
     /// <summary>
     /// other가 자신의 적 진영인지 확인한다 (중립은 적이 아님). AttackHitbox 등 외부에서도 사용 가능.
     /// </summary>
-    public bool IsEnemyOf(PieceBase other) => IsEnemy(other);
 
-    protected bool IsEnemy(PieceBase other)
+    public bool IsEnemyOf(PieceBase other)
     {
         if (Faction == Faction.Ally) return other.Faction == Faction.Enemy;
         if (Faction == Faction.Enemy) return other.Faction == Faction.Ally;
@@ -336,5 +373,51 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
             Direction.West => Quaternion.Euler(0, 270, 0),
             _ => Quaternion.identity,
         };
+    }
+
+    private void ResetAnimatorState(bool snapToIdle)
+    {
+        var animator = GetComponentInChildren<Animator>();
+        if (animator == null)
+        {
+            return;
+        }
+
+        animator.speed = 1f;
+        if (snapToIdle)
+        {
+            animator.Play("Idle", 0, 0f);
+        }
+    }
+
+    private void ResetColliderState()
+    {
+        foreach (var hitbox in GetComponentsInChildren<AttackHitbox>())
+        {
+            hitbox.EndAttack();
+        }
+
+        foreach (var col in GetComponentsInChildren<Collider>())
+        {
+            if (col.GetComponent<AttackHitbox>() != null)
+            {
+                continue;
+            }
+
+            col.enabled = true;
+        }
+    }
+
+    private static bool HasTriggerParameter(Animator animator, string parameterName)
+    {
+        foreach (var parameter in animator.parameters)
+        {
+            if (parameter.type == AnimatorControllerParameterType.Trigger && parameter.name == parameterName)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

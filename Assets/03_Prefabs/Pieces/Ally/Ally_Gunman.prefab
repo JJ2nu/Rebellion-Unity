@@ -54,6 +54,9 @@ MonoBehaviour:
   _maxHealth: 1
   _attackRange: 6
   _isTargeted: 0
+  _isInRange: 0
+  IsDead: 0
+  CanAct: 0
   _aimDelay: 0.5
   bulletPrefab: {fileID: 8928382629762728089, guid: fa43c05b015c9bd498cff2ee74030960, type: 3}
   _flarePoint: {fileID: 2373138120148190336}
@@ -384,42 +387,13 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 3151246190915733015, guid: c938c50441b0da84191da0da5841198c, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6992138965922294170}
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 8771091787928289351, guid: c938c50441b0da84191da0da5841198c, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 4398905219510960232}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: -4161369568681901532, guid: c938c50441b0da84191da0da5841198c, type: 3}
 --- !u!4 &2128631911405834923 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -3910990755373119420, guid: c938c50441b0da84191da0da5841198c, type: 3}
   m_PrefabInstance: {fileID: 6067252303667256047}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &3281462017164974760 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 8771091787928289351, guid: c938c50441b0da84191da0da5841198c, type: 3}
-  m_PrefabInstance: {fileID: 6067252303667256047}
-  m_PrefabAsset: {fileID: 0}
---- !u!65 &4398905219510960232
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3281462017164974760}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.5, y: 2.12, z: 0.43}
-  m_Center: {x: 0, y: 1.06, z: 0}
 --- !u!4 &9189679040143039736 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3151246190915733015, guid: c938c50441b0da84191da0da5841198c, type: 3}

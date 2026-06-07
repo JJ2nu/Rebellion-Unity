@@ -74,6 +74,9 @@ MonoBehaviour:
   _maxHealth: 1
   _attackRange: 1
   _isTargeted: 0
+  _isInRange: 0
+  IsDead: 0
+  CanAct: 0
 --- !u!114 &-4390087842685452055
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -97,6 +100,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6743604242230680878}
   - component: {fileID: 8661518302046652062}
+  - component: {fileID: 7906682440735277706}
   m_Layer: 0
   m_Name: Fist
   m_TagString: EnemyFist
@@ -140,6 +144,18 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.2
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &7906682440735277706
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4566810906019764094}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd180253f9b9f284293b7fa9d4847d70, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AttackHitbox
 --- !u!1001 &7562271812141870495
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -203,9 +219,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 8771091787928289351, guid: 48769ca43bdfa8a4b8aa2352ba466685, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3527839112243948985}
-    - targetCorrespondingSourceObject: {fileID: 8771091787928289351, guid: 48769ca43bdfa8a4b8aa2352ba466685, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 3511533675742259176}
   m_SourcePrefab: {fileID: -4161369568681901532, guid: 48769ca43bdfa8a4b8aa2352ba466685, type: 3}
 --- !u!1 &1246296047939333592 stripped
 GameObject:
@@ -234,27 +247,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!65 &3511533675742259176
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1246296047939333592}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.5, y: 2.12, z: 0.43}
-  m_Center: {x: 0, y: 1.06, z: 0}
 --- !u!4 &2399231698375828955 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -3910990755373119420, guid: 48769ca43bdfa8a4b8aa2352ba466685, type: 3}

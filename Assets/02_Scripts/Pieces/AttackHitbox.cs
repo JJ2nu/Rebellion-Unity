@@ -37,8 +37,6 @@ public class AttackHitbox : MonoBehaviour
     {
         if (_owner == null) return;
 
-        if (other.transform.root == transform.root) return;
-
         var piece = other.GetComponentInParent<PieceBase>();
         if (piece == null || piece.IsDead) return;
         if (!_owner.IsEnemyOf(piece)) return;

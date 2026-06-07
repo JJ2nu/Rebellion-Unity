@@ -9,14 +9,14 @@ using UnityEngine;
 public class BrawlerPiece : PieceBase
 {
     private Animator _animator;
-    private AttackHitbox _fistHitbox;
+    private AttackHitbox _fistHitBox;
     private float _attackClipLength = -1f;
 
     private void Awake()
     {
         _animator = GetComponentInChildren<Animator>();
-        _fistHitbox = GetComponentInChildren<AttackHitbox>();
-        _fistHitbox?.Initialize(this);
+        _fistHitBox = GetComponentInChildren<AttackHitbox>();
+        _fistHitBox?.Initialize(this);
 
         // Attack 클립 길이 미리 캐싱
         if (_animator != null)
@@ -42,7 +42,7 @@ public class BrawlerPiece : PieceBase
     protected override PieceBase FindTarget(IReadOnlyList<PieceBase> allPieces)
     {
         var closest = FindClosestInLine(allPieces);
-        return (closest != null && IsEnemy(closest)) ? closest : null;
+        return (closest != null && IsEnemyOf(closest)) ? closest : null;
     }
 
     public override IEnumerator ExecuteAction(IReadOnlyList<PieceBase> allPieces, float stepDuration)
@@ -57,17 +57,15 @@ public class BrawlerPiece : PieceBase
         if (_animator != null && _attackClipLength > 0f)
             _animator.speed = _attackClipLength / stepDuration;
 
+        _fistHitBox?.BeginAttack();
         _animator?.SetTrigger("Attack");
-        _fistHitbox?.BeginAttack();
 
         // 애니메이션 절반 지점(주먹 뻗는 정점)에서 타격 판정
-        yield return new WaitForSeconds(stepDuration * 0.5f);
-        if (!target.IsDead)
-            target.TakeDamage(1);
+        yield return new WaitForSeconds(stepDuration );
+        // if (!target.IsDead)
+        //     target.TakeDamage(1);
 
-        yield return new WaitForSeconds(stepDuration * 0.5f);
 
-        _fistHitbox?.EndAttack();
         if (_animator != null) _animator.speed = 1f;
         FinishAction();
     }
