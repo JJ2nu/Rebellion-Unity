@@ -2,12 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.InputSystem;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
 public sealed class StageEditorController : MonoBehaviour
 {
+    private const float PanelWidth = 560f;
+    private const float PanelLeft = 12f;
+    private const float WorldGridY = 0.1f;
+
     private enum BrushMode
     {
         Select,
@@ -21,6 +26,7 @@ public sealed class StageEditorController : MonoBehaviour
     [SerializeField] private string stageFolder = "Stages";
 
     [Header("Preview Prefabs")]
+    [SerializeField] private GameObject gridCellPrefab;
     [SerializeField] private GameObject[] mapPrefabs;
     [SerializeField] private GameObject[] enemyPiecePrefabs;
     [SerializeField] private GameObject[] civilianPiecePrefabs;
@@ -37,6 +43,7 @@ public sealed class StageEditorController : MonoBehaviour
 
     private readonly List<string> stagePaths = new();
     private readonly List<GameObject> spawnedPreviewObjects = new();
+    private readonly List<GridCell> spawnedGridCells = new();
     private readonly Dictionary<string, string> inputBuffers = new();
     private readonly Dictionary<string, bool> dropdownStates = new();
 
@@ -50,15 +57,25 @@ public sealed class StageEditorController : MonoBehaviour
     private int brushFacing;
     private int newStageNumber = 1;
     private GameObject currentMapInstance;
+    private GridCell hoveredGridCell;
 
     private void Awake()
     {
         EnsurePreviewRoot();
         RefreshPrefabReferences();
         RefreshStageList();
+        Input.imeCompositionMode = IMECompositionMode.On;
         if (stagePaths.Count > 0)
         {
             LoadStage(stagePaths[0]);
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (Input.imeCompositionMode == IMECompositionMode.On)
+        {
+            Input.imeCompositionMode = IMECompositionMode.Auto;
         }
     }
 
@@ -67,10 +84,15 @@ public sealed class StageEditorController : MonoBehaviour
         DrawPanel();
     }
 
+    private void Update()
+    {
+        HandleKeyboardShortcuts();
+        HandleWorldGridInteraction();
+    }
+
     private void DrawPanel()
     {
-        const float panelWidth = 560f;
-        GUILayout.BeginArea(new Rect(12f, 12f, panelWidth, Screen.height - 24f), GUI.skin.box);
+        GUILayout.BeginArea(new Rect(PanelLeft, 12f, PanelWidth, Screen.height - 24f), GUI.skin.box);
         panelScroll = GUILayout.BeginScrollView(panelScroll);
 
         GUILayout.Label("Stage Editor", GUI.skin.box);
@@ -172,14 +194,19 @@ public sealed class StageEditorController : MonoBehaviour
 
     private void DrawBrushControls()
     {
-        GUILayout.Label("Brush", GUI.skin.box);
+        GUILayout.Label("Placement", GUI.skin.box);
         DrawBrushModeButtons();
-        if (DrawDetailTypeList("Brush Prefab", brushMode, brushDetailType, out int detailType))
-        {
-            brushDetailType = detailType;
-        }
 
-        if (DrawFacingList("Brush Direction", brushFacing, out int facing))
+        GUILayout.Label("Enemy Slots", GUI.skin.box);
+        DrawPlacementButtons(BrushMode.Enemy, enemyPiecePrefabs);
+
+        GUILayout.Label("Civilian Slots", GUI.skin.box);
+        DrawPlacementButtons(BrushMode.Civilian, civilianPiecePrefabs);
+
+        GUILayout.Label("Object Slots", GUI.skin.box);
+        DrawPlacementButtons(BrushMode.Object, GetObjectPrefabs(currentStage.mapIndex));
+
+        if (DrawFacingList("Placement Direction", brushFacing, out int facing))
         {
             brushFacing = facing;
         }
@@ -191,7 +218,8 @@ public sealed class StageEditorController : MonoBehaviour
             BrushMode.Object => GetObjectPrefabName(currentStage.mapIndex, brushDetailType),
             _ => "-",
         };
-        GUILayout.Label($"Prefab: {prefabName}");
+        GUILayout.Label($"Selected: {brushMode} / {prefabName}");
+        GUILayout.Label("Tip: Press Tab to rotate the current placement.");
     }
 
     private void DrawBrushModeButtons()
@@ -199,12 +227,6 @@ public sealed class StageEditorController : MonoBehaviour
         GUILayout.BeginVertical(GUI.skin.box);
         GUILayout.BeginHorizontal();
         DrawBrushModeButton(BrushMode.Select, "Select");
-        DrawBrushModeButton(BrushMode.Enemy, "Enemy");
-        DrawBrushModeButton(BrushMode.Civilian, "Civil");
-        GUILayout.EndHorizontal();
-
-        GUILayout.BeginHorizontal();
-        DrawBrushModeButton(BrushMode.Object, "Object");
         DrawBrushModeButton(BrushMode.Erase, "Erase");
         GUILayout.FlexibleSpace();
         GUILayout.EndHorizontal();
@@ -225,6 +247,56 @@ public sealed class StageEditorController : MonoBehaviour
         }
 
         GUI.backgroundColor = oldColor;
+    }
+
+    private void DrawPlacementButtons(BrushMode mode, GameObject[] prefabs)
+    {
+        if (prefabs == null || prefabs.Length == 0)
+        {
+            GUILayout.Label("No prefabs found.", GUI.skin.box);
+            return;
+        }
+
+        GUILayout.BeginVertical(GUI.skin.box);
+        int columnCount = 2;
+        for (int index = 0; index < prefabs.Length; index += columnCount)
+        {
+            GUILayout.BeginHorizontal();
+            for (int offset = 0; offset < columnCount; offset++)
+            {
+                int prefabIndex = index + offset;
+                if (prefabIndex >= prefabs.Length)
+                {
+                    GUILayout.FlexibleSpace();
+                    continue;
+                }
+
+                GameObject prefab = prefabs[prefabIndex];
+                string label = GetPaletteButtonLabel(mode, prefabIndex, prefab);
+                bool isSelected = brushMode == mode && brushDetailType == prefabIndex;
+
+                Color oldColor = GUI.backgroundColor;
+                if (isSelected)
+                {
+                    GUI.backgroundColor = Color.yellow;
+                }
+
+                bool isSelectable = prefab != null;
+                GUI.enabled = isSelectable;
+                bool pressed = GUILayout.Button(label, GUILayout.Width(240f), GUILayout.Height(28f));
+                GUI.enabled = true;
+
+                if (pressed && isSelectable)
+                {
+                    brushMode = mode;
+                    brushDetailType = prefabIndex;
+                }
+
+                GUI.backgroundColor = oldColor;
+            }
+            GUILayout.EndHorizontal();
+        }
+        GUILayout.EndVertical();
     }
 
     private void DrawSelectedEntityControls()
@@ -296,7 +368,7 @@ public sealed class StageEditorController : MonoBehaviour
 
     private void DrawGridEditor()
     {
-        GUILayout.Label("Board", GUI.skin.box);
+        GUILayout.Label("Board (or click world tiles)", GUI.skin.box);
         int boardSize = Mathf.Max(1, currentStage.boardSize);
 
         for (int z = 0; z < boardSize; z++)
@@ -404,7 +476,9 @@ public sealed class StageEditorController : MonoBehaviour
         EnsurePreviewRoot();
         ClearPreview();
         SpawnMapPreview();
+        SpawnGridPreview();
         SpawnEntityPreviews();
+        RefreshGridCellVisuals();
     }
 
     private void SpawnMapPreview()
@@ -443,6 +517,38 @@ public sealed class StageEditorController : MonoBehaviour
             instance.transform.SetPositionAndRotation(position, rotation);
             instance.transform.SetParent(previewRoot, true);
             spawnedPreviewObjects.Add(instance);
+        }
+    }
+
+    private void SpawnGridPreview()
+    {
+        if (gridCellPrefab == null || currentStage == null)
+        {
+            return;
+        }
+
+        int boardSize = Mathf.Max(1, currentStage.boardSize);
+        spawnedGridCells.Clear();
+
+        for (int z = 0; z < boardSize; z++)
+        {
+            for (int x = boardSize - 1; x >= 0; x--)
+            {
+                int cellIndex = StageGridIndexUtility.ToCellIndex(boardSize, x, z);
+                Vector3 position = GetCellPosition(cellIndex);
+                position.y = WorldGridY;
+
+                GameObject cellObject = Instantiate(gridCellPrefab, position, Quaternion.identity, previewRoot);
+                cellObject.name = $"EditorGridCell_{cellIndex}";
+                GridCell gridCell = cellObject.GetComponent<GridCell>();
+                if (gridCell != null)
+                {
+                    gridCell.Initialize(cellIndex, boardSize);
+                    spawnedGridCells.Add(gridCell);
+                }
+
+                spawnedPreviewObjects.Add(cellObject);
+            }
         }
     }
 
@@ -588,6 +694,18 @@ public sealed class StageEditorController : MonoBehaviour
         return prefab != null ? $"{index}: {prefab.name}" : $"{index}: Missing";
     }
 
+    private static string GetPaletteButtonLabel(BrushMode mode, int index, GameObject prefab)
+    {
+        if (prefab != null)
+        {
+            return $"{index}: {prefab.name}";
+        }
+
+        return mode == BrushMode.Enemy
+            ? $"{index}: Reserved"
+            : $"{index}: Missing";
+    }
+
     private bool DrawPrefabDropdown(string key, string title, GameObject[] prefabs, int currentIndex, out int selectedIndex)
     {
         if (prefabs == null || prefabs.Length == 0)
@@ -705,6 +823,7 @@ public sealed class StageEditorController : MonoBehaviour
 
     private void LoadStage(string path)
     {
+        CommitPendingInputs();
         if (!File.Exists(path))
         {
             return;
@@ -726,6 +845,7 @@ public sealed class StageEditorController : MonoBehaviour
             return;
         }
 
+        CommitPendingInputs();
         EnsureStageArrays();
         Directory.CreateDirectory(Path.GetDirectoryName(currentStagePath));
         File.WriteAllText(currentStagePath, JsonUtility.ToJson(currentStage, true));
@@ -743,8 +863,9 @@ public sealed class StageEditorController : MonoBehaviour
     private void RefreshPrefabReferences()
     {
 #if UNITY_EDITOR
+        gridCellPrefab = LoadPrefabAtPath("Assets/03_Prefabs/Indicators/GridTiles/GridCell.prefab", gridCellPrefab);
         mapPrefabs = LoadPrefabFolder(mapPrefabFolder, mapPrefabs);
-        enemyPiecePrefabs = LoadPrefabFolder(enemyPrefabFolder, enemyPiecePrefabs);
+        enemyPiecePrefabs = NormalizeEnemyPrefabIndices(LoadPrefabFolder(enemyPrefabFolder, enemyPiecePrefabs));
         civilianPiecePrefabs = LoadPrefabFolder(civilianPrefabFolder, civilianPiecePrefabs);
 #endif
     }
@@ -773,6 +894,17 @@ public sealed class StageEditorController : MonoBehaviour
         return prefabs.Count > 0 ? prefabs.ToArray() : fallbackPrefabs ?? Array.Empty<GameObject>();
     }
 
+    private static GameObject LoadPrefabAtPath(string assetPath, GameObject fallbackPrefab)
+    {
+        if (string.IsNullOrWhiteSpace(assetPath))
+        {
+            return fallbackPrefab;
+        }
+
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+        return prefab != null ? prefab : fallbackPrefab;
+    }
+
     private static int ComparePrefabOrder(GameObject left, GameObject right)
     {
         int leftPriority = GetPrefabOrderPriority(left != null ? left.name : string.Empty);
@@ -792,6 +924,44 @@ public sealed class StageEditorController : MonoBehaviour
         if (prefabName.IndexOf("Civilian_01", StringComparison.OrdinalIgnoreCase) >= 0) return 0;
         if (prefabName.IndexOf("Eliza", StringComparison.OrdinalIgnoreCase) >= 0) return 1;
         return 100;
+    }
+
+    private static GameObject[] NormalizeEnemyPrefabIndices(GameObject[] prefabs)
+    {
+        GameObject[] normalized = new GameObject[4];
+        if (prefabs == null)
+        {
+            return normalized;
+        }
+
+        for (int i = 0; i < prefabs.Length; i++)
+        {
+            GameObject prefab = prefabs[i];
+            if (prefab == null)
+            {
+                continue;
+            }
+
+            string prefabName = prefab.name;
+            if (prefabName.IndexOf("Brawler", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                normalized[0] = prefab;
+            }
+            else if (prefabName.IndexOf("Slasher", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                normalized[1] = prefab;
+            }
+            else if (prefabName.IndexOf("Gunman", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                normalized[2] = prefab;
+            }
+            else if (prefabName.IndexOf("Boss", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                normalized[3] = prefab;
+            }
+        }
+
+        return normalized;
     }
 #endif
 
@@ -914,6 +1084,8 @@ public sealed class StageEditorController : MonoBehaviour
 
     private void ClearPreview()
     {
+        hoveredGridCell = null;
+        spawnedGridCells.Clear();
         if (currentMapInstance != null)
         {
             Destroy(currentMapInstance);
@@ -961,15 +1133,20 @@ public sealed class StageEditorController : MonoBehaviour
         inputBuffers[key] = raw;
         GUILayout.EndHorizontal();
 
-        if (!IsEnterPressedOn(controlName) || !int.TryParse(raw, out int parsed))
+        bool pressedEnter = IsEnterPressedOn(controlName);
+        bool lostFocus = GUI.GetNameOfFocusedControl() != controlName && raw != value.ToString();
+        if ((!pressedEnter && !lostFocus) || !int.TryParse(raw, out int parsed))
         {
             return false;
         }
 
         result = parsed;
         inputBuffers[key] = result.ToString();
-        GUI.FocusControl(null);
-        return true;
+        if (pressedEnter)
+        {
+            GUI.FocusControl(null);
+        }
+        return result != value;
     }
 
     private bool TextField(string key, string label, string value, out string result)
@@ -983,14 +1160,19 @@ public sealed class StageEditorController : MonoBehaviour
         inputBuffers[key] = raw;
         GUILayout.EndHorizontal();
 
-        if (!IsEnterPressedOn(controlName))
+        bool pressedEnter = IsEnterPressedOn(controlName);
+        bool lostFocus = GUI.GetNameOfFocusedControl() != controlName && raw != result;
+        if (!pressedEnter && !lostFocus)
         {
             return false;
         }
 
         result = raw;
-        GUI.FocusControl(null);
-        return true;
+        if (pressedEnter)
+        {
+            GUI.FocusControl(null);
+        }
+        return result != (value ?? string.Empty);
     }
 
     private string GetInputBuffer(string key, string fallback)
@@ -1017,6 +1199,244 @@ public sealed class StageEditorController : MonoBehaviour
 
         currentEvent.Use();
         return true;
+    }
+
+    private void CommitPendingInputs()
+    {
+        if (currentStage == null)
+        {
+            return;
+        }
+
+        ApplyBufferedInt("stage.version", value => currentStage.version = value);
+        ApplyBufferedInt("stage.boardSize", value => currentStage.boardSize = Mathf.Clamp(value, 1, 12));
+        ApplyBufferedText("stage.mainMission", value => currentStage.mainMission = value);
+        ApplyBufferedText("stage.subMission1", value => currentStage.subMission1 = value);
+        ApplyBufferedText("stage.subMission2", value => currentStage.subMission2 = value);
+        ApplyBufferedInt("save.newStageNumber", value => newStageNumber = Mathf.Max(1, value));
+
+        EnsureAllySlots();
+        ApplyBufferedInt($"ally.{PieceType.Brawler}", value => SetAllySlotCount(PieceType.Brawler, Mathf.Max(0, value)));
+        ApplyBufferedInt($"ally.{PieceType.Slasher}", value => SetAllySlotCount(PieceType.Slasher, Mathf.Max(0, value)));
+        ApplyBufferedInt($"ally.{PieceType.Gunman}", value => SetAllySlotCount(PieceType.Gunman, Mathf.Max(0, value)));
+
+        StageEntityData selected = GetSelectedEntity();
+        if (selected == null)
+        {
+            return;
+        }
+
+        string keyPrefix = $"entity.{selectedEntityIndex}";
+        ApplyBufferedInt($"{keyPrefix}.cellIndex", value => selected.cellIndex = Mathf.Clamp(value, 0, CellCount - 1));
+    }
+
+    private void ApplyBufferedInt(string key, Action<int> apply)
+    {
+        if (apply == null || !inputBuffers.TryGetValue(key, out string raw) || !int.TryParse(raw, out int parsed))
+        {
+            return;
+        }
+
+        apply(parsed);
+        inputBuffers[key] = parsed.ToString();
+    }
+
+    private void ApplyBufferedText(string key, Action<string> apply)
+    {
+        if (apply == null || !inputBuffers.TryGetValue(key, out string raw))
+        {
+            return;
+        }
+
+        apply(raw);
+    }
+
+    private void SetAllySlotCount(PieceType type, int count)
+    {
+        int index = FindAllySlotIndex(type);
+        if (index < 0)
+        {
+            return;
+        }
+
+        currentStage.allySlots[index].count = count;
+    }
+
+    private void HandleKeyboardShortcuts()
+    {
+        if (Keyboard.current == null)
+        {
+            return;
+        }
+
+        if (Keyboard.current.tabKey.wasPressedThisFrame && IsPlacementBrushMode(brushMode) && !IsTextFieldFocused())
+        {
+            brushFacing = (brushFacing + 1) % 4;
+            RefreshGridCellVisuals();
+        }
+    }
+
+    private static bool IsPlacementBrushMode(BrushMode mode)
+    {
+        return mode == BrushMode.Enemy || mode == BrushMode.Civilian || mode == BrushMode.Object;
+    }
+
+    private static bool IsTextFieldFocused()
+    {
+        return GUI.GetNameOfFocusedControl().StartsWith("StageEditorField_", StringComparison.Ordinal);
+    }
+
+    private void HandleWorldGridInteraction()
+    {
+        if (currentStage == null)
+        {
+            return;
+        }
+
+        if (IsPointerOverPanel())
+        {
+            UpdateHoveredGridCell(null);
+            return;
+        }
+
+        GridCell hitGridCell = RaycastGridCell();
+        UpdateHoveredGridCell(hitGridCell);
+
+        if (hitGridCell == null)
+        {
+            return;
+        }
+
+        if (IsPointerButtonPressedThisFrame(true))
+        {
+            HandleCellClick(hitGridCell.CellIndex, FindEntityIndexAtCell(hitGridCell.CellIndex));
+        }
+        else if (IsPointerButtonPressedThisFrame(false) && IsPlacementBrushMode(brushMode))
+        {
+            brushMode = BrushMode.Select;
+            RefreshGridCellVisuals();
+        }
+    }
+
+    private GridCell RaycastGridCell()
+    {
+        Camera mainCamera = Camera.main;
+        if (mainCamera == null)
+        {
+            return null;
+        }
+
+        Vector2 pointerScreenPosition = GetPointerScreenPosition();
+        Ray ray = mainCamera.ScreenPointToRay(pointerScreenPosition);
+        RaycastHit[] hits = Physics.RaycastAll(ray, 500f);
+        if (hits == null || hits.Length == 0)
+        {
+            return null;
+        }
+
+        Array.Sort(hits, (left, right) => left.distance.CompareTo(right.distance));
+        for (int index = 0; index < hits.Length; index++)
+        {
+            GridCell gridCell = hits[index].collider.GetComponentInParent<GridCell>();
+            if (gridCell != null && spawnedGridCells.Contains(gridCell))
+            {
+                return gridCell;
+            }
+        }
+
+        return null;
+    }
+
+    private void UpdateHoveredGridCell(GridCell nextGridCell)
+    {
+        if (ReferenceEquals(hoveredGridCell, nextGridCell))
+        {
+            return;
+        }
+
+        hoveredGridCell = nextGridCell;
+        RefreshGridCellVisuals();
+    }
+
+    private void RefreshGridCellVisuals()
+    {
+        for (int index = 0; index < spawnedGridCells.Count; index++)
+        {
+            GridCell gridCell = spawnedGridCells[index];
+            if (gridCell == null)
+            {
+                continue;
+            }
+
+            int entityIndex = FindEntityIndexAtCell(gridCell.CellIndex);
+            bool isHovered = ReferenceEquals(gridCell, hoveredGridCell);
+            bool isSelected = entityIndex >= 0 && entityIndex == selectedEntityIndex;
+
+            if (isHovered)
+            {
+                if (IsPlacementBrushMode(brushMode))
+                {
+                    gridCell.ShowMoveHighlight(true, Quaternion.Euler(0f, brushFacing * 90f, 0f));
+                }
+                else
+                {
+                    gridCell.ShowRangeHighlight(true);
+                }
+
+                continue;
+            }
+
+            if (isSelected)
+            {
+                gridCell.ShowRangeHighlight(true);
+            }
+            else if (entityIndex >= 0)
+            {
+                gridCell.ShowPlacementAvailability(false);
+            }
+            else
+            {
+                gridCell.ResetVisual();
+            }
+        }
+    }
+
+    private static bool IsPointerOverPanel()
+    {
+        Vector2 pointerPosition = GetPointerScreenPosition();
+        return pointerPosition.x >= PanelLeft && pointerPosition.x <= PanelLeft + PanelWidth;
+    }
+
+    private static Vector2 GetPointerScreenPosition()
+    {
+        if (Mouse.current != null)
+        {
+            return Mouse.current.position.ReadValue();
+        }
+
+        if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.isPressed)
+        {
+            return Touchscreen.current.primaryTouch.position.ReadValue();
+        }
+
+        return Vector2.zero;
+    }
+
+    private static bool IsPointerButtonPressedThisFrame(bool primaryButton)
+    {
+        if (Mouse.current != null)
+        {
+            return primaryButton
+                ? Mouse.current.leftButton.wasPressedThisFrame
+                : Mouse.current.rightButton.wasPressedThisFrame;
+        }
+
+        if (primaryButton && Touchscreen.current != null)
+        {
+            return Touchscreen.current.primaryTouch.press.wasPressedThisFrame;
+        }
+
+        return false;
     }
 
     private static string GetEntityShortLabel(StageEntityData entity)

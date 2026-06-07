@@ -107,7 +107,7 @@ public class GunmanPiece : PieceBase
             float cellDuration = stepDuration;
             while (elapsed < cellDuration)
             {
-                elapsed += Time.deltaTime;
+                elapsed += Time.deltaTime *2;
                 if (bullet != null)
                     bullet.transform.position = Vector3.Lerp(currentPos, targetPos, elapsed / cellDuration);
                 yield return null;
