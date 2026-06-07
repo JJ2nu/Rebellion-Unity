@@ -18,21 +18,9 @@ public class SlasherPiece : PieceBase
 
     private bool _attackAnimEnded =false;
     private Vector3 targetWorldPos;
-    private Vector3 _spawnWorldPos;
-    private int _spawnGridX;
-    private int _spawnGridY;
-    private bool _spawnRecorded;
-
     private int _currentAttackRange = 1;
 
     private AttackHitbox _knifeHitBox;
-
-    private void OnDisable()
-    {
-        // 기물이 슬롯으로 되돌아갔을 때(비활성화 시) 기록을 초기화하여
-        // 다음에 다시 배치될 때 새로운 위치를 정상적으로 기록하도록 합니다.
-        _spawnRecorded = false;
-    }
 
     private void Awake()
     {
@@ -57,23 +45,7 @@ public class SlasherPiece : PieceBase
 
     public override void OnSimulationStart()
     {
-
-        // 시뮬레이션 최초 시작 시 배치 위치 기록
-        if (!_spawnRecorded)
-        {
-            _spawnWorldPos = transform.position;
-            _spawnGridX = GridX;
-            _spawnGridY = GridY;
-            _spawnRecorded = true;
-        }
-        else
-        {
-            // 리셋: 초기 배치 위치로 복원
-            transform.position = _spawnWorldPos;
-            GridX = _spawnGridX;
-            GridY = _spawnGridY;
-        }
-            _attackAnimEnded = false;
+        _attackAnimEnded = false;
 
         base.OnSimulationStart();
     }

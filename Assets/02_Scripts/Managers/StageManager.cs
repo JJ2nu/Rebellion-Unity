@@ -151,29 +151,30 @@ public class StageManager : MonoBehaviour
         {
             enemy.piece._HUD.SetActive(true);
         }
-
-        // 아군: 위치 유지, 상태만 초기화
-        foreach (var ally in spawnedAllyPieces)
-        {
-            if (ally == null) continue;
-            ally.gameObject.SetActive(true);
-            ally.OnSimulationStart();
-
-            var animator = ally.GetComponentInChildren<Animator>();
-            animator?.SetTrigger("Reset");
-        }
-
-        // 적: 풀로 반환 후 재스폰
-        SpawnEnemies(currentStageData);
-
-        // 민간인: 파괴 후 재스폰
         if (civilianPieces != null)
         {
             foreach (var civilian in civilianPieces)
-                if (civilian != null) Destroy(civilian.gameObject);
+            {
+                civilian?._HUD?.SetActive(true);
+            }
         }
-        civilianPieces = null;
-        SpawnCivilians(currentStageData);
+
+        foreach (var ally in spawnedAllyPieces)
+        {
+            ResetPieceForRetry(ally);
+        }
+
+        if (civilianPieces != null)
+        {
+            foreach (var civilian in civilianPieces)
+            {
+                ResetPieceForRetry(civilian);
+            }
+        }
+        foreach (var enemy in spawnedEnemyPieces)
+        {
+            ResetPieceForRetry(enemy.piece);
+        }
     }
     public GameObject GetAllyPiecePrefab(PieceType pieceType)
     {
@@ -300,6 +301,7 @@ public class StageManager : MonoBehaviour
         allyPiece.GridX = gridCoord.x;
         allyPiece.GridY = gridCoord.y;
         allyPiece.FacingDirection = facingDirection;
+        allyPiece.CaptureSpawnState();
         spawnedAllyPieces.Add(allyPiece);
         return true;
     }
@@ -554,6 +556,7 @@ public class StageManager : MonoBehaviour
             enemyPiece.GridX = gridCoord.x;
             enemyPiece.GridY = gridCoord.y;
             enemyPiece.FacingDirection = (Direction)enemyEntity.facing;
+            enemyPiece.CaptureSpawnState();
 
             int enemyTypeIndex = enemyTypeIndices[enemyEntity.detailType]++;
             enemyPieces[enemyEntity.detailType][enemyTypeIndex] = enemyPiece;
@@ -609,6 +612,7 @@ public class StageManager : MonoBehaviour
                 piece.GridX = gridCoord.x;
                 piece.GridY = gridCoord.y;
                 piece.FacingDirection = (Direction)civilian.facing;
+                piece.CaptureSpawnState();
                 civilianPieces[i] = piece;
             }
         }
@@ -833,6 +837,11 @@ public class StageManager : MonoBehaviour
             if (piece != null && piece.gameObject.activeInHierarchy)
                 result.Add(piece);
 
+        if (civilianPieces != null)
+            foreach (var piece in civilianPieces)
+                if (piece != null && piece.gameObject.activeInHierarchy)
+                    result.Add(piece);
+
         return result.AsReadOnly();
     }
 
@@ -883,6 +892,20 @@ public class StageManager : MonoBehaviour
 
         allyPool[prefabIndex].Enqueue(piece);
     }
+
+    private static void ResetPieceForRetry(PieceBase piece)
+    {
+        if (piece == null)
+        {
+            return;
+        }
+
+        piece.gameObject.SetActive(true);
+        piece.RestoreSpawnState();
+        piece.OnSimulationStart();
+        piece.PlayResetAnimation();
+    }
+
     public void SetAttackRange(int[] cellIndices)
     {
         foreach (int idx in cellIndices)

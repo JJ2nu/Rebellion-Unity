@@ -71,6 +71,10 @@ public class SimulationController : MonoBehaviour
                 piece.IsDead = false;
             }
         }
+        foreach (var bullet in FindObjectsByType<BulletController>())
+        {
+            Destroy(bullet.gameObject);
+        }
         GameManager.Instance.ResetAllTile();
         _isRunning = false;
         _currentPhase = 0;
