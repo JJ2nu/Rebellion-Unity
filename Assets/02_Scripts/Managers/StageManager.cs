@@ -126,6 +126,8 @@ public class StageManager : MonoBehaviour
 
         //Debug.Log($"Stage parsed: mapIndex={parsedData.mapIndex}, entityCount={parsedData.entities.Length}", this);
         StageLoaded?.Invoke(currentStageData);
+
+        SimulationController.Instance?.ResetSimulation();
     }
 
     public void EndStage()
