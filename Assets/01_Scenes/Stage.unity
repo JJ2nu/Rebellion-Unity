@@ -517,7 +517,7 @@ Light:
   m_InnerSpotAngle: 21.80208
   m_CookieSize2D: {x: 0.5, y: 0.5}
   m_Shadows:
-    m_Type: 0
+    m_Type: 2
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
@@ -1203,37 +1203,17 @@ PrefabInstance:
       value: GameManager
       objectReference: {fileID: 0}
     - target: {fileID: 6562320009633688067, guid: f0e9e1a4490476f4e83197bb34b20713, type: 3}
-      propertyPath: stageManager
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 6562320009633688067, guid: f0e9e1a4490476f4e83197bb34b20713, type: 3}
-      propertyPath: initialMapIndex
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 6562320009633688067, guid: f0e9e1a4490476f4e83197bb34b20713, type: 3}
       propertyPath: initialStagePath
-      value: Stages/stage_005.json
+      value: Stages/stage_006.json
+      objectReference: {fileID: 0}
+    - target: {fileID: 6562320009633688067, guid: f0e9e1a4490476f4e83197bb34b20713, type: 3}
+      propertyPath: autoStartFirstStage
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8006600841717635771, guid: f0e9e1a4490476f4e83197bb34b20713, type: 3}
       propertyPath: raycastCamera
       value: 
       objectReference: {fileID: 1413033650}
-    - target: {fileID: 8006600841717635771, guid: f0e9e1a4490476f4e83197bb34b20713, type: 3}
-      propertyPath: leftClickAction
-      value: 
-      objectReference: {fileID: 7490723811521843157, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-    - target: {fileID: 8006600841717635771, guid: f0e9e1a4490476f4e83197bb34b20713, type: 3}
-      propertyPath: rightClickAction
-      value: 
-      objectReference: {fileID: 624618501342684686, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-    - target: {fileID: 8006600841717635771, guid: f0e9e1a4490476f4e83197bb34b20713, type: 3}
-      propertyPath: raycastLayers.m_Bits
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8006600841717635771, guid: f0e9e1a4490476f4e83197bb34b20713, type: 3}
-      propertyPath: pointerPositionAction
-      value: 
-      objectReference: {fileID: -1899296094067532810, guid: 052faaac586de48259a63d0c4782560b, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

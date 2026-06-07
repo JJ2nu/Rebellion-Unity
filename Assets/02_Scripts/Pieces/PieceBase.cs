@@ -43,7 +43,7 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
     public int EffectivePhaseIndex => SimulationPhaseIndex + PhaseOffset;
 
     /// <summary>시뮬레이션 0페이즈에서 설정된 공격 가능 여부</summary>
-    public bool CanAct { get; private set; }
+    [SerializeField] public bool CanAct = false;
 
     /// <summary>현재 기물 목록 기준으로 즉시 공격 가능 여부를 반환한다 (호버 표시용).</summary>
     public bool CheckCanActNow(IReadOnlyList<PieceBase> allPieces) => FindTarget(allPieces) != null;
@@ -74,7 +74,8 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
             {
                 if (!_isTargeted)
                 {
-                    CheckCanAct(StageManager.Instance.GetAllActivePieces());
+                    if (SimulationController.Instance == null || !SimulationController.Instance._isRunning)
+                        CheckCanAct(StageManager.Instance.GetAllActivePieces());
                     if (CanAct)
                     {
                         _HUD.GetComponent<InGameHUDUI>().Active();
@@ -110,7 +111,7 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
     /// <summary>Phase 0에서 호출. FindTarget 결과로 CanAct를 설정한다.</summary>
     public void CheckCanAct(IReadOnlyList<PieceBase> allPieces)
     {
-        CanAct = FindTarget(allPieces) != null;
+        CanAct = !IsDead && FindTarget(allPieces) != null;
     }
 
     /// <summary>
@@ -157,6 +158,21 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
         if (animator == null) return;
         // Play()는 HasExitTime/Transition 완전 무시하고 즉시 강제 재생
         animator.Play("Hit", 0, 0f);
+    }
+
+
+    public void ResetState()
+    {
+        CurrentHealth = _maxHealth;
+        IsDead = false;
+        IsActionFinished = false;
+        CanAct = false;
+        PhaseOffset = 0;
+        var animator = GetComponentInChildren<Animator>();
+
+        animator?.Play("Idle", 0, 0f);
+        foreach (var col in GetComponentsInChildren<Collider>())
+            col.enabled = true;
     }
 
     // ─── Grid Helpers ────────────────────────────────────────────────

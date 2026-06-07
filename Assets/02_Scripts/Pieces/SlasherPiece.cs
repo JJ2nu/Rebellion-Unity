@@ -16,6 +16,8 @@ public class SlasherPiece : PieceBase
     private float _attack1ClipLength = -1f;
     private float _attack2ClipLength = -1f;
 
+    private bool _attackAnimEnded =false;
+    private Vector3 targetWorldPos;
     private Vector3 _spawnWorldPos;
     private int _spawnGridX;
     private int _spawnGridY;
@@ -39,9 +41,9 @@ public class SlasherPiece : PieceBase
             foreach (var clip in _animator.runtimeAnimatorController.animationClips)
             {
                 string n = clip.name.ToLower();
-                if (n.Contains("knife01") || n.Contains("knife_01") || n.Contains("attack_01"))
+                if (n.Contains("range1") || n.Contains("knife_01") || n.Contains("attack_01"))
                     _attack1ClipLength = clip.length;
-                else if (n.Contains("knife02") || n.Contains("knife_02") || n.Contains("attack_02"))
+                else if (n.Contains("range2") || n.Contains("knife_02") || n.Contains("attack_02"))
                     _attack2ClipLength = clip.length;
             }
         }
@@ -66,6 +68,7 @@ public class SlasherPiece : PieceBase
             GridX = _spawnGridX;
             GridY = _spawnGridY;
         }
+            _attackAnimEnded = false;
 
         base.OnSimulationStart();
     }
@@ -78,48 +81,26 @@ public class SlasherPiece : PieceBase
 
     public override IEnumerator ExecuteAction(IReadOnlyList<PieceBase> allPieces, float stepDuration)
     {
-        var target = FindTarget(allPieces);
+        PieceBase target = FindTarget(allPieces);
         if (target == null)
         {
             FinishAction();
             yield break;
         }
 
-        int dist = ManhattanDistanceTo(target);
+        int dx = target.GridX - GridX;
+        int dy = target.GridY - GridY;
+        int dist = Mathf.Abs(dx) + Mathf.Abs(dy);
         bool is1Cell = dist <= 1;
-        float clipLen = is1Cell ? _attack1ClipLength : _attack2ClipLength;
 
-        int targetGX = target.GridX;
-        int targetGY = target.GridY;
-
-        int boardSize = StageManager.Instance?.CurrentStageData?.boardSize ?? 6;
-        int cellIdx = StageGridIndexUtility.ToCellIndex(boardSize, targetGX, targetGY);
-        Vector3 targetWorldPos = GameManager.Instance != null
-            ? GameManager.Instance.GetCellPosition(cellIdx)
-            : transform.position;
-
-        if (_animator != null && clipLen > 0f)
-            _animator.speed = (clipLen / stepDuration) * _animSpeedMultiplier;
+        int targetGX = target.GridX - Mathf.Clamp(dx, -1, 1);
+        int targetGY = target.GridY - Mathf.Clamp(dy, -1, 1);
+        targetWorldPos = target.transform.position;
+        _attackAnimEnded = false;
 
         _animator?.SetTrigger(is1Cell ? "Attack" : "Attack2");
 
-        Vector3 startPos = transform.position;
-        float dashTime = stepDuration * _dashFraction;
-        float elapsed = 0f;
-
-        // 돌진 시간 동안 부드럽게 위치 이동
-        while (elapsed < dashTime)
-        {
-            elapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsed / dashTime);
-            // 빠르고 역동적인 느낌을 위한 Ease-Out 곡선 적용
-            float easeT = 1f - Mathf.Pow(1f - t, 3f);
-            
-            transform.position = Vector3.Lerp(startPos, targetWorldPos, easeT);
-            yield return null;
-        }
-
-        // 목적지 도착 완료 처리
+        yield return new WaitUntil(() => _attackAnimEnded);
         transform.position = targetWorldPos;
         GridX = targetGX;
         GridY = targetGY;
@@ -127,14 +108,6 @@ public class SlasherPiece : PieceBase
         if (!target.IsDead)
             target.TakeDamage(1);
 
-        // 남은 stepDuration 동안 애니메이션 마무리 대기
-        float remainingTime = stepDuration - dashTime;
-        if (remainingTime > 0f)
-        {
-            yield return new WaitForSeconds(remainingTime);
-        }
-
-        if (_animator != null) _animator.speed = 1f;
         FinishAction();
     }
 
@@ -161,5 +134,9 @@ public class SlasherPiece : PieceBase
         }
     }
 
-
+    public void OnAttackAnimationEnd()
+    {
+        _attackAnimEnded = true;
+    }
+    
 }

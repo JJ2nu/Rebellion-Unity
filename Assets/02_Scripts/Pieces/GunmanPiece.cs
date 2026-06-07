@@ -104,7 +104,7 @@ public class GunmanPiece : PieceBase
 
             // 한 칸을 stepDuration/2 시간 동안 이동 (1스텝에 2칸)
             float elapsed = 0f;
-            float cellDuration = stepDuration * 0.5f;
+            float cellDuration = stepDuration;
             while (elapsed < cellDuration)
             {
                 elapsed += Time.deltaTime;

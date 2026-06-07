@@ -19,6 +19,7 @@ public class GridCell : MonoBehaviour, IWorldInputTarget
         Occupied,
         Direction,
         Empty,
+        Clear,
         End
     }
 
@@ -85,7 +86,11 @@ public class GridCell : MonoBehaviour, IWorldInputTarget
         transform.rotation = pieceRotation;
         ApplyVisualState();
     }
-
+    public void ClearTile()
+    {
+        tileState = TileState.Clear;
+        ApplyVisualState();
+    }
 
     public void ResetVisual()
     {
