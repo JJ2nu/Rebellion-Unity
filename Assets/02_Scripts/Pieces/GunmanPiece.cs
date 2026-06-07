@@ -39,7 +39,7 @@ public class GunmanPiece : PieceBase
     protected override PieceBase FindTarget(IReadOnlyList<PieceBase> allPieces)
     {
         var closest = FindClosestInLine(allPieces);
-        return (closest != null && IsEnemy(closest)) ? closest : null;
+        return (closest != null && IsEnemyOf(closest)) ? closest : null;
     }
 
     public override IEnumerator ExecuteAction(IReadOnlyList<PieceBase> allPieces, float stepDuration)

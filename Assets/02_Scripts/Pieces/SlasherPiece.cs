@@ -18,24 +18,15 @@ public class SlasherPiece : PieceBase
 
     private bool _attackAnimEnded =false;
     private Vector3 targetWorldPos;
-    private Vector3 _spawnWorldPos;
-    private int _spawnGridX;
-    private int _spawnGridY;
-    private bool _spawnRecorded;
-
     private int _currentAttackRange = 1;
 
-    private void OnDisable()
-    {
-        // 기물이 슬롯으로 되돌아갔을 때(비활성화 시) 기록을 초기화하여
-        // 다음에 다시 배치될 때 새로운 위치를 정상적으로 기록하도록 합니다.
-        _spawnRecorded = false;
-    }
+    private AttackHitbox _knifeHitBox;
 
     private void Awake()
     {
         _animator = GetComponentInChildren<Animator>();
-
+        _knifeHitBox = GetComponentInChildren<AttackHitbox>();
+        _knifeHitBox?.Initialize(this);
         if (_animator != null && _animator.runtimeAnimatorController != null)
         {
             foreach (var clip in _animator.runtimeAnimatorController.animationClips)
@@ -47,28 +38,14 @@ public class SlasherPiece : PieceBase
                     _attack2ClipLength = clip.length;
             }
         }
+
     }
 
     public override int SimulationPhaseIndex => 2;
 
     public override void OnSimulationStart()
     {
-        // 시뮬레이션 최초 시작 시 배치 위치 기록
-        if (!_spawnRecorded)
-        {
-            _spawnWorldPos = transform.position;
-            _spawnGridX = GridX;
-            _spawnGridY = GridY;
-            _spawnRecorded = true;
-        }
-        else
-        {
-            // 리셋: 초기 배치 위치로 복원
-            transform.position = _spawnWorldPos;
-            GridX = _spawnGridX;
-            GridY = _spawnGridY;
-        }
-            _attackAnimEnded = false;
+        _attackAnimEnded = false;
 
         base.OnSimulationStart();
     }
@@ -76,7 +53,7 @@ public class SlasherPiece : PieceBase
     protected override PieceBase FindTarget(IReadOnlyList<PieceBase> allPieces)
     {
         var closest = FindClosestInLine(allPieces);
-        return (closest != null && IsEnemy(closest)) ? closest : null;
+        return (closest != null && IsEnemyOf(closest)) ? closest : null;
     }
 
     public override IEnumerator ExecuteAction(IReadOnlyList<PieceBase> allPieces, float stepDuration)
@@ -97,16 +74,16 @@ public class SlasherPiece : PieceBase
         int targetGY = target.GridY - Mathf.Clamp(dy, -1, 1);
         targetWorldPos = target.transform.position;
         _attackAnimEnded = false;
-
+        _knifeHitBox?.BeginAttack();
         _animator?.SetTrigger(is1Cell ? "Attack" : "Attack2");
 
-        yield return new WaitUntil(() => _attackAnimEnded);
+        yield return new WaitUntil(() => _attackAnimEnded == true);
         transform.position = targetWorldPos;
         GridX = targetGX;
         GridY = targetGY;
 
-        if (!target.IsDead)
-            target.TakeDamage(1);
+        // if (!target.IsDead)
+        //     target.TakeDamage(1);
 
         FinishAction();
     }
@@ -120,7 +97,7 @@ public class SlasherPiece : PieceBase
         var indices = new System.Collections.Generic.List<int>();
         _currentAttackRange = ManhattanDistanceTo( FindTarget(StageManager.Instance?.GetAllActivePieces()));   
 
-        for (int i = 1; i <= _currentAttackRange; i++)
+        for (int i = 0; i <= _currentAttackRange; i++)
         {
             int tx = GridX + dx * i;
             int ty = GridY + dy * i;
