@@ -147,11 +147,11 @@ public class StageManager : MonoBehaviour
 
         foreach (var ally in spawnedAllyPieces)
         {
-            ally._HUD.SetActive(true);
+            ally?._HUD?.SetActive(true);
         }
         foreach (var enemy in spawnedEnemyPieces)
         {
-            enemy.piece._HUD.SetActive(true);
+            enemy.piece?._HUD?.SetActive(true);
         }
         if (civilianPieces != null)
         {
@@ -403,7 +403,6 @@ public class StageManager : MonoBehaviour
                 GameObject mapInstance = Instantiate(mapPrefab, mapRoot);
 
                 mapInstance.name = mapPrefab.name;
-                DontDestroyOnLoad(mapInstance);
                 loadedMaps[index] = mapInstance;
             }
 

@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System;
@@ -25,6 +25,8 @@ public class SimulationController : MonoBehaviour
     private PieceBase _currentClickedPiece = null;
     [SerializeField] private List<SkillBase> _skills;
     public IReadOnlyList<SkillBase> GetStageSkills() => _skills.AsReadOnly();
+    public event Action<SimulationResult> SimulationFinished;
+    public event Action<bool> RunningStateChanged;
 
     public enum SimulationResult
     {
@@ -36,6 +38,7 @@ public class SimulationController : MonoBehaviour
     }
 
     [SerializeField] public SimulationResult LastSimulationResult = SimulationResult.Lose; 
+    private bool isExecutingSimulation;
 
     public enum Skills
     {
@@ -57,12 +60,18 @@ public class SimulationController : MonoBehaviour
     }
     public void StartSimulation()
     {
+        if (_isRunning || isExecutingSimulation)
+        {
+            return;
+        }
+
         StartCoroutine(RunSimulation());
     }
 
     public void ResetSimulation()
     {
         StopAllCoroutines();
+        isExecutingSimulation = false;
         foreach (var piece in StageManager.Instance.GetAllPieces())
         {
             if (piece != null)
@@ -76,7 +85,7 @@ public class SimulationController : MonoBehaviour
             Destroy(bullet.gameObject);
         }
         GameManager.Instance.ResetAllTile();
-        _isRunning = false;
+        SetRunning(false);
         _currentPhase = 0;
         _currentStep = 0;
         _lastResult = "-";
@@ -93,7 +102,8 @@ public class SimulationController : MonoBehaviour
 
     private IEnumerator RunSimulation()
     {
-        _isRunning = true;
+        SetRunning(true);
+        isExecutingSimulation = true;
         _currentPhase = 0;
         _currentStep = 0;
         _lastResult = "-";
@@ -120,7 +130,7 @@ public class SimulationController : MonoBehaviour
         {
             if (piece != null && piece._HUD != null)
             {
-                piece._HUD.SetActive(false);
+                piece._HUD?.SetActive(false);
             }
         }
 
@@ -142,8 +152,10 @@ public class SimulationController : MonoBehaviour
 
         var result = DetermineResult(allPieces);
         _lastResult = result.ToString();
-        _isRunning = false;
+        LastSimulationResult = result;
+        isExecutingSimulation = false;
         Debug.Log($"[Simulation] Result: {result}");
+        SimulationFinished?.Invoke(result);
     }
 
     private IEnumerator RunPhase(int phaseIndex, IReadOnlyList<PieceBase> allPieces)
@@ -168,11 +180,27 @@ public class SimulationController : MonoBehaviour
     private IEnumerator TickSteps()
     {
         _currentStep = 0;
-        while (_isRunning)
+        while (isExecutingSimulation)
         {
             yield return new WaitForSeconds(stepDuration);
             _currentStep++;
         }
+    }
+
+    public void MarkSimulationConfirmed()
+    {
+        SetRunning(false);
+    }
+
+    private void SetRunning(bool isRunning)
+    {
+        if (_isRunning == isRunning)
+        {
+            return;
+        }
+
+        _isRunning = isRunning;
+        RunningStateChanged?.Invoke(_isRunning);
     }
 
     private SimulationResult DetermineResult(IReadOnlyList<PieceBase> allPieces)

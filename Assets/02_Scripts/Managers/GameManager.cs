@@ -152,7 +152,6 @@ public class GameManager : MonoBehaviour
                 {
                     gridCell.Initialize(index, gridSize);
                 }
-                DontDestroyOnLoad(cell);
                 loadedGridCells[index] = cell;
             }
         }

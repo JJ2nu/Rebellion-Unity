@@ -4,6 +4,8 @@ using System;
 using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.Video;
 
 public sealed class AudioDramaPlayer : MonoBehaviour
 {
@@ -28,7 +30,11 @@ public sealed class AudioDramaPlayer : MonoBehaviour
     [Header("Bindings")]
     [SerializeField] private CanvasGroup canvasGroup;
     [SerializeField] private AudioSource audioSource;
+    [SerializeField] private VideoPlayer videoPlayer;
     [SerializeField] private TMP_Text dialogueText;
+
+    [Header("Input")]
+    [SerializeField] private InputActionReference skipAction;
 
     [Header("Fade")]
     [SerializeField] private float panelFadeDuration = 0.25f;
@@ -36,6 +42,7 @@ public sealed class AudioDramaPlayer : MonoBehaviour
 
     private AudioDramaDataTable dataTable;
     private Coroutine playRoutine;
+    private bool skipRequested;
 
     #endregion
 
@@ -51,6 +58,16 @@ public sealed class AudioDramaPlayer : MonoBehaviour
     {
         Initialize();
         HideImmediate();
+    }
+
+    private void OnEnable()
+    {
+        BindSkipAction();
+    }
+
+    private void OnDisable()
+    {
+        UnbindSkipAction();
     }
 
     #endregion
@@ -72,6 +89,7 @@ public sealed class AudioDramaPlayer : MonoBehaviour
     public IEnumerator PlayByStageIdAndWait(string stageId)
     {
         Initialize();
+        skipRequested = false;
 
         if (!dataTable.TryGetByStageId(stageId, out AudioDramaData data))
         {
@@ -96,6 +114,8 @@ public sealed class AudioDramaPlayer : MonoBehaviour
 
     public void Stop()
     {
+        skipRequested = true;
+
         if (playRoutine != null)
         {
             StopCoroutine(playRoutine);
@@ -136,9 +156,44 @@ public sealed class AudioDramaPlayer : MonoBehaviour
             audioSource = GetComponent<AudioSource>();
         }
 
+        if (videoPlayer == null)
+        {
+            videoPlayer = GetComponent<VideoPlayer>();
+        }
+
         if (dialogueText == null)
         {
             dialogueText = GetComponentInChildren<TMP_Text>(true);
+        }
+    }
+
+    private void BindSkipAction()
+    {
+        if (skipAction?.action == null)
+        {
+            return;
+        }
+
+        skipAction.action.performed -= HandleSkipPerformed;
+        skipAction.action.performed += HandleSkipPerformed;
+        skipAction.action.Enable();
+    }
+
+    private void UnbindSkipAction()
+    {
+        if (skipAction?.action == null)
+        {
+            return;
+        }
+
+        skipAction.action.performed -= HandleSkipPerformed;
+    }
+
+    private void HandleSkipPerformed(InputAction.CallbackContext _)
+    {
+        if (IsVisibleOrPlaying())
+        {
+            Stop();
         }
     }
 
@@ -154,18 +209,30 @@ public sealed class AudioDramaPlayer : MonoBehaviour
         SetTextAlpha(0f);
 
         yield return FadePanel(0f, 1f, panelFadeDuration);
+        if (skipRequested)
+        {
+            HideImmediate();
+            yield break;
+        }
 
         audioSource.clip = clip;
         audioSource.time = 0f;
         audioSource.Play();
+        PlayVideoIfAssigned();
 
         for (int index = 0; index < data.Lines.Count; index++)
         {
             AudioDramaLineData line = data.Lines[index];
 
-            while (audioSource.isPlaying && audioSource.time < line.StartTime)
+            while (!skipRequested && audioSource.isPlaying && audioSource.time < line.StartTime)
             {
                 yield return null;
+            }
+
+            if (skipRequested)
+            {
+                HideImmediate();
+                yield break;
             }
 
             dialogueText.text = line.Text;
@@ -175,11 +242,17 @@ public sealed class AudioDramaPlayer : MonoBehaviour
             float holdDuration = Mathf.Max(0f, duration - fadeDuration * 2f);
 
             yield return FadeText(0f, 1f, fadeDuration);
-            yield return new WaitForSeconds(holdDuration);
+            yield return WaitForSecondsOrSkip(holdDuration);
             yield return FadeText(1f, 0f, fadeDuration);
+
+            if (skipRequested)
+            {
+                HideImmediate();
+                yield break;
+            }
         }
 
-        while (audioSource.isPlaying)
+        while (!skipRequested && audioSource.isPlaying)
         {
             yield return null;
         }
@@ -219,6 +292,11 @@ public sealed class AudioDramaPlayer : MonoBehaviour
 
         while (elapsed < duration)
         {
+            if (skipRequested)
+            {
+                yield break;
+            }
+
             elapsed += Time.deltaTime;
             canvasGroup.alpha = Mathf.Lerp(from, to, Mathf.Clamp01(elapsed / duration));
             yield return null;
@@ -239,6 +317,11 @@ public sealed class AudioDramaPlayer : MonoBehaviour
 
         while (elapsed < duration)
         {
+            if (skipRequested)
+            {
+                yield break;
+            }
+
             elapsed += Time.deltaTime;
             SetTextAlpha(Mathf.Lerp(from, to, Mathf.Clamp01(elapsed / duration)));
             yield return null;
@@ -254,6 +337,27 @@ public sealed class AudioDramaPlayer : MonoBehaviour
         dialogueText.color = color;
     }
 
+    private IEnumerator WaitForSecondsOrSkip(float duration)
+    {
+        float elapsed = 0f;
+        while (!skipRequested && elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+    }
+
+    private void PlayVideoIfAssigned()
+    {
+        if (videoPlayer == null)
+        {
+            return;
+        }
+
+        videoPlayer.time = 0d;
+        videoPlayer.Play();
+    }
+
     #endregion
 
     #region Visibility
@@ -264,6 +368,12 @@ public sealed class AudioDramaPlayer : MonoBehaviour
         {
             audioSource.Stop();
             audioSource.clip = null;
+        }
+
+        if (videoPlayer != null)
+        {
+            videoPlayer.Stop();
+            videoPlayer.time = 0d;
         }
 
         if (dialogueText != null)
@@ -278,6 +388,14 @@ public sealed class AudioDramaPlayer : MonoBehaviour
             canvasGroup.blocksRaycasts = false;
             canvasGroup.interactable = false;
         }
+    }
+
+    private bool IsVisibleOrPlaying()
+    {
+        return playRoutine != null ||
+               (!skipRequested && audioSource != null && audioSource.isPlaying) ||
+               (videoPlayer != null && videoPlayer.isPlaying) ||
+               (canvasGroup != null && canvasGroup.alpha > 0f);
     }
 
     #endregion

@@ -81,8 +81,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a79e16fd431b2b344a6509754c7e815e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CivilianPiece
-  _faction: 0
-  _pieceType: 0
+  _faction: 2
+  _pieceType: 3
   _maxHealth: 1
   _attackRange: 1
   _isTargeted: 0
