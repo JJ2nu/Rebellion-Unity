@@ -79,12 +79,6 @@
             "entityKind": 2,
             "detailType": 1,
             "facing": 0,
-            "cellIndex": 31
-        },
-        {
-            "entityKind": 2,
-            "detailType": 1,
-            "facing": 0,
             "cellIndex": 7
         }
     ]
