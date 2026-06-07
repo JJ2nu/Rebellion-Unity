@@ -291,7 +291,7 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
     public bool IsEnemyOf(PieceBase other)
     {
         if (Faction == Faction.Ally) return other.Faction == Faction.Enemy;
-        if (Faction == Faction.Enemy) return other.Faction == Faction.Ally;
+        if (Faction == Faction.Enemy) return other.Faction == Faction.Ally || other.Faction == Faction.Neutral;
         return false;
     }
 
@@ -384,7 +384,7 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
         }
 
         animator.speed = 1f;
-        if (snapToIdle)
+        if (snapToIdle && animator.HasState(0, Animator.StringToHash("Idle")))
         {
             animator.Play("Idle", 0, 0f);
         }

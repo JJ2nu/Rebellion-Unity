@@ -39,6 +39,9 @@ public sealed class InGameUIController : MonoBehaviour
 
     [Header("Placement")]
     [SerializeField] private PlacementController placementController;
+    [SerializeField] private SimulationController simulationController;
+
+    private readonly List<InGameUnitStorageSlotUI> storageSlots = new();
 
     #endregion
 
@@ -51,15 +54,35 @@ public sealed class InGameUIController : MonoBehaviour
             placementController = FindObjectOfType<PlacementController>();
         }
 
+        EnsureSimulationController();
         StageManager.StageLoaded += HandleStageLoaded;
+    }
+
+    private void OnEnable()
+    {
+        SubscribeSimulationState();
+        ApplyStorageInteractionState();
     }
 
     private void Start()
     {
+        EnsureSimulationController();
+        SubscribeSimulationState();
+
         StageData current = StageManager.Instance?.CurrentStageData;
         if (current != null)
         {
             Bind(current);
+        }
+
+        ApplyStorageInteractionState();
+    }
+
+    private void OnDisable()
+    {
+        if (simulationController != null)
+        {
+            simulationController.RunningStateChanged -= HandleSimulationRunningStateChanged;
         }
     }
 
@@ -83,6 +106,7 @@ public sealed class InGameUIController : MonoBehaviour
 
     private void Bind(StageData data)
     {
+        storageSlots.Clear();
         ClearChildren(missionRoot);
         ClearChildren(storageRoot);
         ClearChildren(skillRoot);
@@ -112,6 +136,7 @@ public sealed class InGameUIController : MonoBehaviour
         }
 
         AlignStoragesFromRight();
+        ApplyStorageInteractionState();
 
         if (data.hasOrder)
         {
@@ -178,6 +203,7 @@ public sealed class InGameUIController : MonoBehaviour
         InGameUnitStorageSlotUI slot = Instantiate(prefab, storageRoot, false);
         slot.Bind(unitType, deployableCount);
         slot.Clicked += HandleStorageSlotClicked;
+        storageSlots.Add(slot);
         placementController?.RegisterSlot(slot);
     }
 
@@ -226,6 +252,11 @@ public sealed class InGameUIController : MonoBehaviour
 
     private void HandleStorageSlotClicked(InGameUnitStorageSlotUI slot)
     {
+        if (simulationController != null && simulationController._isRunning)
+        {
+            return;
+        }
+
         if (placementController == null)
         {
             Debug.LogWarning("Placement controller is not assigned.", this);
@@ -259,6 +290,51 @@ public sealed class InGameUIController : MonoBehaviour
     #endregion
 
     #region Helpers
+
+    private void EnsureSimulationController()
+    {
+        if (simulationController == null)
+        {
+            simulationController = SimulationController.Instance;
+        }
+
+        if (simulationController == null)
+        {
+            simulationController = FindAnyObjectByType<SimulationController>();
+        }
+    }
+
+    private void SubscribeSimulationState()
+    {
+        EnsureSimulationController();
+
+        if (simulationController == null)
+        {
+            return;
+        }
+
+        simulationController.RunningStateChanged -= HandleSimulationRunningStateChanged;
+        simulationController.RunningStateChanged += HandleSimulationRunningStateChanged;
+    }
+
+    private void HandleSimulationRunningStateChanged(bool _)
+    {
+        ApplyStorageInteractionState();
+    }
+
+    private void ApplyStorageInteractionState()
+    {
+        bool isLocked = simulationController != null && simulationController._isRunning;
+
+        for (int index = 0; index < storageSlots.Count; index++)
+        {
+            InGameUnitStorageSlotUI slot = storageSlots[index];
+            if (slot != null)
+            {
+                slot.SetInteractionLocked(isLocked);
+            }
+        }
+    }
 
     private static void ClearChildren(Transform root)
     {

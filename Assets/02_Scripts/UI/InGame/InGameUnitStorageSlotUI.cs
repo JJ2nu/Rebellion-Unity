@@ -23,6 +23,8 @@ public sealed class InGameUnitStorageSlotUI : MonoBehaviour, IPointerUpHandler
     public int RemainingDeployableCount { get; private set; }
 
     public event Action<InGameUnitStorageSlotUI> Clicked;
+    private bool interactionLocked;
+    private CanvasGroup canvasGroup;
 
     #endregion
 
@@ -30,6 +32,8 @@ public sealed class InGameUnitStorageSlotUI : MonoBehaviour, IPointerUpHandler
 
     public void Bind(PieceType unitType, int deployableCount)
     {
+        EnsureCanvasGroup();
+
         UnitType = unitType;
         MaxDeployableCount = Mathf.Max(0, deployableCount);
         RemainingDeployableCount = MaxDeployableCount;
@@ -69,12 +73,26 @@ public sealed class InGameUnitStorageSlotUI : MonoBehaviour, IPointerUpHandler
         return true;
     }
 
+    public void SetInteractionLocked(bool isLocked)
+    {
+        EnsureCanvasGroup();
+
+        interactionLocked = isLocked;
+        canvasGroup.blocksRaycasts = !isLocked;
+        UpdateView();
+    }
+
     #endregion
 
     #region Button Events
 
     private void HandleClick()
     {
+        if (interactionLocked)
+        {
+            return;
+        }
+
         if (RemainingDeployableCount <= 0)
         {
             return;
@@ -94,6 +112,11 @@ public sealed class InGameUnitStorageSlotUI : MonoBehaviour, IPointerUpHandler
 
     public void OnPointerUp(PointerEventData eventData)
     {
+        if (interactionLocked)
+        {
+            return;
+        }
+
         if (RemainingDeployableCount > 0)
         {
             StartCoroutine(ResetActiveSpriteAfterClick());
@@ -150,6 +173,24 @@ public sealed class InGameUnitStorageSlotUI : MonoBehaviour, IPointerUpHandler
         SpriteState spriteState = button.spriteState;
         spriteState.disabledSprite = deactiveSprite;
         button.spriteState = spriteState;
+    }
+
+    private void EnsureCanvasGroup()
+    {
+        if (canvasGroup != null)
+        {
+            return;
+        }
+
+        canvasGroup = GetComponent<CanvasGroup>();
+        if (canvasGroup == null)
+        {
+            canvasGroup = gameObject.AddComponent<CanvasGroup>();
+        }
+
+        canvasGroup.alpha = 1f;
+        canvasGroup.interactable = true;
+        canvasGroup.blocksRaycasts = !interactionLocked;
     }
 
     private IEnumerator ResetActiveSpriteAfterClick()

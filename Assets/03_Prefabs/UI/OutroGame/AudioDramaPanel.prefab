@@ -385,8 +385,11 @@ MonoBehaviour:
     audioClip: {fileID: 8300000, guid: 81aecb0db21b23b48834be6e7a11ed16, type: 3}
   - audioId: AD_GoodEnding
     audioClip: {fileID: 8300000, guid: bcad4375023056d4f841b5fa8d5f333d, type: 3}
+  previewStageId: 1
   canvasGroup: {fileID: 9218931645811388132}
   audioSource: {fileID: 1075335148124145412}
+  videoPlayer: {fileID: 0}
   dialogueText: {fileID: 5977031040136650906}
+  skipAction: {fileID: 7727032971491509709, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   panelFadeDuration: 0.25
   textFadeDuration: 0.35

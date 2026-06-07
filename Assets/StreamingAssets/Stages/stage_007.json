@@ -15,7 +15,7 @@
     { "entityKind": 0, "detailType": 0, "facing": 2, "cellIndex": 1 },
     { "entityKind": 0, "detailType": 2, "facing": 2, "cellIndex": 7 },
     { "entityKind": 0, "detailType": 2, "facing": 2, "cellIndex": 13 },
-    { "entityKind": 1, "detailType": 0, "facing": 2, "cellIndex": 25 },
+    { "entityKind": 1, "detailType": 1, "facing": 2, "cellIndex": 25 },
     { "entityKind": 2, "detailType": 0, "facing": 0, "cellIndex": 19 }
   ]
 }
