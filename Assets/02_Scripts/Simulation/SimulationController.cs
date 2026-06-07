@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System;
@@ -25,6 +25,7 @@ public class SimulationController : MonoBehaviour
     private PieceBase _currentClickedPiece = null;
     [SerializeField] private List<SkillBase> _skills;
     public IReadOnlyList<SkillBase> GetStageSkills() => _skills.AsReadOnly();
+    public event Action<SimulationResult> SimulationFinished;
 
     public enum SimulationResult
     {
@@ -136,8 +137,10 @@ public class SimulationController : MonoBehaviour
 
         var result = DetermineResult(allPieces);
         _lastResult = result.ToString();
+        LastSimulationResult = result;
         _isRunning = false;
         Debug.Log($"[Simulation] Result: {result}");
+        SimulationFinished?.Invoke(result);
     }
 
     private IEnumerator RunPhase(int phaseIndex, IReadOnlyList<PieceBase> allPieces)

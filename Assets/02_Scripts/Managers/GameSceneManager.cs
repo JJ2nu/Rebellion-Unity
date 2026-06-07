@@ -18,6 +18,11 @@ public class GameSceneManager : MonoBehaviour
 
 
     #region 씬 전환
+    public void StartCampaign()
+    {
+        GameFlowManager.StartNewCampaign();
+    }
+
     public void LoadScene(string sceneName)
     {
         // todo : 다음 씬에 필요한 에셋 로드

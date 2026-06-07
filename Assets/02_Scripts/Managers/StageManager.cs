@@ -399,7 +399,6 @@ public class StageManager : MonoBehaviour
                 GameObject mapInstance = Instantiate(mapPrefab, mapRoot);
 
                 mapInstance.name = mapPrefab.name;
-                DontDestroyOnLoad(mapInstance);
                 loadedMaps[index] = mapInstance;
             }
 
