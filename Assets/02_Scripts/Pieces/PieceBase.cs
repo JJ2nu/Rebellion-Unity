@@ -75,7 +75,7 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
             {
                 if (!_isTargeted)
                 {
-                    if(!SimulationController.Instance._isRunning)
+                    if (SimulationController.Instance == null || !SimulationController.Instance._isRunning)
                         CheckCanAct(StageManager.Instance.GetAllActivePieces());
                     if (CanAct)
                     {
