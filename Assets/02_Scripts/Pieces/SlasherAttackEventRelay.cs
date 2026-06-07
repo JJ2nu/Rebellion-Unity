@@ -6,10 +6,12 @@ public class SlasherAttackEventRelay : MonoBehaviour
 
     public void OnAttackAnimationEnd()
     {
+        owner ??= GetComponentInParent<SlasherPiece>();
         if (owner == null)
         {
-            owner = transform.parent.GetComponent<SlasherPiece>();
+            return;
         }
+
         owner.OnAttackAnimationEnd();
     }
 }
