@@ -25,7 +25,7 @@ public static class StageEditorSceneBuilder
 
         var serializedObject = new SerializedObject(controller);
         serializedObject.FindProperty("stageFolder").stringValue = "Stages";
-        serializedObject.FindProperty("mapPrefabFolder").stringValue = "Assets/03_Prefabs/Maps";
+        serializedObject.FindProperty("mapPrefabFolder").stringValue = "Assets/03_Prefabs/Maps/InGame";
         serializedObject.FindProperty("enemyPrefabFolder").stringValue = "Assets/03_Prefabs/Pieces/Enemy";
         serializedObject.FindProperty("civilianPrefabFolder").stringValue = "Assets/03_Prefabs/Pieces/Civilian";
         serializedObject.FindProperty("cellSize").floatValue = 1.3f;
@@ -34,10 +34,9 @@ public static class StageEditorSceneBuilder
 
         AssignArray(serializedObject, "mapPrefabs", new[]
         {
-            "Assets/03_Prefabs/Maps/Map_Bar.prefab",
-            "Assets/03_Prefabs/Maps/Map_Museum.prefab",
-            "Assets/03_Prefabs/Maps/Map_Warehouse.prefab",
-            "Assets/03_Prefabs/Maps/Map_Table.prefab",
+            "Assets/03_Prefabs/Maps/InGame/Map_Bar.prefab",
+            "Assets/03_Prefabs/Maps/InGame/Map_Museum.prefab",
+            "Assets/03_Prefabs/Maps/InGame/Map_Warehouse.prefab",
         });
 
         AssignArray(serializedObject, "enemyPiecePrefabs", new[]
