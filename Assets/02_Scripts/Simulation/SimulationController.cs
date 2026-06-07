@@ -121,12 +121,14 @@ public class SimulationController : MonoBehaviour
         allPieces = StageManager.Instance.GetAllActivePieces();
 
         foreach (var piece in allPieces)
+        {
             piece.OnSimulationStart();
+        }
 
         var totalPieces = StageManager.Instance.GetAllPieces();
         foreach(var piece in totalPieces)
         {
-            if (piece != null)
+            if (piece != null && piece._HUD != null)
             {
                 piece._HUD?.SetActive(false);
             }

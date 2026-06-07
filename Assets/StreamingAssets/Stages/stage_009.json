@@ -1,20 +1,97 @@
 {
-  "version": 2,
-  "boardSize": 6,
-  "mapIndex": 2,
-  "mainMission": "총리를 제거하여 협정 저지",
-  "subMission1": "전투원 희생 없이 작전 수행",
-  "subMission2": "민간인 희생 없이 작전 수행",
-  "hasOrder": true,
-  "allySlots": [
-    { "pieceType": 0, "count": 1 },
-    { "pieceType": 1, "count": 1 },
-    { "pieceType": 2, "count": 2 }
-  ],
-  "entities": [
-    { "entityKind": 0, "detailType": 0, "facing": 2, "cellIndex": 0 },
-    { "entityKind": 0, "detailType": 2, "facing": 2, "cellIndex": 6 },
-    { "entityKind": 0, "detailType": 2, "facing": 2, "cellIndex": 12 },
-    { "entityKind": 1, "detailType": 1, "facing": 2, "cellIndex": 30 }
-  ]
+    "version": 2,
+    "boardSize": 6,
+    "mapIndex": 1,
+    "mainMission": "총리를 제거하여 협정 저지",
+    "subMission1": "전투원 희생 없이 작전 수행",
+    "subMission2": "민간인 희생 없이 작전 수행",
+    "hasOrder": true,
+    "allySlots": [
+        {
+            "pieceType": 0,
+            "count": 1
+        },
+        {
+            "pieceType": 1,
+            "count": 1
+        },
+        {
+            "pieceType": 2,
+            "count": 2
+        }
+    ],
+    "entities": [
+        {
+            "entityKind": 1,
+            "detailType": 0,
+            "facing": 0,
+            "cellIndex": 2
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 0,
+            "cellIndex": 0
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 0,
+            "cellIndex": 1
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 2,
+            "cellIndex": 18
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 3,
+            "cellIndex": 25
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 3,
+            "cellIndex": 30
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 1,
+            "cellIndex": 34
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 2,
+            "cellIndex": 29
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 0,
+            "cellIndex": 5
+        },
+        {
+            "entityKind": 0,
+            "detailType": 3,
+            "facing": 1,
+            "cellIndex": 16
+        },
+        {
+            "entityKind": 2,
+            "detailType": 0,
+            "facing": 1,
+            "cellIndex": 10
+        },
+        {
+            "entityKind": 2,
+            "detailType": 0,
+            "facing": 0,
+            "cellIndex": 3
+        }
+    ]
 }

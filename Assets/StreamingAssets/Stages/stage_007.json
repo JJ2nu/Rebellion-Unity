@@ -1,21 +1,85 @@
 {
-  "version": 2,
-  "boardSize": 6,
-  "mapIndex": 2,
-  "mainMission": "연설장 잠입 및 초대장 확보",
-  "subMission1": "전투원 희생 없이 작전 수행",
-  "subMission2": "부관 희생 없이 작전 수행",
-  "hasOrder": false,
-  "allySlots": [
-    { "pieceType": 0, "count": 1 },
-    { "pieceType": 1, "count": 1 },
-    { "pieceType": 2, "count": 2 }
-  ],
-  "entities": [
-    { "entityKind": 0, "detailType": 0, "facing": 2, "cellIndex": 1 },
-    { "entityKind": 0, "detailType": 2, "facing": 2, "cellIndex": 7 },
-    { "entityKind": 0, "detailType": 2, "facing": 2, "cellIndex": 13 },
-    { "entityKind": 1, "detailType": 1, "facing": 2, "cellIndex": 25 },
-    { "entityKind": 2, "detailType": 0, "facing": 0, "cellIndex": 19 }
-  ]
+    "version": 2,
+    "boardSize": 6,
+    "mapIndex": 1,
+    "mainMission": "연설장 잠입 및 초대장 확보",
+    "subMission1": "전투원 희생 없이 작전 수행",
+    "subMission2": "부관 희생 없이 작전 수행",
+    "hasOrder": false,
+    "allySlots": [
+        {
+            "pieceType": 0,
+            "count": 1
+        },
+        {
+            "pieceType": 1,
+            "count": 1
+        },
+        {
+            "pieceType": 2,
+            "count": 2
+        }
+    ],
+    "entities": [
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 0,
+            "cellIndex": 8
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 3,
+            "cellIndex": 12
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 2,
+            "cellIndex": 20
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 1,
+            "cellIndex": 26
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 2,
+            "cellIndex": 28
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 1,
+            "cellIndex": 17
+        },
+        {
+            "entityKind": 1,
+            "detailType": 1,
+            "facing": 0,
+            "cellIndex": 2
+        },
+        {
+            "entityKind": 2,
+            "detailType": 1,
+            "facing": 3,
+            "cellIndex": 4
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 0,
+            "cellIndex": 10
+        },
+        {
+            "entityKind": 2,
+            "detailType": 1,
+            "facing": 3,
+            "cellIndex": 5
+        }
+    ]
 }

@@ -16,6 +16,7 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
     [SerializeField] protected int _maxHealth = 1;
     [SerializeField] protected int _attackRange = 1;
     public GameObject _HUD{get; set; }
+    public GameObject _DirectionIndicator { get; set; }
     public bool _isTargeted = false;
     public bool _isInRange = false;
 
@@ -66,6 +67,10 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
         _HUD = transform.Find("HUD")?.gameObject;
 
         _HUD?.SetActive(true);
+
+        _DirectionIndicator = transform.Find("DirectionIndicator")?.gameObject;
+        _DirectionIndicator?.SetActive(true);
+
         ResetColliderState();
     }
     public void Update()
@@ -100,6 +105,7 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
     }
     public virtual void OnSimulationStart()
     {
+        _DirectionIndicator?.SetActive(false);
         CurrentHealth = _maxHealth;
         IsDead = false;
         IsActionFinished = false;
@@ -171,6 +177,7 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
         PhaseOffset = 0;
         ResetAnimatorState(true);
         ResetColliderState();
+        _DirectionIndicator?.SetActive(true);
     }
 
     public void CaptureSpawnState()

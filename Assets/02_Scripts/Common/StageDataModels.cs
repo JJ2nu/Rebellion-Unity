@@ -62,7 +62,7 @@ public class StageEntityData
     public int entityKind;
 
     // Enemy일 때 공격 방식 ID, Object일 때 오브젝트 종류 ID
-    // Enemy 기준: 0 = Brawler, 1 = Reserved, 2 = Gunman
+    // Enemy 기준: 0 = Brawler, 1 = Reserved, 2 = Gunman, 3 = Boss
     public int detailType;
 
     // 0 = North, 1 = East, 2 = South, 3 = West
