@@ -60,8 +60,9 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
         _HUD = transform.Find("HUD")?.gameObject;
 
         _HUD?.SetActive(true);
+        foreach (var col in GetComponentsInChildren<Collider>())
+            col.enabled = true;
     }
-
     public void Update()
     {
         if (_HUD != null)
@@ -249,9 +250,8 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
     /// <summary>
     /// other가 자신의 적 진영인지 확인한다 (중립은 적이 아님). AttackHitbox 등 외부에서도 사용 가능.
     /// </summary>
-    public bool IsEnemyOf(PieceBase other) => IsEnemy(other);
 
-    protected bool IsEnemy(PieceBase other)
+    public bool IsEnemyOf(PieceBase other)
     {
         if (Faction == Faction.Ally) return other.Faction == Faction.Enemy;
         if (Faction == Faction.Enemy) return other.Faction == Faction.Ally;

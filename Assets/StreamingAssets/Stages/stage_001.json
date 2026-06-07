@@ -1,7 +1,7 @@
 {
     "version": 2,
     "boardSize": 6,
-    "mapIndex": 2,
+    "mapIndex": 0,
     "mainMission": "선술집 내 칼트 병력 제거",
     "subMission1": "전투원 희생 없이 작전 수행",
     "subMission2": "",
@@ -17,7 +17,7 @@
         },
         {
             "pieceType": 2,
-            "count": 1
+            "count": 2
         }
     ],
     "entities": [
@@ -25,25 +25,55 @@
             "entityKind": 2,
             "detailType": 0,
             "facing": 0,
-            "cellIndex": 6
-        },
-        {
-            "entityKind": 2,
-            "detailType": 1,
-            "facing": 0,
-            "cellIndex": 0
+            "cellIndex": 5
         },
         {
             "entityKind": 2,
             "detailType": 2,
             "facing": 0,
-            "cellIndex": 4
+            "cellIndex": 10
+        },
+        {
+            "entityKind": 2,
+            "detailType": 2,
+            "facing": 0,
+            "cellIndex": 16
+        },
+        {
+            "entityKind": 2,
+            "detailType": 2,
+            "facing": 0,
+            "cellIndex": 23
+        },
+        {
+            "entityKind": 2,
+            "detailType": 2,
+            "facing": 0,
+            "cellIndex": 29
         },
         {
             "entityKind": 0,
             "detailType": 2,
+            "facing": 3,
+            "cellIndex": 11
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 3,
+            "cellIndex": 17
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 1,
+            "cellIndex": 27
+        },
+        {
+            "entityKind": 0,
+            "detailType": 0,
             "facing": 0,
-            "cellIndex": 10
+            "cellIndex": 14
         }
     ]
 }
