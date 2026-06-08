@@ -107,6 +107,11 @@ public class StageManager : MonoBehaviour
         currentStageData = parsedData;
         CacheStageEntities(parsedData);
 
+        if (gameManager == null)
+        {
+            gameManager = GameManager.Instance;
+        }
+
         MapRootCheck();
         MapCacheCheck();
 
@@ -119,6 +124,7 @@ public class StageManager : MonoBehaviour
         currentMapIndex = Mathf.Clamp(parsedData.mapIndex, 0, loadedMaps.Length - 1);
         Debug.Log($"[StageManager] Activating map index: {currentMapIndex}", this);
         UpdateActiveMap();
+        gameManager?.EnsureStageGridReady();
 
         SpawnEnemies(parsedData);
         SpawnCivilians(parsedData);
@@ -710,7 +716,6 @@ public class StageManager : MonoBehaviour
         }
         spawnedEnemyPieces.Clear();
     }
-
     private void PoolObjects()
     {
         foreach ((int detailType, GameObject obj) in spawnedObjects)
@@ -770,6 +775,8 @@ public class StageManager : MonoBehaviour
             }
         }
         objectPool.Clear();
+
+
     }
 
     private void ClearSpawnedAllyPieces()

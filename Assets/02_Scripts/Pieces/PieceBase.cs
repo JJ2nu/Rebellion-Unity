@@ -152,8 +152,8 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
         IsDead = true;
         IsActionFinished = true;
 
-        // foreach (var col in GetComponentsInChildren<Collider>())
-        //     col.enabled = false;
+        foreach (var col in GetComponentsInChildren<Collider>())
+            col.enabled = false;
 
         PlayDeathAnimation();
         OnDied?.Invoke(this);

@@ -60,9 +60,7 @@ public class GameManager : MonoBehaviour
 
     public void LoadStage(string stagePath)
     {
-        EnsureRoots();
-        EnsureGridCellsLoaded();
-        SetAllCellsActive(true);
+        EnsureStageGridReady();
 
         if (stageManager == null)
         {
@@ -76,6 +74,14 @@ public class GameManager : MonoBehaviour
         }
 
         stageManager.LoadStage(stagePath);
+    }
+
+    public void EnsureStageGridReady()
+    {
+        EnsureRoots();
+        EnsureGridCellsLoaded();
+        SetAllCellsActive(true);
+        ResetAllTile();
     }
 
     // 스테이지 종료 시 셀과 맵을 전부 비활성화

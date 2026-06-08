@@ -78,13 +78,10 @@ public class SlasherPiece : PieceBase
         _animator?.SetTrigger(is1Cell ? "Attack" : "Attack2");
 
         yield return new WaitUntil(() => _attackAnimEnded == true);
+        _animator?.Play("Idle", 0, 0f);
         transform.position = targetWorldPos;
         GridX = targetGX;
         GridY = targetGY;
-
-        // if (!target.IsDead)
-        //     target.TakeDamage(1);
-
         FinishAction();
     }
 

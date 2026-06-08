@@ -27,11 +27,7 @@ public class WorldInputRaycaster : MonoBehaviour
             return;
         }
         Instance = this;
-
-        if (raycastCamera == null)
-        {
-            raycastCamera = Camera.main;
-        }
+        EnsureRaycastCamera();
     }
 
     private void OnEnable()
@@ -47,6 +43,7 @@ public class WorldInputRaycaster : MonoBehaviour
 
     private void Update()
     {
+        EnsureRaycastCamera();
         UpdateHoverTarget();
     }
 
@@ -100,6 +97,14 @@ public class WorldInputRaycaster : MonoBehaviour
         if (actionReference != null && actionReference.action != null)
         {
             actionReference.action.Enable();
+        }
+    }
+
+    private void EnsureRaycastCamera()
+    {
+        if (raycastCamera == null || !raycastCamera.isActiveAndEnabled)
+        {
+            raycastCamera = Camera.main;
         }
     }
 
