@@ -172,6 +172,7 @@ GameObject:
   - component: {fileID: 2432825525325923781}
   - component: {fileID: 5728575418060540474}
   - component: {fileID: 4718659645800963385}
+  - component: {fileID: 4449191375715640027}
   m_Layer: 0
   m_Name: Bullet
   m_TagString: Bullet
@@ -256,6 +257,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd180253f9b9f284293b7fa9d4847d70, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AttackHitbox
+--- !u!114 &4449191375715640027
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8928382629762728089}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 956b57cc136e5c34c913c3ee27ff4226, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BulletController
 --- !u!1001 &3434035471721155622
 PrefabInstance:
   m_ObjectHideFlags: 0
