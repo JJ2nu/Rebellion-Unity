@@ -15,14 +15,15 @@ public class AttackHitbox : MonoBehaviour
 
     private void Awake()
     {
-        _col = GetComponent<Collider>();
-        _col.isTrigger = true;
-        _col.enabled = false;
+
     }
 
     public void Initialize(PieceBase owner)
     {
         _owner = owner;
+        _col = GetComponent<Collider>();
+        _col.isTrigger = true;
+        _col.enabled = false;
     }
 
     public void BeginAttack()
