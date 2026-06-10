@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 
 /// <summary>
@@ -8,13 +7,10 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 public class BulletController : MonoBehaviour
 {
-    [SerializeField, Min(0.1f)] private float _lifeTime = 3f;
+    private const float MinMapBounds = -5f;
+    private const float MaxMapBounds = 5f;
 
     private Rigidbody _rigidbody;
-    private Coroutine _lifeRoutine;
-    private Transform _originParent;
-    private Vector3 _originLocalPosition;
-    private Quaternion _originLocalRotation;
 
     public bool IsFlying { get; private set; }
 
@@ -26,9 +22,6 @@ public class BulletController : MonoBehaviour
     public void Initialize()
     {
         _rigidbody = GetComponent<Rigidbody>();
-        _originParent = transform.parent;
-        _originLocalPosition = transform.localPosition;
-        _originLocalRotation = transform.localRotation;
 
         _rigidbody.useGravity = false;
         _rigidbody.linearVelocity = Vector3.zero;
@@ -55,53 +48,29 @@ public class BulletController : MonoBehaviour
         _rigidbody.angularVelocity = Vector3.zero;
         _rigidbody.WakeUp();
         _rigidbody.AddForce(direction.normalized * speed, ForceMode.VelocityChange);
-
-        if (_lifeRoutine != null)
-        {
-            StopCoroutine(_lifeRoutine);
-        }
-
-        _lifeRoutine = StartCoroutine(DeactivateAfterLifetime());
     }
 
     public void Stop()
     {
-        if (_lifeRoutine != null)
-        {
-            StopCoroutine(_lifeRoutine);
-            _lifeRoutine = null;
-        }
-
         IsFlying = false;
         _rigidbody.linearVelocity = Vector3.zero;
         _rigidbody.angularVelocity = Vector3.zero;
 
-        if (_originParent != null)
-        {
-            transform.SetParent(_originParent, false);
-            transform.localPosition = _originLocalPosition;
-            transform.localRotation = _originLocalRotation;
-        }
-
-        gameObject.SetActive(false);
+        Destroy(gameObject);
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void Update()
     {
         if (!IsFlying)
         {
             return;
         }
 
-        if (other.CompareTag("Wall"))
+        Vector3 position = transform.position;
+        if (position.x < MinMapBounds || position.x > MaxMapBounds ||
+            position.z < MinMapBounds || position.z > MaxMapBounds)
         {
             Stop();
         }
-    }
-
-    private IEnumerator DeactivateAfterLifetime()
-    {
-        yield return new WaitForSeconds(_lifeTime);
-        Stop();
     }
 }
