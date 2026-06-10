@@ -402,6 +402,7 @@ MonoBehaviour:
   skillRoot: {fileID: 529355088}
   orderSkillButtonPrefab: {fileID: 9129578763818932144, guid: b28f665980c3ccb4dbd8248b7206ca47, type: 3}
   placementController: {fileID: 372993848}
+  simulationController: {fileID: 0}
 --- !u!114 &372993848
 MonoBehaviour:
   m_ObjectHideFlags: 0

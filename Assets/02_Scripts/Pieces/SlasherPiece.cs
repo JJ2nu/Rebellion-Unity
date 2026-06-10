@@ -12,19 +12,18 @@ public class SlasherPiece : PieceBase
     [SerializeField, Range(0f, 1f)] private float _dashFraction = 0.6f;
     [SerializeField, Range(0.1f, 2f)] private float _animSpeedMultiplier = 0.8f; // 애니메이션 속도 조절용
 
-    private Animator _animator;
-    private float _attack1ClipLength = -1f;
-    private float _attack2ClipLength = -1f;
+    private float _attack1ClipLength = 2f;
+    private float _attack2ClipLength = 2.117f;
 
     private bool _attackAnimEnded =false;
     private Vector3 targetWorldPos;
     private int _currentAttackRange = 1;
-
+    private float _animTimer = 0f;
     private AttackHitbox _knifeHitBox;
 
     private void Awake()
     {
-        _animator = GetComponentInChildren<Animator>();
+        base.Awake();
         _knifeHitBox = GetComponentInChildren<AttackHitbox>();
         _knifeHitBox?.Initialize(this);
         if (_animator != null && _animator.runtimeAnimatorController != null)
@@ -46,7 +45,7 @@ public class SlasherPiece : PieceBase
     public override void OnSimulationStart()
     {
         _attackAnimEnded = false;
-
+        _animTimer = 0f;
         base.OnSimulationStart();
     }
 
@@ -76,15 +75,12 @@ public class SlasherPiece : PieceBase
         _attackAnimEnded = false;
         _knifeHitBox?.BeginAttack();
         _animator?.SetTrigger(is1Cell ? "Attack" : "Attack2");
-
+ 
         yield return new WaitUntil(() => _attackAnimEnded == true);
+        
         transform.position = targetWorldPos;
         GridX = targetGX;
         GridY = targetGY;
-
-        // if (!target.IsDead)
-        //     target.TakeDamage(1);
-
         FinishAction();
     }
 

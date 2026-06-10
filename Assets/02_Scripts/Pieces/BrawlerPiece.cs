@@ -8,13 +8,12 @@ using UnityEngine;
 /// </summary>
 public class BrawlerPiece : PieceBase
 {
-    private Animator _animator;
     private AttackHitbox _fistHitBox;
     private float _attackClipLength = -1f;
 
     private void Awake()
     {
-        _animator = GetComponentInChildren<Animator>();
+        base.Awake();
         _fistHitBox = GetComponentInChildren<AttackHitbox>();
         _fistHitBox?.Initialize(this);
 
@@ -33,11 +32,6 @@ public class BrawlerPiece : PieceBase
     }
 
     public override int SimulationPhaseIndex => 1;
-
-    public override void OnSimulationStart()
-    {
-        base.OnSimulationStart();
-    }
 
     protected override PieceBase FindTarget(IReadOnlyList<PieceBase> allPieces)
     {

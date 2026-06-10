@@ -17,6 +17,8 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
     [SerializeField] protected int _attackRange = 1;
     public GameObject _HUD{get; set; }
     public GameObject _DirectionIndicator { get; set; }
+    protected Animator _animator;
+
     public bool _isTargeted = false;
     public bool _isInRange = false;
 
@@ -62,6 +64,10 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
 
     // ─── Simulation lifecycle ────────────────────────────────────────
 
+    protected void Awake()
+    {
+        _animator = GetComponentInChildren<Animator>();
+    }
     private void Start()
     {
         _HUD = transform.Find("HUD")?.gameObject;
@@ -152,8 +158,8 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
         IsDead = true;
         IsActionFinished = true;
 
-        // foreach (var col in GetComponentsInChildren<Collider>())
-        //     col.enabled = false;
+        foreach (var col in GetComponentsInChildren<Collider>())
+            col.enabled = false;
 
         PlayDeathAnimation();
         OnDied?.Invoke(this);
@@ -164,11 +170,11 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
         var animator = GetComponentInChildren<Animator>();
         if (animator == null) return;
         // Play()는 HasExitTime/Transition 완전 무시하고 즉시 강제 재생
-        animator.Play("Hit", 0, 0f);
+        animator.SetTrigger("Hit");
     }
 
 
-    public void ResetState()
+    public virtual void ResetState()
     {
         CurrentHealth = _maxHealth;
         IsDead = false;

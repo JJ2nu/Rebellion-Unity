@@ -10,16 +10,22 @@ using UnityEngine;
 public class GunmanPiece : PieceBase
 {
     [Header("Gunman Config")]
-    [SerializeField] private float _aimDelay = 0.5f;
-    [SerializeField] private GameObject bulletPrefab;
-
-    private Animator _animator;
     [SerializeField] private Transform _flarePoint;
+    [SerializeField, Range(0.1f, 10f)] private float _bulletSpeedMultiplier = 2f; // 총알 이동 속도 조절용
+
+    [SerializeField] private GameObject _bullet;
+
+    private AttackHitbox _bulletHitBox;
     private float _attackClipLength;
+    [SerializeField, Range(0.1f, 10f)] private float _fireMotionClipLength = 1.1f;
 
     private void Awake()
     {
-        _animator = GetComponentInChildren<Animator>();
+        base.Awake();
+        _bullet?.SetActive(false);
+        _bulletHitBox = _bullet?.GetComponent<AttackHitbox>();
+        _bulletHitBox?.Initialize(this);
+        _bulletHitBox?.SetAsBullet(true);
 
         if (_animator != null)
         {
@@ -56,28 +62,19 @@ public class GunmanPiece : PieceBase
         Vector3 cellCenter = GameManager.Instance != null
             ? GameManager.Instance.GetCellPosition(selfCellIdx)
             : transform.position;
-        Vector3 spawnPos = new Vector3(cellCenter.x, spawnY, cellCenter.z);
 
         // 공격 애니메이션을 1스텝 안에 맞춰 재생 후 총알 발사
-        if (_animator != null && _attackClipLength > 0f)
-            _animator.speed = _attackClipLength / stepDuration;
+        // if (_animator != null && _attackClipLength > 0f)
+        //     _animator.speed = _attackClipLength / stepDuration;
         _animator?.SetTrigger("Attack");
         float waitTime = stepDuration;
-        yield return new WaitForSeconds(waitTime);
-        if (_animator != null)
-            _animator.speed = 1f;
+        yield return new WaitForSeconds(_fireMotionClipLength);
 
-        // 총알 생성
+        // // 총알 생성
+        _bullet.transform.position = _flarePoint.position;
+        _bulletHitBox?.BeginAttack();
+        _bullet.SetActive(true);
 
-        GameObject bullet = bulletPrefab != null
-            ? Instantiate(bulletPrefab, spawnPos, transform.rotation)
-            : null;
-
-        if (bullet != null)
-        {
-            var bc = bullet.GetComponent<BulletController>();
-            if (bc != null) bc.ShooterFaction = Faction;
-        }
 
         // 총알을 1칸씩 이동하며 피격 체크
         var (dx, dy) = GetFacingDelta();
@@ -85,8 +82,8 @@ public class GunmanPiece : PieceBase
         int cy = GridY;
         int boardSize = StageManager.Instance?.CurrentStageData?.boardSize ?? 6;
 
-        Vector3 bulletHeight = Vector3.up * spawnPos.y; // FlarePoint 높이 유지
-        Vector3 currentPos = spawnPos;
+        Vector3 bulletHeight = Vector3.up * _flarePoint.position.y; // FlarePoint 높이 유지
+        Vector3 currentPos = _flarePoint.position;
 
         for (int step = 0; step < AttackRange; step++)
         {
@@ -100,30 +97,30 @@ public class GunmanPiece : PieceBase
             Vector3 cellFloor = GameManager.Instance != null
                 ? GameManager.Instance.GetCellPosition(cellIdx)
                 : Vector3.zero;
-            Vector3 targetPos = new Vector3(cellFloor.x, spawnPos.y, cellFloor.z);
+            Vector3 targetPos = new Vector3(cellFloor.x, _flarePoint.position.y, cellFloor.z);
 
             // 한 칸을 stepDuration/2 시간 동안 이동 (1스텝에 2칸)
             float elapsed = 0f;
             float cellDuration = stepDuration;
             while (elapsed < cellDuration)
             {
-                elapsed += Time.deltaTime *2;
-                if (bullet != null)
-                    bullet.transform.position = Vector3.Lerp(currentPos, targetPos, elapsed / cellDuration);
+                elapsed += Time.deltaTime * _bulletSpeedMultiplier;
+                _bullet.transform.position = Vector3.Lerp(currentPos, targetPos, elapsed / cellDuration);
                 yield return null;
             }
 
-            if (bullet != null)
-                bullet.transform.position = targetPos;
+            if (_bullet != null)
+                _bullet.transform.position = targetPos;
             currentPos = targetPos;
 
-            PieceBase hit = FindPieceAtGrid(allPieces, cx, cy);
-            if (hit != null && !hit.IsDead)
-                hit.Die();
         }
 
-        if (bullet != null)
-            Destroy(bullet);
+        if (_bullet.transform.position.x > 5f || _bullet.transform.position.x < -5f || _bullet.transform.position.z > 5f || _bullet.transform.position.z < -5f)
+        {
+            _bulletHitBox?.EndAttack();
+            _bullet.SetActive(false);
+            _bullet.transform.position = _flarePoint.position;
+        }
 
         FinishAction();
     }
@@ -138,5 +135,15 @@ public class GunmanPiece : PieceBase
             if (found != null) return found;
         }
         return null;
+    }
+    public override void ResetState()
+    {
+        base.ResetState();
+        if (_bullet != null)
+        {
+            _bulletHitBox?.EndAttack();
+            _bullet.SetActive(false);
+            _bullet.transform.position = _flarePoint.position;
+        }
     }
 }

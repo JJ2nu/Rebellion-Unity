@@ -42,7 +42,7 @@ public sealed class PlacementController : MonoBehaviour
 private void Awake()
     {
         ResolveDependencies();
-        mainCamera = Camera.main;
+        EnsureMainCamera();
 
         PieceBase.AllyRightClicked += HandleAllyPieceRightClick;
         PieceBase.AllyLeftClicked  += HandleAllyPieceLeftClick;
@@ -60,6 +60,8 @@ private void Awake()
 
 private void Update()
     {
+        EnsureMainCamera();
+
         if (!IsPlacing)
         {
             return;
@@ -328,11 +330,19 @@ public void HandleAllyPieceRightClick(PieceBase piece)
         }
     }
 
-private void ResolveDependencies()
+    private void ResolveDependencies()
     {
         if (stageManager == null)
         {
             stageManager = StageManager.Instance;
+        }
+    }
+
+    private void EnsureMainCamera()
+    {
+        if (mainCamera == null || !mainCamera.isActiveAndEnabled)
+        {
+            mainCamera = Camera.main;
         }
     }
 
