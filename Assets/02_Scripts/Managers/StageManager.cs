@@ -34,6 +34,7 @@ public class StageManager : MonoBehaviour
     private readonly List<StageEntityData> objectEntities = new();
     private readonly List<PieceBase> spawnedAllyPieces = new();
     private readonly List<(int detailType, PieceBase piece)> spawnedEnemyPieces = new();
+    private readonly List<(int detailType, PieceBase piece)> spawnedCivilianPieces = new();
     private readonly List<(int detailType, GameObject obj)> spawnedObjects = new();
 
     /// <summary>
@@ -46,11 +47,12 @@ public class StageManager : MonoBehaviour
 
     private readonly List<Queue<PieceBase>> allyPool = new();
     private readonly List<Queue<PieceBase>> enemyPool = new();
+    private readonly List<Queue<PieceBase>> civilianPool = new();
     private readonly Dictionary<int, Queue<GameObject>> objectPool = new();
 
     private PieceBase[][] allyPieces;
     private PieceBase[][] enemyPieces;
-    private PieceBase[] civilianPieces;
+    private PieceBase[][] civilianPieces;
 
     private void Awake()
     {
@@ -159,12 +161,9 @@ public class StageManager : MonoBehaviour
         {
             enemy.piece?._HUD?.SetActive(true);
         }
-        if (civilianPieces != null)
+        foreach (var civilian in spawnedCivilianPieces)
         {
-            foreach (var civilian in civilianPieces)
-            {
-                civilian?._HUD?.SetActive(true);
-            }
+            civilian.piece?._HUD?.SetActive(true);
         }
 
         foreach (var ally in spawnedAllyPieces)
@@ -172,12 +171,9 @@ public class StageManager : MonoBehaviour
             ResetPieceForRetry(ally);
         }
 
-        if (civilianPieces != null)
+        foreach (var civilian in spawnedCivilianPieces)
         {
-            foreach (var civilian in civilianPieces)
-            {
-                ResetPieceForRetry(civilian);
-            }
+            ResetPieceForRetry(civilian.piece);
         }
         foreach (var enemy in spawnedEnemyPieces)
         {
@@ -573,55 +569,79 @@ public class StageManager : MonoBehaviour
     private void SpawnCivilians(StageData stageData)
     {
         if (gameManager == null)
+        {
             gameManager = GameManager.Instance;
-
-        if (gameManager == null)
-        {
-            Debug.LogWarning("StageManager could not find GameManager.", this);
-            return;
         }
 
-        if (civilianPiecePrefabs == null || civilianPiecePrefabs.Length == 0)
+        PoolCivilians();
+
+        while (civilianPool.Count < civilianPiecePrefabs.Length)
+            civilianPool.Add(new Queue<PieceBase>());
+
+        int[] civilianTypeCounts = new int[civilianPiecePrefabs.Length];
+        foreach (StageEntityData civilianEntity in civilianEntities)
         {
-            Debug.LogWarning("StageManager: civilianPiecePrefabs is not assigned.", this);
-            return;
-        }
-
-        civilianPieces = new PieceBase[civilianEntities.Count];
-
-        for (int i = 0; i < civilianEntities.Count; i++)
-        {
-            StageEntityData civilian = civilianEntities[i];
-
-            if (civilian.detailType < 0 || civilian.detailType >= civilianPiecePrefabs.Length)
+            if (civilianEntity.detailType >= 0 && civilianEntity.detailType < civilianTypeCounts.Length)
             {
-                Debug.LogWarning($"Civilian detailType is out of range: {civilian.detailType}", this);
+                civilianTypeCounts[civilianEntity.detailType]++;
+            }
+        }
+
+        civilianPieces = new PieceBase[civilianPiecePrefabs.Length][];
+        for (int index = 0; index < civilianPiecePrefabs.Length; index++)
+        {
+            civilianPieces[index] = new PieceBase[civilianTypeCounts[index]];
+        }
+
+        int[] civilianTypeIndices = new int[civilianPiecePrefabs.Length];
+
+        foreach (StageEntityData civilianEntity in civilianEntities)
+        {
+            if (civilianEntity.detailType < 0 || civilianEntity.detailType >= civilianPiecePrefabs.Length)
+            {
+                Debug.LogWarning($"Civilian detailType is out of range: {civilianEntity.detailType}", this);
                 continue;
             }
 
-            GameObject prefab = civilianPiecePrefabs[civilian.detailType];
-            if (prefab == null)
+            GameObject civilianPrefab = civilianPiecePrefabs[civilianEntity.detailType];
+            if (civilianPrefab == null)
             {
-                Debug.LogWarning($"Civilian prefab is missing for detailType: {civilian.detailType}", this);
+                Debug.LogWarning($"Civilian prefab is missing for detailType: {civilianEntity.detailType}", this);
                 continue;
             }
 
-            Vector3 spawnPosition = gameManager.GetCellPosition(civilian.cellIndex);
-            Quaternion spawnRotation = Quaternion.Euler(0f, civilian.facing * 90f, 0f);
+            Vector3 spawnPosition = gameManager.GetCellPosition(civilianEntity.cellIndex);
+            Quaternion spawnRotation = Quaternion.Euler(0f, civilianEntity.facing * 90f, 0f);
 
-            GameObject civilianObject = Instantiate(prefab, spawnPosition, spawnRotation, transform);
-            civilianObject.name = prefab.name;
-
-            PieceBase piece = civilianObject.GetComponent<PieceBase>();
-            if (piece != null)
+            PieceBase civilianPiece;
+            Queue<PieceBase> pool = civilianPool[civilianEntity.detailType];
+            if (pool.Count > 0)
             {
-                Vector2Int gridCoord = StageGridIndexUtility.ToGridCoord(stageData.boardSize, civilian.cellIndex);
-                piece.GridX = gridCoord.x;
-                piece.GridY = gridCoord.y;
-                piece.FacingDirection = (Direction)civilian.facing;
-                piece.CaptureSpawnState();
-                civilianPieces[i] = piece;
+                civilianPiece = pool.Dequeue();
+                civilianPiece.transform.SetPositionAndRotation(spawnPosition, spawnRotation);
+                civilianPiece.gameObject.SetActive(true);
             }
+            else
+            {
+                GameObject civilianObject = Instantiate(civilianPrefab, spawnPosition, spawnRotation, transform);
+                civilianPiece = civilianObject.GetComponent<PieceBase>();
+                if (civilianPiece == null)
+                {
+                    Debug.LogWarning($"Civilian prefab has no PieceBase component: {civilianPrefab.name}", this);
+                    Destroy(civilianObject);
+                    continue;
+                }
+            }
+
+            Vector2Int gridCoord = StageGridIndexUtility.ToGridCoord(stageData.boardSize, civilianEntity.cellIndex);
+            civilianPiece.GridX = gridCoord.x;
+            civilianPiece.GridY = gridCoord.y;
+            civilianPiece.FacingDirection = (Direction)civilianEntity.facing;
+            civilianPiece.CaptureSpawnState();
+
+            int civilianTypeIndex = civilianTypeIndices[civilianEntity.detailType]++;
+            civilianPieces[civilianEntity.detailType][civilianTypeIndex] = civilianPiece;
+            spawnedCivilianPieces.Add((civilianEntity.detailType, civilianPiece));
         }
     }
     private void SpawnObjects(StageData stageData)
@@ -716,6 +736,18 @@ public class StageManager : MonoBehaviour
         }
         spawnedEnemyPieces.Clear();
     }
+    private void PoolCivilians()
+    {
+        foreach ((int detailType, PieceBase civilian) in spawnedCivilianPieces)
+        {
+            if (civilian == null) continue;
+            civilian.gameObject.SetActive(false);
+            while (civilianPool.Count <= detailType)
+                civilianPool.Add(new Queue<PieceBase>());
+            civilianPool[detailType].Enqueue(civilian);
+        }
+        spawnedCivilianPieces.Clear();
+    }
     private void PoolObjects()
     {
         foreach ((int detailType, GameObject obj) in spawnedObjects)
@@ -759,6 +791,23 @@ public class StageManager : MonoBehaviour
                 if (pooled != null) Destroy(pooled.gameObject);
             }
         }
+        enemyPool.Clear();
+
+        foreach ((int _, PieceBase civilian) in spawnedCivilianPieces)
+        {
+            if (civilian != null) Destroy(civilian.gameObject);
+        }
+        spawnedCivilianPieces.Clear();
+
+        foreach (Queue<PieceBase> pool in civilianPool)
+        {
+            while (pool.Count > 0)
+            {
+                PieceBase pooled = pool.Dequeue();
+                if (pooled != null) Destroy(pooled.gameObject);
+            }
+        }
+        civilianPool.Clear();
 
         foreach ((int _, GameObject obj) in spawnedObjects)
         {
@@ -775,8 +824,6 @@ public class StageManager : MonoBehaviour
             }
         }
         objectPool.Clear();
-
-
     }
 
     private void ClearSpawnedAllyPieces()
@@ -826,10 +873,9 @@ public class StageManager : MonoBehaviour
             if (piece != null && piece.gameObject.activeInHierarchy && !piece.IsDead)
                 result.Add(piece);
 
-        if (civilianPieces != null)
-            foreach (var piece in civilianPieces)
-                if (piece != null && piece.gameObject.activeInHierarchy && !piece.IsDead)
-                    result.Add(piece);
+        foreach ((_, var piece) in spawnedCivilianPieces)
+            if (piece != null && piece.gameObject.activeInHierarchy && !piece.IsDead)
+                result.Add(piece);
 
         return result.AsReadOnly();
     }
@@ -845,10 +891,9 @@ public class StageManager : MonoBehaviour
             if (piece != null && piece.gameObject.activeInHierarchy)
                 result.Add(piece);
 
-        if (civilianPieces != null)
-            foreach (var piece in civilianPieces)
-                if (piece != null && piece.gameObject.activeInHierarchy)
-                    result.Add(piece);
+        foreach ((_, var piece) in spawnedCivilianPieces)
+            if (piece != null && piece.gameObject.activeInHierarchy)
+                result.Add(piece);
 
         return result.AsReadOnly();
     }

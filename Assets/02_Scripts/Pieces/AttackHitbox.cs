@@ -11,6 +11,8 @@ public class AttackHitbox : MonoBehaviour
     private PieceBase _owner;
     private Collider _col;
 
+    private bool _isBullet = false;
+
     private void Awake()
     {
         _col = GetComponent<Collider>();
@@ -32,16 +34,30 @@ public class AttackHitbox : MonoBehaviour
     {
         _col.enabled = false;
     }
+    public void SetAsBullet(bool isBullet)
+    {
+        _isBullet = isBullet;
+    }
 
     private void OnTriggerEnter(Collider other)
     {
         if (_owner == null) return;
+
+        if(other.CompareTag("Wall"))
+        {
+            //TODO: 총알이 벽에 맞았을 때 효과음, 파티클 등 추가 가능
+            EndAttack();
+            return; 
+        }
+
+
 
         var piece = other.GetComponentInParent<PieceBase>();
         if (piece == null || piece.IsDead) return;
         if (!_owner.IsEnemyOf(piece)) return;
 
         piece.TakeDamage(1);
-        EndAttack();
+        if(!_isBullet)
+            EndAttack();
     }
 }
