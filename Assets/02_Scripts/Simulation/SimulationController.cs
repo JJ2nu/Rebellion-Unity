@@ -10,7 +10,6 @@ public class SimulationController : MonoBehaviour
     public static SimulationController Instance { get; private set; }
 
     [SerializeField] private float stepDuration = 0.5f;
-    // ... (rest of the code)
 
     [Header("Debug (Read-only)")]
     public bool _isRunning;
@@ -28,12 +27,14 @@ public class SimulationController : MonoBehaviour
     public event Action<SimulationResult> SimulationFinished;
     public event Action<bool> RunningStateChanged;
 
+    public List<int> _currentDeadCount;
     public enum SimulationResult
     {
         PerfectWin,
         AllyDeadWin,
         CivilianDeadWin,
         BothDeadWin,
+        AllyDeadLose,
         Lose,
     }
 
@@ -56,6 +57,11 @@ public class SimulationController : MonoBehaviour
             return;
         }
         Instance = this;
+        _currentDeadCount = new List<int>();
+        foreach (Faction f in Enum.GetValues(typeof(Faction)))
+        {
+            _currentDeadCount.Add(0);
+        }
         // DontDestroyOnLoad(gameObject);
     }
     public void StartSimulation()
@@ -92,6 +98,10 @@ public class SimulationController : MonoBehaviour
         _currentPhase = 0;
         _currentStep = 0;
         _lastResult = "-";
+        for (int i = 0; i < _currentDeadCount.Count; i++)
+        {
+            _currentDeadCount[i] = 0;
+        }
     }
 
     /// <summary>
