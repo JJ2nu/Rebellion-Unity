@@ -67,6 +67,13 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
     protected void Awake()
     {
         _animator = GetComponentInChildren<Animator>();
+        OnDied += piece =>
+        {
+            if (SimulationController.Instance != null)
+            {
+                SimulationController.Instance._currentDeadCount[(int)_faction]++;
+            }
+        };
     }
     private void Start()
     {
