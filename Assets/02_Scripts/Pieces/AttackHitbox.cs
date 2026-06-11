@@ -48,17 +48,14 @@ public class AttackHitbox : MonoBehaviour
         {
             //TODO: 총알이 벽에 맞았을 때 효과음, 파티클 등 추가 가능
             EndAttack();
-            return; 
+            return;
         }
-
-
 
         var piece = other.GetComponentInParent<PieceBase>();
         if (piece == null || piece.IsDead) return;
-        if (!_owner.IsEnemyOf(piece)) return;
-
+        if (piece == _owner) return; // 자기 자신은 공격하지 않음
         piece.TakeDamage(1);
-        if(!_isBullet)
+        if (!_isBullet)
             EndAttack();
     }
 }
