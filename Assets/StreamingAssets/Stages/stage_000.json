@@ -27,6 +27,12 @@
             "detailType": 2,
             "facing": 0,
             "cellIndex": 15
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 0,
+            "cellIndex": 26
         }
     ]
 }

@@ -72,6 +72,12 @@ public class SimulationController : MonoBehaviour
     {
         StopAllCoroutines();
         isExecutingSimulation = false;
+
+        foreach (var bullet in GameObject.FindGameObjectsWithTag("Bullet"))
+        {
+            Destroy(bullet);
+        }
+
         foreach (var piece in StageManager.Instance.GetAllPieces())
         {
             if (piece != null)
