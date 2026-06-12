@@ -42,6 +42,10 @@ public sealed class DialoguePlayer : MonoBehaviour
     [Header("Character")]
     [SerializeField, Range(0f, 1f)] private float playerSpeakerAlpha = 0.5f;
 
+    [Header("Audio")]
+    [SerializeField] private AudioSource advanceAudioSource;
+    [SerializeField] private AudioClip advanceClip;
+
     [Header("Events")]
     [SerializeField] private UnityEvent nextStageRequestedEvent;
 
@@ -171,8 +175,15 @@ public sealed class DialoguePlayer : MonoBehaviour
             return;
         }
 
+        if (currentLines == null || currentLines.Count == 0)
+        {
+            Debug.LogWarning("Dialogue textbox clicked, but no dialogue is playing.");
+            return;
+        }
+
         lastAdvanceFrame = Application.isPlaying ? Time.frameCount : -1;
 
+        PlayAdvanceSound();
         AdvanceCurrentLine();
     }
 
@@ -329,12 +340,6 @@ public sealed class DialoguePlayer : MonoBehaviour
 
     private void AdvanceCurrentLine()
     {
-        if (currentLines == null || currentLines.Count == 0)
-        {
-            Debug.LogWarning("Dialogue textbox clicked, but no dialogue is playing.");
-            return;
-        }
-
         DialogueLineData line = currentLines[currentIndex];
 
         if (line.NextAction == DialogueNextAction.NextStage)
@@ -372,6 +377,16 @@ public sealed class DialoguePlayer : MonoBehaviour
         {
             dialogueText.text = string.Empty;
         }
+    }
+
+    private void PlayAdvanceSound()
+    {
+        if (advanceAudioSource == null || advanceClip == null)
+        {
+            return;
+        }
+
+        advanceAudioSource.PlayOneShot(advanceClip);
     }
 
     #endregion

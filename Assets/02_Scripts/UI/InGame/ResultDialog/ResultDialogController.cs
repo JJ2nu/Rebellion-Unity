@@ -32,6 +32,10 @@ public sealed class ResultDialogController : MonoBehaviour
     [SerializeField] private StageSimulationControls stageSimulationControls;
     [SerializeField] private StageSceneFlowBinder stageSceneFlowBinder;
 
+    [Header("Audio")]
+    [SerializeField] private AudioSource advanceAudioSource;
+    [SerializeField] private AudioClip advanceClip;
+
     private ResultDialogueDataTable dataTable;
     private TextAsset cachedCsv;
     private DisplayState displayState = DisplayState.Hidden;
@@ -93,6 +97,7 @@ public sealed class ResultDialogController : MonoBehaviour
         }
 
         lastAdvanceFrame = Time.frameCount;
+        PlayAdvanceSound();
         displayState = DisplayState.Choices;
 
         bool canConfirm = currentResult == SimulationController.SimulationResult.AllyDeadWin ||
@@ -180,5 +185,15 @@ public sealed class ResultDialogController : MonoBehaviour
 
         cachedCsv = resultDialogueCsv;
         dataTable = ResultDialogueDataTable.FromCsv(resultDialogueCsv);
+    }
+
+    private void PlayAdvanceSound()
+    {
+        if (advanceAudioSource == null || advanceClip == null)
+        {
+            return;
+        }
+
+        advanceAudioSource.PlayOneShot(advanceClip);
     }
 }
