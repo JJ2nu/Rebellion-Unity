@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 #if UNITY_EDITOR
@@ -80,6 +81,19 @@ public sealed class DialoguePlayer : MonoBehaviour
         if (playPreviewOnStart)
         {
             PlayPreviewDialogue();
+        }
+    }
+
+    private void Update()
+    {
+        if (!Application.isPlaying || Keyboard.current == null)
+        {
+            return;
+        }
+
+        if (Keyboard.current.spaceKey.wasPressedThisFrame)
+        {
+            AdvanceDialogue();
         }
     }
 

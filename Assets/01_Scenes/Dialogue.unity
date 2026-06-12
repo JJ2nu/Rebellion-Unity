@@ -1018,6 +1018,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -269
       objectReference: {fileID: 0}
+    - target: {fileID: 4555597245651428195, guid: 4afdea8b1abb9b641a1d80c50ab7290a, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 355
+      objectReference: {fileID: 0}
     - target: {fileID: 6162189193158832846, guid: 4afdea8b1abb9b641a1d80c50ab7290a, type: 3}
       propertyPath: m_text
       value: "(\uD76C\uC0DD\uC744 \uB9C9\uC9C0 \uBABB\uD55C\uB2E4\uBA74\u2026 \uB05D\uC5C6\uB294
@@ -1111,7 +1115,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 57edb108071e90148a4c2cb5af12cf9a, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DialogueSceneFlowBinder
   dialoguePlayer: {fileID: 536387158}
 --- !u!4 &586181097

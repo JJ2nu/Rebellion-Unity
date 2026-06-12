@@ -141,9 +141,10 @@ public sealed class GameFlowManager : MonoBehaviour
             return;
         }
 
-        if (result == SimulationController.SimulationResult.Lose)
+        if (result == SimulationController.SimulationResult.Lose ||
+            result == SimulationController.SimulationResult.AllyDeadLose)
         {
-            Debug.Log("[GameFlowManager] Stage ended with Lose. Staying on Stage for retry.", this);
+            Debug.Log($"[GameFlowManager] Stage ended with {result}. Staying on Stage for retry.", this);
             return;
         }
 
