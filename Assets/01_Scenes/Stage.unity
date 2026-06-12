@@ -770,10 +770,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: AudioDramaPanel
       objectReference: {fileID: 0}
-    - target: {fileID: 7884104376316905297, guid: 93d73afeb5e39cf4099a473c610195aa, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

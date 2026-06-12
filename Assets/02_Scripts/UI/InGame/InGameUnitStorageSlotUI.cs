@@ -78,6 +78,8 @@ public sealed class InGameUnitStorageSlotUI : MonoBehaviour, IPointerUpHandler
         EnsureCanvasGroup();
 
         interactionLocked = isLocked;
+
+        // Button.interactable을 바꾸면 Disabled Sprite가 표시되므로 raycast만 차단해 수량 이미지를 보존한다.
         canvasGroup.blocksRaycasts = !isLocked;
         UpdateView();
     }
@@ -185,6 +187,7 @@ public sealed class InGameUnitStorageSlotUI : MonoBehaviour, IPointerUpHandler
         canvasGroup = GetComponent<CanvasGroup>();
         if (canvasGroup == null)
         {
+            // 기존 Storage Prefab에도 동작하도록 필요한 경우 런타임에 입력 차단용 CanvasGroup을 보충한다.
             canvasGroup = gameObject.AddComponent<CanvasGroup>();
         }
 

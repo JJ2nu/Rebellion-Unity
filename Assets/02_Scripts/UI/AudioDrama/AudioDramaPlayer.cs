@@ -62,6 +62,7 @@ public sealed class AudioDramaPlayer : MonoBehaviour
 
     private void OnEnable()
     {
+        // 컴포넌트 활성 기간에 UI/Cancel 액션을 연결하고, 표시 중인 오디오드라마에만 스킵을 적용한다.
         BindSkipAction();
     }
 
@@ -114,6 +115,7 @@ public sealed class AudioDramaPlayer : MonoBehaviour
 
     public void Stop()
     {
+        // 대기 중인 모든 fade/자막 루프가 같은 프레임에 종료 조건을 볼 수 있도록 먼저 표시한다.
         skipRequested = true;
 
         if (playRoutine != null)
@@ -203,6 +205,7 @@ public sealed class AudioDramaPlayer : MonoBehaviour
 
     private IEnumerator PlayDataAndWait(AudioDramaData data, AudioClip clip)
     {
+        // 오디오 시간을 기준으로 자막을 맞추며, 어느 대기 구간에서도 스킵 즉시 패널을 정리한다.
         canvasGroup.blocksRaycasts = true;
         canvasGroup.interactable = false;
         dialogueText.text = string.Empty;

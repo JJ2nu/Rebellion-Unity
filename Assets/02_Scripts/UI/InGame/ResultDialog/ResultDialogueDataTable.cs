@@ -4,6 +4,10 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
+/// <summary>
+/// 판정 대사 CSV를 읽고 Stage와 SimulationResult 조합에 맞는 한 줄을 제공한다.
+/// 특정 Stage 행이 없으면 StageId가 '*'인 공통 결과 행을 대체 데이터로 사용한다.
+/// </summary>
 public sealed class ResultDialogueDataTable
 {
     private const string AnyStageId = "*";
@@ -45,6 +49,7 @@ public sealed class ResultDialogueDataTable
             return true;
         }
 
+        // Stage 전용 문구가 없을 때만 결과별 공통 문구를 사용한다.
         List<ResultDialogueLineData> fallbackMatches = FindMatches(AnyStageId, result);
         if (fallbackMatches.Count > 1)
         {
@@ -148,6 +153,7 @@ public sealed class ResultDialogueDataTable
 
     private static List<string[]> ParseRecords(string csvText)
     {
+        // 대사 안의 쉼표, 줄바꿈, 이중 따옴표를 보존하기 위해 인용 상태를 추적하며 레코드를 분리한다.
         List<string[]> records = new();
         List<string> fields = new();
         StringBuilder field = new();

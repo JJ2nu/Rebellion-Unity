@@ -2,6 +2,10 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
+/// <summary>
+/// Stage의 Play, Retry, Confirm 버튼을 시뮬레이션 실행 상태와 보관된 결과에 맞춰 전환한다.
+/// 결과 확정 전까지 배치 모드를 잠그고, 완전 승리 외 결과는 판정 다이얼로그를 거쳐 기존 확정/Retry 흐름으로 보낸다.
+/// </summary>
 public sealed class StageSimulationControls : MonoBehaviour
 {
     [Header("Bindings")]
@@ -99,6 +103,7 @@ public sealed class StageSimulationControls : MonoBehaviour
             return;
         }
 
+        // 완전 승리는 판정 패널을 생략하고, 나머지 결과만 플레이어 선택을 위해 패널에 전달한다.
         if (result == SimulationController.SimulationResult.PerfectWin)
         {
             stageSceneFlowBinder.ConfirmSimulationResult();
@@ -152,6 +157,8 @@ public sealed class StageSimulationControls : MonoBehaviour
     private void HandleSimulationFinished(SimulationController.SimulationResult _)
     {
         EnsureBindings();
+
+        // Binder의 이벤트 구독 순서와 관계없이 버튼 갱신 전에 pending 결과가 존재하도록 보장한다.
         stageSceneFlowBinder?.StoreSimulationResult(_);
         ApplyState();
     }
@@ -161,6 +168,7 @@ public sealed class StageSimulationControls : MonoBehaviour
         EnsureBindings();
         CachePlayButtonSprites();
 
+        // 실행 중에는 Play를 비활성 스프라이트로 남기고, 결과가 생긴 뒤에만 Retry/Confirm으로 교체한다.
         bool isSimulationMode = simulationController != null && simulationController._isRunning;
         bool hasSimulationResult = stageSceneFlowBinder != null && stageSceneFlowBinder.HasPendingSimulationResult;
 

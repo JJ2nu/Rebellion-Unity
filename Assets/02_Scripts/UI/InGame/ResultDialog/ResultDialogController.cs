@@ -3,6 +3,10 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
+/// <summary>
+/// 시뮬레이션 결과 대사를 표시하고 Dialogue에서 Choices로 이어지는 판정 패널 상태를 관리한다.
+/// 최종 결과 확정과 Retry 처리는 직접 구현하지 않고 Stage의 기존 흐름에 위임한다.
+/// </summary>
 public sealed class ResultDialogController : MonoBehaviour
 {
     private const string ElizaSpeakerName = "부관 엘리자";
@@ -10,6 +14,7 @@ public sealed class ResultDialogController : MonoBehaviour
     private const string PlayerSpeakerName = "당신";
     private const string PlayerSpeakerRichText = "<color=#dd9f7b>당신</color>";
 
+    // 상태를 명시해 Spacebar와 버튼 입력이 서로 다른 단계의 동작을 중복 실행하지 않게 한다.
     private enum DisplayState
     {
         Hidden,
@@ -91,6 +96,7 @@ public sealed class ResultDialogController : MonoBehaviour
 
     public void AdvanceDialogue()
     {
+        // Textbox와 별도 진행 버튼이 같은 프레임에 눌려도 한 번만 Choices로 전환한다.
         if (displayState != DisplayState.Dialogue || lastAdvanceFrame == Time.frameCount)
         {
             return;
@@ -100,6 +106,7 @@ public sealed class ResultDialogController : MonoBehaviour
         PlayAdvanceSound();
         displayState = DisplayState.Choices;
 
+        // 실패 결과는 재고만 허용하고, 불완전 승리만 현재 명령을 확정할 수 있다.
         bool canConfirm = currentResult == SimulationController.SimulationResult.AllyDeadWin ||
                           currentResult == SimulationController.SimulationResult.CivilianDeadWin ||
                           currentResult == SimulationController.SimulationResult.BothDeadWin;
@@ -116,6 +123,8 @@ public sealed class ResultDialogController : MonoBehaviour
         }
 
         Hide();
+
+        // pending 결과를 지우고 Scene 흐름을 진행하는 책임은 StageSceneFlowBinder에 유지한다.
         stageSceneFlowBinder?.ConfirmSimulationResult();
     }
 
@@ -127,6 +136,8 @@ public sealed class ResultDialogController : MonoBehaviour
         }
 
         Hide();
+
+        // 판정 패널의 재고 버튼도 Stage의 기존 Retry 복원 경로를 그대로 사용한다.
         stageSimulationControls?.RetrySimulation();
     }
 

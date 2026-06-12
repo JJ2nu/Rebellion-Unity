@@ -2,6 +2,10 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
+/// <summary>
+/// 버튼 Prefab 자체의 AudioSource로 hover와 click SFX를 재생한다.
+/// additionalClickClip은 기본 클릭음과 함께 재생해야 하는 버튼 전용 효과음에 사용한다.
+/// </summary>
 [RequireComponent(typeof(Button))]
 [RequireComponent(typeof(AudioSource))]
 public sealed class UIButtonSfx : MonoBehaviour, IPointerEnterHandler, IPointerDownHandler
