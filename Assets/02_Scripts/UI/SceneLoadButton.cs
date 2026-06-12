@@ -1,14 +1,20 @@
-using UnityEngine;
-using UnityEngine.SceneManagement;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Inspector의 Scene 이름으로 단순 메뉴 버튼 전환을 연결한다.
-/// 캠페인 상태가 필요한 Campaign 버튼에는 사용하지 않는다.
+/// 메뉴 버튼의 씬 전환을 코드에서 연결한다.
+/// Campaign은 지속되는 GameSceneManager를 통해 캠페인 상태를 만든 뒤 이동한다.
 /// </summary>
 [RequireComponent(typeof(Button))]
 public sealed class SceneLoadButton : MonoBehaviour
 {
+    private enum LoadMode
+    {
+        Scene,
+        Campaign
+    }
+
+    [SerializeField] private LoadMode loadMode;
     [SerializeField] private string sceneName;
 
     private Button button;
@@ -21,22 +27,34 @@ public sealed class SceneLoadButton : MonoBehaviour
     private void OnEnable()
     {
         button ??= GetComponent<Button>();
-        button.onClick.AddListener(LoadScene);
+        button.onClick.AddListener(Load);
     }
 
     private void OnDisable()
     {
-        button?.onClick.RemoveListener(LoadScene);
+        button?.onClick.RemoveListener(Load);
     }
 
-    private void LoadScene()
+    private void Load()
     {
+        if (GameSceneManager.Instance == null)
+        {
+            Debug.LogWarning("SceneLoadButton could not find GameSceneManager.Instance.", this);
+            return;
+        }
+
+        if (loadMode == LoadMode.Campaign)
+        {
+            GameSceneManager.Instance.StartCampaign();
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(sceneName))
         {
             Debug.LogWarning("SceneLoadButton scene name is empty.", this);
             return;
         }
 
-        SceneManager.LoadScene(sceneName);
+        GameSceneManager.Instance.LoadScene(sceneName);
     }
 }

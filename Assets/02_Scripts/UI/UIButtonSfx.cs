@@ -7,7 +7,6 @@ using UnityEngine.UI;
 /// additionalClickClip은 기본 클릭음과 함께 재생해야 하는 버튼 전용 효과음에 사용한다.
 /// </summary>
 [RequireComponent(typeof(Button))]
-[RequireComponent(typeof(AudioSource))]
 public sealed class UIButtonSfx : MonoBehaviour, IPointerEnterHandler, IPointerDownHandler
 {
     [SerializeField] private AudioClip hoverClip;
@@ -25,12 +24,12 @@ public sealed class UIButtonSfx : MonoBehaviour, IPointerEnterHandler, IPointerD
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        if (!button.interactable || hoverClip == null)
+        if (!button.interactable)
         {
             return;
         }
 
-        audioSource.PlayOneShot(hoverClip);
+        PlayClip(hoverClip);
     }
 
     public void OnPointerDown(PointerEventData eventData)
@@ -42,12 +41,35 @@ public sealed class UIButtonSfx : MonoBehaviour, IPointerEnterHandler, IPointerD
 
         if (clickClip != null)
         {
-            audioSource.PlayOneShot(clickClip);
+            PlayClip(clickClip);
         }
 
         if (additionalClickClip != null)
         {
-            audioSource.PlayOneShot(additionalClickClip);
+            PlayClip(additionalClickClip);
         }
+    }
+
+    private void PlayClip(AudioClip clip)
+    {
+        if (clip == null)
+        {
+            return;
+        }
+
+        if (audioSource == null && GameSceneManager.Instance != null)
+        {
+            // Title 재진입 시 삭제되는 새 Managers 참조 대신 영속 싱글톤의 출력을 런타임에 사용한다.
+            audioSource = GameSceneManager.Instance.GetComponent<AudioSource>();
+        }
+
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.playOnAwake = false;
+            audioSource.spatialBlend = 0f;
+        }
+
+        audioSource.PlayOneShot(clip);
     }
 }

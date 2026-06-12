@@ -768,6 +768,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1491cbfd5a64628489006086545bdef8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SceneLoadButton
+  loadMode: 0
   sceneName: Title
 --- !u!114 &972063826
 MonoBehaviour:

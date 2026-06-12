@@ -51,6 +51,8 @@ public sealed class ResultDialogController : MonoBehaviour
 
     private void OnEnable()
     {
+        WorldInputRaycaster.Instance?.SetInputBlocked(true);
+
         textboxButton?.onClick.AddListener(AdvanceDialogue);
         advanceButton?.onClick.AddListener(AdvanceDialogue);
         confirmCommandButton?.onClick.AddListener(ConfirmCommand);
@@ -59,6 +61,8 @@ public sealed class ResultDialogController : MonoBehaviour
 
     private void OnDisable()
     {
+        WorldInputRaycaster.Instance?.SetInputBlocked(false);
+
         textboxButton?.onClick.RemoveListener(AdvanceDialogue);
         advanceButton?.onClick.RemoveListener(AdvanceDialogue);
         confirmCommandButton?.onClick.RemoveListener(ConfirmCommand);
