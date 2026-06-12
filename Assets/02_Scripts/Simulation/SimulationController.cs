@@ -221,7 +221,10 @@ public class SimulationController : MonoBehaviour
         bool anyEnemyAlive = allPieces.Any(p => p.Faction == Faction.Enemy && !p.IsDead);
         if (anyEnemyAlive) return SimulationResult.Lose;
 
-        bool anyAllyDead = allPieces.Any(p => p.Faction == Faction.Ally && p.IsDead);
+        int allyDeadCount = allPieces.Count(p => p.Faction == Faction.Ally && p.IsDead);
+        if (allyDeadCount >= 3) return SimulationResult.AllyDeadLose;
+
+        bool anyAllyDead = allyDeadCount > 0;
         bool anyCivilianDead = allPieces.Any(p => p.Faction == Faction.Neutral && p.IsDead);
 
         if (anyAllyDead && anyCivilianDead) return SimulationResult.BothDeadWin;

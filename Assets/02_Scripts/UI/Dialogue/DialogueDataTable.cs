@@ -45,9 +45,10 @@ public sealed class DialogueDataTable
             return new List<DialogueLineData>();
         }
 
-        if (result == SimulationController.SimulationResult.Lose)
+        if (result == SimulationController.SimulationResult.Lose ||
+            result == SimulationController.SimulationResult.AllyDeadLose)
         {
-            Debug.LogError("Lose 결과는 다이얼로그 씬으로 전달되면 안 됩니다.");
+            Debug.LogError($"{result} 결과는 다이얼로그 씬으로 전달되면 안 됩니다.");
             return new List<DialogueLineData>();
         }
 

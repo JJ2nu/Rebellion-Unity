@@ -11,6 +11,9 @@ public class StageManager : MonoBehaviour
     public static event System.Action<StageData> StageLoaded;
 
     public StageData CurrentStageData => currentStageData;
+    public string CurrentStageId => string.IsNullOrWhiteSpace(currentStagePath)
+        ? string.Empty
+        : Path.GetFileNameWithoutExtension(currentStagePath);
 
     [SerializeField] private GameObject[] allyPiecePrefabs;
     [SerializeField] private GameObject[] enemyPiecePrefabs;

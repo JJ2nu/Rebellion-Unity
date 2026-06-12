@@ -10,6 +10,7 @@ public sealed class StageSimulationControls : MonoBehaviour
     [SerializeField] private Button playButton;
     [SerializeField] private Button retryButton;
     [SerializeField] private Button confirmButton;
+    [SerializeField] private ResultDialogController resultDialogController;
 
     [Header("Confirm Override")]
     [SerializeField] private bool useConfirmOverride;
@@ -90,7 +91,33 @@ public sealed class StageSimulationControls : MonoBehaviour
             return;
         }
 
-        stageSceneFlowBinder?.ConfirmSimulationResult();
+        if (stageSceneFlowBinder == null ||
+            !stageSceneFlowBinder.TryGetPendingSimulationResult(out SimulationController.SimulationResult result))
+        {
+            Debug.LogWarning("[StageSimulationControls] Confirm requested before a simulation result is ready.", this);
+            ApplyState();
+            return;
+        }
+
+        if (result == SimulationController.SimulationResult.PerfectWin)
+        {
+            stageSceneFlowBinder.ConfirmSimulationResult();
+            ApplyState();
+            return;
+        }
+
+        if (resultDialogController == null)
+        {
+            Debug.LogWarning("[StageSimulationControls] ResultDialogController is not assigned.", this);
+            return;
+        }
+
+        if (!resultDialogController.IsVisible)
+        {
+            string stageId = StageManager.Instance != null ? StageManager.Instance.CurrentStageId : string.Empty;
+            resultDialogController.Show(stageId, result);
+        }
+
         ApplyState();
     }
 

@@ -1,0 +1,31 @@
+StageId,SimulationResult,SpeakerName,DialogueText,CharacterState,Enabled
+*,Lose,부관 엘리자,"적이 한 명이라도 남게 되면 지원을 부를 겁니다.
+한 번에 모두 처치할 수 있게 다시 명령을 내려주세요.",Eliza_Resistance_Sad,TRUE
+*,CivilianDeadWin,부관 엘리자,"이대로 진행한다면 누군가는 희생해야 합니다.
+정말 이대로 작전을 지시할까요?",Eliza_Resistance_Sad,TRUE
+*,AllyDeadWin,부관 엘리자,"이대로 진행한다면 누군가는 희생해야 합니다.
+정말 이대로 작전을 지시할까요?",Eliza_Resistance_Sad,TRUE
+*,BothDeadWin,부관 엘리자,"이대로 진행한다면 누군가는 희생해야 합니다.
+정말 이대로 작전을 지시할까요?",Eliza_Resistance_Sad,TRUE
+*,AllyDeadLose,부관 엘리자,"이렇게 많은 대원을 잃을 수는 없습니다.
+명령을 재고해주세요.",Eliza_Resistance_Sad,TRUE
+stage_007,Lose,당신,"남은 적이 지원을 요청한다면 큰일이다.
+다시 작전을 짜보자.",,TRUE
+stage_007,CivilianDeadWin,당신,"이대로 진행한다면 누군가는 희생해야 한다.
+정말 이대로 작전을 지시할까?",,TRUE
+stage_007,AllyDeadWin,당신,"이대로 진행한다면 누군가는 희생해야 한다.
+정말 이대로 작전을 지시할까?",,TRUE
+stage_007,BothDeadWin,당신,"이대로 진행한다면 누군가는 희생해야 한다.
+정말 이대로 작전을 지시할까?",,TRUE
+stage_007,AllyDeadLose,당신,"이렇게 많은 대원을 잃을 수는 없다.
+다시 작전을 짜보자.",,TRUE
+stage_008,Lose,당신,"남은 적이 지원을 요청한다면 큰일이다.
+다시 작전을 짜보자.",,TRUE
+stage_008,CivilianDeadWin,당신,"이대로 진행한다면 누군가는 희생해야 한다.
+정말 이대로 작전을 지시할까?",,TRUE
+stage_008,AllyDeadWin,당신,"이대로 진행한다면 누군가는 희생해야 한다.
+정말 이대로 작전을 지시할까?",,TRUE
+stage_008,BothDeadWin,당신,"이대로 진행한다면 누군가는 희생해야 한다.
+정말 이대로 작전을 지시할까?",,TRUE
+stage_008,AllyDeadLose,당신,"이렇게 많은 대원을 잃을 수는 없다.
+다시 작전을 짜보자.",,TRUE

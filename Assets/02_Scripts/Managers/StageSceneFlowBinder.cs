@@ -112,6 +112,13 @@ public sealed class StageSceneFlowBinder : MonoBehaviour
         }
 
         SimulationController.SimulationResult confirmedResult = pendingSimulationResult;
+        if (confirmedResult == SimulationController.SimulationResult.Lose ||
+            confirmedResult == SimulationController.SimulationResult.AllyDeadLose)
+        {
+            Debug.LogWarning($"[StageSceneFlowBinder] Failure result cannot be confirmed: {confirmedResult}", this);
+            return;
+        }
+
         ClearPendingSimulationResult();
         simulationController?.MarkSimulationConfirmed();
         if (flowManager != null)
@@ -133,6 +140,12 @@ public sealed class StageSceneFlowBinder : MonoBehaviour
     {
         pendingSimulationResult = result;
         hasPendingSimulationResult = true;
+    }
+
+    public bool TryGetPendingSimulationResult(out SimulationController.SimulationResult result)
+    {
+        result = pendingSimulationResult;
+        return hasPendingSimulationResult;
     }
 
     private void HandleSimulationFinished(SimulationController.SimulationResult result)
