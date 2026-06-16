@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class GameSceneManager : MonoBehaviour
 {
@@ -20,6 +20,7 @@ public class GameSceneManager : MonoBehaviour
     #region 씬 전환
     public void StartCampaign()
     {
+        // Campaign 버튼은 Scene을 직접 열지 않고 지속되는 캠페인 상태를 먼저 생성한다.
         GameFlowManager.StartNewCampaign();
     }
 

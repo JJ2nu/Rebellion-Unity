@@ -10,7 +10,7 @@ using UnityEngine.UI;
 using UnityEditor;
 #endif
 
-// Plays dialogue lines from CSV data and updates character animation.
+// CSV 대사를 순서대로 표시하고 화자에 맞는 캐릭터 연출과 다음 Stage 요청을 전달한다.
 [ExecuteAlways]
 public sealed class DialoguePlayer : MonoBehaviour
 {
@@ -41,6 +41,10 @@ public sealed class DialoguePlayer : MonoBehaviour
 
     [Header("Character")]
     [SerializeField, Range(0f, 1f)] private float playerSpeakerAlpha = 0.5f;
+
+    [Header("Audio")]
+    [SerializeField] private AudioSource advanceAudioSource;
+    [SerializeField] private AudioClip advanceClip;
 
     [Header("Events")]
     [SerializeField] private UnityEvent nextStageRequestedEvent;
@@ -93,6 +97,7 @@ public sealed class DialoguePlayer : MonoBehaviour
 
         if (Keyboard.current.spaceKey.wasPressedThisFrame)
         {
+            // Spacebar도 Textbox 클릭과 같은 진행 경로를 사용해 마지막 대사의 Scene 요청까지 일관되게 처리한다.
             AdvanceDialogue();
         }
     }
@@ -166,13 +171,21 @@ public sealed class DialoguePlayer : MonoBehaviour
 
     public void AdvanceDialogue()
     {
+        // 같은 프레임에 클릭과 Spacebar가 함께 들어와도 대사가 두 줄 진행되지 않게 막는다.
         if (Application.isPlaying && lastAdvanceFrame == Time.frameCount)
         {
             return;
         }
 
+        if (currentLines == null || currentLines.Count == 0)
+        {
+            Debug.LogWarning("Dialogue textbox clicked, but no dialogue is playing.");
+            return;
+        }
+
         lastAdvanceFrame = Application.isPlaying ? Time.frameCount : -1;
 
+        PlayAdvanceSound();
         AdvanceCurrentLine();
     }
 
@@ -329,12 +342,6 @@ public sealed class DialoguePlayer : MonoBehaviour
 
     private void AdvanceCurrentLine()
     {
-        if (currentLines == null || currentLines.Count == 0)
-        {
-            Debug.LogWarning("Dialogue textbox clicked, but no dialogue is playing.");
-            return;
-        }
-
         DialogueLineData line = currentLines[currentIndex];
 
         if (line.NextAction == DialogueNextAction.NextStage)
@@ -372,6 +379,16 @@ public sealed class DialoguePlayer : MonoBehaviour
         {
             dialogueText.text = string.Empty;
         }
+    }
+
+    private void PlayAdvanceSound()
+    {
+        if (advanceAudioSource == null || advanceClip == null)
+        {
+            return;
+        }
+
+        advanceAudioSource.PlayOneShot(advanceClip);
     }
 
     #endregion

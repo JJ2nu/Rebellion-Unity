@@ -2,6 +2,10 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+/// <summary>
+/// 캠페인 진행 상태를 Scene 전환 사이에 보관하고 Stage와 Dialogue Scene의 Binder를 연결한다.
+/// 각 Scene의 기존 매니저는 그대로 두고, 캠페인 순서와 분기만 이 객체가 담당한다.
+/// </summary>
 public sealed class GameFlowManager : MonoBehaviour
 {
     private const string StageSceneName = "Stage";
@@ -44,6 +48,8 @@ public sealed class GameFlowManager : MonoBehaviour
     private Coroutine stageSceneRoutine;
     private Coroutine endingRoutine;
     private string currentStageId;
+
+    // Stage Scene이 내려간 뒤 Dialogue Scene이 올라오므로 다음 대사 정보를 Scene 전환 전에 보관한다.
     private string nextStageAfterDialogue;
     private string pendingDialogueLevel;
     private SimulationController.SimulationResult pendingDialogueResult;
@@ -141,6 +147,7 @@ public sealed class GameFlowManager : MonoBehaviour
             return;
         }
 
+        // 실패 결과는 확정할 수 없으며 현재 Stage에서 Retry 선택을 기다린다.
         if (result == SimulationController.SimulationResult.Lose ||
             result == SimulationController.SimulationResult.AllyDeadLose)
         {
@@ -148,6 +155,7 @@ public sealed class GameFlowManager : MonoBehaviour
             return;
         }
 
+        // 엔딩 Stage는 Dialogue Scene으로 나가지 않고 현재 Stage 위에서 오디오드라마를 마친다.
         if (currentStageId == Stage008)
         {
             PlayEndingOnCurrentStage(BadEndingAudioStageId);
@@ -233,6 +241,7 @@ public sealed class GameFlowManager : MonoBehaviour
                 nextStageAfterDialogue = Stage007;
                 break;
             case Stage007:
+                // Stage 7의 민간인 사망 결과는 Eliza 사망 분기로 해석해 Stage 8로 보낸다.
                 pendingDialogueLevel = HasElizaDeath(result) ? Stage008 : Stage007;
                 nextStageAfterDialogue = HasElizaDeath(result) ? Stage008 : Stage009;
                 break;

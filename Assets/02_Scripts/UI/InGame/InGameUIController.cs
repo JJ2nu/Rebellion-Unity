@@ -324,6 +324,7 @@ public sealed class InGameUIController : MonoBehaviour
 
     private void ApplyStorageInteractionState()
     {
+        // 실행 중에도 남은 수량과 Act/Deact 이미지는 유지하고 배치 입력만 잠근다.
         bool isLocked = simulationController != null && simulationController._isRunning;
 
         for (int index = 0; index < storageSlots.Count; index++)
