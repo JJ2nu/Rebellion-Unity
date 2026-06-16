@@ -10,15 +10,15 @@ public class SlasherPiece : PieceBase
 {
     [Header("Slasher Config")]
     [SerializeField, Range(0f, 1f)] private float _dashFraction = 0.6f;
-    [SerializeField, Range(0.1f, 2f)] private float _animSpeedMultiplier = 0.8f; // 애니메이션 속도 조절용
+    [SerializeField, Min(0f)] private float _windupEndTime = 0.08f;
+    [SerializeField, Min(0f)] private float _slashMoveEndTime = 0.3f;
+    [SerializeField, Min(0f)] private float _settleEndTime = 0.42f;
+    [SerializeField, Range(0.1f, 10f)] private float _animSpeedMultiplier = 1f;
 
-    private float _attack1ClipLength = 2f;
-    private float _attack2ClipLength = 2.117f;
 
-    private bool _attackAnimEnded =false;
-    private Vector3 targetWorldPos;
+    private float _attackClipLength = 1.367f;
+
     private int _currentAttackRange = 1;
-    private float _animTimer = 0f;
     private AttackHitbox _knifeHitBox;
 
     private void Awake()
@@ -31,10 +31,11 @@ public class SlasherPiece : PieceBase
             foreach (var clip in _animator.runtimeAnimatorController.animationClips)
             {
                 string n = clip.name.ToLower();
-                if (n.Contains("range1") || n.Contains("knife_01") || n.Contains("attack_01"))
-                    _attack1ClipLength = clip.length;
-                else if (n.Contains("range2") || n.Contains("knife_02") || n.Contains("attack_02"))
-                    _attack2ClipLength = clip.length;
+                if (n.Contains("attack") || n.Contains("knife"))
+                {
+                    _attackClipLength = clip.length;
+                    break;
+                }
             }
         }
 
@@ -44,8 +45,6 @@ public class SlasherPiece : PieceBase
 
     public override void OnSimulationStart()
     {
-        _attackAnimEnded = false;
-        _animTimer = 0f;
         base.OnSimulationStart();
     }
 
@@ -66,21 +65,36 @@ public class SlasherPiece : PieceBase
 
         int dx = target.GridX - GridX;
         int dy = target.GridY - GridY;
-        int dist = Mathf.Abs(dx) + Mathf.Abs(dy);
-        bool is1Cell = dist <= 1;
+        int targetGX = target.GridX;
+        int targetGY = target.GridY;
+        Vector3 startWorldPos = transform.position;
+        Vector3 targetWorldPos = GetCellWorldPosition(targetGX, targetGY, target.transform.position);
+        float moveDuration = Mathf.Max(0.01f, _attackClipLength / _animSpeedMultiplier);
 
-        int targetGX = target.GridX - Mathf.Clamp(dx, -1, 1);
-        int targetGY = target.GridY - Mathf.Clamp(dy, -1, 1);
-        targetWorldPos = target.transform.position;
-        _attackAnimEnded = false;
         _knifeHitBox?.BeginAttack();
-        _animator?.SetTrigger(is1Cell ? "Attack" : "Attack2");
- 
-        yield return new WaitUntil(() => _attackAnimEnded == true);
-        
+        if (_animator != null)
+        {
+            _animator.speed = _animSpeedMultiplier;
+        }
+        _animator?.SetTrigger("Attack");
+
+        float elapsed = 0f;
+        while (elapsed < moveDuration)
+        {
+            elapsed += Time.deltaTime;
+            float animationTime = elapsed * _animSpeedMultiplier;
+            float moveProgress = EvaluateMoveProgress(animationTime);
+            transform.position = Vector3.Lerp(startWorldPos, targetWorldPos, moveProgress);
+            yield return null;
+        }
+
         transform.position = targetWorldPos;
         GridX = targetGX;
         GridY = targetGY;
+        if (_animator != null)
+        {
+            _animator.speed = 1f;
+        }
         FinishAction();
     }
 
@@ -107,9 +121,41 @@ public class SlasherPiece : PieceBase
         }
     }
 
+    private Vector3 GetCellWorldPosition(int gridX, int gridY, Vector3 fallback)
+    {
+        int boardSize = StageManager.Instance?.CurrentStageData?.boardSize ?? 6;
+        int cellIdx = StageGridIndexUtility.ToCellIndex(boardSize, gridX, gridY);
+        return GameManager.Instance != null
+            ? GameManager.Instance.GetCellPosition(cellIdx)
+            : fallback;
+    }
+
+    private float EvaluateMoveProgress(float animationTime)
+    {
+        if (animationTime <= _windupEndTime)
+        {
+            float t = Mathf.Clamp01(animationTime / Mathf.Max(0.01f, _windupEndTime));
+            return Mathf.Lerp(0f, 0.08f, t);
+        }
+
+        if (animationTime <= _slashMoveEndTime)
+        {
+            float t = Mathf.Clamp01((animationTime - _windupEndTime) / Mathf.Max(0.01f, _slashMoveEndTime - _windupEndTime));
+            t = 1f - Mathf.Pow(1f - t, 3f);
+            return Mathf.Lerp(0.08f, 0.95f, t);
+        }
+
+        if (animationTime <= _settleEndTime)
+        {
+            float t = Mathf.Clamp01((animationTime - _slashMoveEndTime) / Mathf.Max(0.01f, _settleEndTime - _slashMoveEndTime));
+            t = t * t * (3f - 2f * t);
+            return Mathf.Lerp(0.95f, 1f, t);
+        }
+
+        return 1f;
+    }
+
     public void OnAttackAnimationEnd()
     {
-        _attackAnimEnded = true;
     }
-    
 }

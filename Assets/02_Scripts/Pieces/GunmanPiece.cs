@@ -11,7 +11,7 @@ public class GunmanPiece : PieceBase
 {
     [Header("Gunman Config")]
     [SerializeField] private Transform _flarePoint;
-    [SerializeField, Range(0.1f, 10f)] private float _bulletSpeedMultiplier = 2f; // 총알 이동 속도 조절용
+    [SerializeField, Range(0.1f, 50f)] private float _bulletSpeedMultiplier = 2f; // 총알 이동 속도 조절용
 
     [SerializeField] private GameObject _bullet;
 
@@ -55,9 +55,6 @@ public class GunmanPiece : PieceBase
     /// <summary>외부(스킬 등)에서도 직접 발사 가능.</summary>
     public IEnumerator Fire(IReadOnlyList<PieceBase> allPieces, float stepDuration)
     {
-        // 공격 애니메이션을 1스텝 안에 맞춰 재생 후 총알 발사
-        // if (_animator != null && _attackClipLength > 0f)
-        //     _animator.speed = _attackClipLength / stepDuration;
         _animator?.SetTrigger("Attack");
         yield return new WaitForSeconds(_fireMotionClipLength);
 
