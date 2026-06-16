@@ -24,6 +24,8 @@ public class SimulationController : MonoBehaviour
     private PieceBase _currentClickedPiece = null;
     [SerializeField] private List<SkillBase> _skills;
     public IReadOnlyList<SkillBase> GetStageSkills() => _skills.AsReadOnly();
+
+    // SimulationFinished는 결과 UI에 값을 전달하고, RunningStateChanged는 배치 UI 잠금 상태를 동기화한다.
     public event Action<SimulationResult> SimulationFinished;
     public event Action<bool> RunningStateChanged;
 
@@ -202,6 +204,7 @@ public class SimulationController : MonoBehaviour
 
     public void MarkSimulationConfirmed()
     {
+        // 실행 코루틴이 끝나도 결과 확정 전까지는 배치 모드를 잠근 상태로 유지한다.
         SetRunning(false);
     }
 
@@ -218,6 +221,8 @@ public class SimulationController : MonoBehaviour
 
     private SimulationResult DetermineResult(IReadOnlyList<PieceBase> allPieces)
     {
+        // 이벤트 누적 카운터 대신 최종 기물 상태를 사용해 중복 사망 이벤트나 Retry 타이밍의 영향을 피한다.
+        // 적이 남은 실패를 먼저 판정한 뒤, 적 전멸 상태에서 아군/민간인 피해 정도를 세분화한다.
         bool anyEnemyAlive = allPieces.Any(p => p.Faction == Faction.Enemy && !p.IsDead);
         if (anyEnemyAlive) return SimulationResult.Lose;
 

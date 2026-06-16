@@ -18,6 +18,7 @@ public class WorldInputRaycaster : MonoBehaviour
 
     private IWorldInputTarget currentTarget;
     private WorldInputEventData currentEventData;
+    private bool isInputBlocked;
 
     private void Awake()
     {
@@ -49,7 +50,7 @@ public class WorldInputRaycaster : MonoBehaviour
 
     private void UpdateHoverTarget()
     {
-        if (raycastCamera == null || pointerPositionAction == null)
+        if (isInputBlocked || raycastCamera == null || pointerPositionAction == null)
         {
             ClearHover();
             return;
@@ -110,7 +111,7 @@ public class WorldInputRaycaster : MonoBehaviour
 
     private void OnLeftClick(InputAction.CallbackContext context)
     {
-        if (currentTarget != null)
+        if (!isInputBlocked && currentTarget != null)
         {
             currentTarget.OnWorldLeftClick(currentEventData);
         }
@@ -118,9 +119,20 @@ public class WorldInputRaycaster : MonoBehaviour
 
     private void OnRightClick(InputAction.CallbackContext context)
     {
-        if (currentTarget != null)
+        if (!isInputBlocked && currentTarget != null)
         {
             currentTarget.OnWorldRightClick(currentEventData);
+        }
+    }
+
+    public void SetInputBlocked(bool blocked)
+    {
+        isInputBlocked = blocked;
+
+        if (blocked)
+        {
+            // 모달 UI가 열릴 때 기존 3D 호버 표시도 같은 프레임에 정리한다.
+            ClearHover();
         }
     }
 

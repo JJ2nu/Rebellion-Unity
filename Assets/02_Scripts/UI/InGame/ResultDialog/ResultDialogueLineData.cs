@@ -1,3 +1,6 @@
+/// <summary>
+/// 판정 대사 CSV 한 행을 런타임에서 사용하는 불변 데이터로 보관한다.
+/// </summary>
 public sealed class ResultDialogueLineData
 {
     public string StageId { get; }

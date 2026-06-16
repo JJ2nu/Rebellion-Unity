@@ -1,5 +1,9 @@
 using UnityEngine;
 
+/// <summary>
+/// Dialogue Scene의 DialoguePlayer를 캠페인 진행 상태와 연결한다.
+/// DialoguePlayer는 대사 표시만 담당하고 다음 Stage 결정은 GameFlowManager에 위임한다.
+/// </summary>
 public sealed class DialogueSceneFlowBinder : MonoBehaviour
 {
     [Header("Bindings")]
@@ -15,6 +19,7 @@ public sealed class DialogueSceneFlowBinder : MonoBehaviour
 
     private void Start()
     {
+        // GameFlowManager가 OnEnable 이후 생성되는 Scene 진입 순서도 지원한다.
         TryRegisterWithFlowManager();
     }
 

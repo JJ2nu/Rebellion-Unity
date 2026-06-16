@@ -45,6 +45,7 @@ public sealed class DialogueDataTable
             return new List<DialogueLineData>();
         }
 
+        // 실패 결과는 Stage의 Retry 흐름에서 처리하므로 일반 Dialogue Scene 데이터로 조회하지 않는다.
         if (result == SimulationController.SimulationResult.Lose ||
             result == SimulationController.SimulationResult.AllyDeadLose)
         {
