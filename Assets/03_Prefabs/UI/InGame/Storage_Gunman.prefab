@@ -277,7 +277,9 @@ MonoBehaviour:
   storageImage: {fileID: 2835776190094384611}
   activeSprite: {fileID: 21300000, guid: 9bab62993a719a04092fa049d952d1fe, type: 3}
   deactiveSprite: {fileID: 21300000, guid: 898d1cf56747eea4a98a8b1d57198c0d, type: 3}
+  lockedSprite: {fileID: 21300000, guid: 2a1e2c0d5e800ab49b12cba191d3044c, type: 3}
   countText: {fileID: 3203151172707577288}
+  buttonLockView: {fileID: 0}
 --- !u!82 &9001848508261031652
 AudioSource:
   m_ObjectHideFlags: 0

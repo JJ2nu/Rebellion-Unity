@@ -139,7 +139,8 @@ MonoBehaviour:
   targetImage: {fileID: 5726684365629931956}
   activeSprite: {fileID: 21300000, guid: 003013acf324f864ca95934ff099885a, type: 3}
   hoverSprite: {fileID: 21300000, guid: d234fbcec07d6aa46a39e5ae48b528f0, type: 3}
-  disabledSprite: {fileID: 21300000, guid: bbff12e6b8adbc34887289fb0a6105e4, type: 3}
+  unavailableSprite: {fileID: 21300000, guid: bbff12e6b8adbc34887289fb0a6105e4, type: 3}
+  lockSprite: {fileID: 21300000, guid: a8af0cc28a2a97a4e80ea59f6e2346cb, type: 3}
 --- !u!82 &795201673965625577
 AudioSource:
   m_ObjectHideFlags: 0

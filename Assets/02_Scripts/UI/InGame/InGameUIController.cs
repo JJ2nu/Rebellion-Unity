@@ -105,7 +105,7 @@ public sealed class InGameUIController : MonoBehaviour
         UnsubscribeOpeningShotSkillState();
         UnsubscribeScopeCancelRequest();
         SetTargetingUiClickBlocked(false);
-        SetOrderSkillButtonClickBlocked(false);
+        ApplyOrderSkillButtonLockMode(UIButtonLockMode.None);
     }
 
     private void OnDestroy()
@@ -114,7 +114,7 @@ public sealed class InGameUIController : MonoBehaviour
         UnsubscribeOpeningShotSkillState();
         UnsubscribeScopeCancelRequest();
         SetTargetingUiClickBlocked(false);
-        SetOrderSkillButtonClickBlocked(false);
+        ApplyOrderSkillButtonLockMode(UIButtonLockMode.None);
     }
 
     #endregion
@@ -366,7 +366,7 @@ public sealed class InGameUIController : MonoBehaviour
         orderSkillButton = button;
         orderSkillButtonLockView = lockView;
 
-        ApplyOrderSkillButtonVisualState(false);
+        ApplyOrderSkillButtonLockMode(UIButtonLockMode.None);
     }
 
     private void ClearOrderSkillButtonCache()
@@ -456,7 +456,7 @@ public sealed class InGameUIController : MonoBehaviour
 
     private void ApplyOrderSkillButtonState()
     {
-        // 버튼 이미지는 OpeningShot 상태만 따르고, 배치/시뮬레이션 잠금은 별도 차단막으로 처리한다.
+        // OpeningShot, 배치, 시뮬레이션 상태를 공용 버튼 잠금 모드로 변환해 이미지와 입력 잠금을 함께 맞춘다.
         ApplyOpeningShotTargetingUiBlockState();
 
         if (orderSkillButton == null)
@@ -466,10 +466,10 @@ public sealed class InGameUIController : MonoBehaviour
         }
 
         bool openingShotLocked = IsOrderSkillButtonLockedByOpeningShot();
-        bool inputStateLocked = IsOrderSkillButtonLockedByInputState();
+        UIButtonLockMode lockMode = GetOrderSkillButtonLockMode(openingShotLocked);
 
-        ApplyOrderSkillButtonVisualState(openingShotLocked);
-        SetOrderSkillButtonClickBlocked(!openingShotLocked && inputStateLocked);
+        ApplyOrderSkillButtonAvailabilityVisual(!openingShotLocked);
+        ApplyOrderSkillButtonLockMode(lockMode);
         CacheOrderSkillLockStates();
 
         if (openingShotSkill != null && openingShotSkill.HasConfirmedTarget)
@@ -478,7 +478,36 @@ public sealed class InGameUIController : MonoBehaviour
         }
     }
 
-    private void ApplyOrderSkillButtonVisualState(bool openingShotLocked)
+    private UIButtonLockMode GetOrderSkillButtonLockMode(bool openingShotLocked)
+    {
+        // 시뮬레이션 중에는 현재 Act/Deact 이미지를 유지한 채 회색 tint로 잠그고, 그 외 잠금은 색상 변경 없이 입력만 막는다.
+        if (simulationController != null && simulationController._isRunning)
+        {
+            return UIButtonLockMode.VisualDisabled;
+        }
+
+        if (openingShotLocked)
+        {
+            return UIButtonLockMode.InteractionOnly;
+        }
+
+        if (placementController != null && placementController.IsPlacing)
+        {
+            return UIButtonLockMode.InteractionOnly;
+        }
+
+        return UIButtonLockMode.None;
+    }
+
+    private void ApplyOrderSkillButtonAvailabilityVisual(bool isAvailable)
+    {
+        if (orderSkillButtonLockView != null)
+        {
+            orderSkillButtonLockView.SetAvailableVisual(isAvailable);
+        }
+    }
+
+    private void ApplyOrderSkillButtonLockMode(UIButtonLockMode lockMode)
     {
         if (orderSkillButton == null)
         {
@@ -487,11 +516,11 @@ public sealed class InGameUIController : MonoBehaviour
 
         if (orderSkillButtonLockView != null)
         {
-            orderSkillButtonLockView.SetVisualLocked(openingShotLocked);
+            orderSkillButtonLockView.SetLockMode(lockMode);
             return;
         }
 
-        orderSkillButton.interactable = !openingShotLocked;
+        orderSkillButton.interactable = lockMode == UIButtonLockMode.None;
     }
 
     private void ApplyOpeningShotTargetingUiBlockState()
@@ -552,14 +581,6 @@ public sealed class InGameUIController : MonoBehaviour
     private void CacheOrderSkillLockStates()
     {
         lastOrderSkillPlacementState = placementController != null && placementController.IsPlacing;
-    }
-
-    private void SetOrderSkillButtonClickBlocked(bool blocked)
-    {
-        if (orderSkillButtonLockView != null)
-        {
-            orderSkillButtonLockView.SetClickBlocked(blocked);
-        }
     }
 
     private void SetTargetingUiClickBlocked(bool blocked)
@@ -690,7 +711,7 @@ public sealed class InGameUIController : MonoBehaviour
 
     private void ApplyStorageInteractionState()
     {
-        // 실행 중에도 남은 수량과 Act/Deact 이미지는 유지하고 배치 입력만 잠근다.
+        // 실행 중에는 Storage 버튼도 공용 VisualDisabled 잠금으로 회색 처리하고 입력을 막는다.
         bool isLocked = simulationController != null && simulationController._isRunning;
 
         for (int index = 0; index < storageSlots.Count; index++)
