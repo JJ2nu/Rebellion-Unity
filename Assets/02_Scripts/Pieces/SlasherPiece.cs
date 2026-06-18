@@ -8,12 +8,11 @@ using UnityEngine;
 /// </summary>
 public class SlasherPiece : PieceBase
 {
+    private const string AttackStateName = "Attack";
+
     [Header("Slasher Config")]
-    [SerializeField, Range(0f, 1f)] private float _dashFraction = 0.6f;
-    [SerializeField, Min(0f)] private float _windupEndTime = 0.08f;
-    [SerializeField, Min(0f)] private float _slashMoveEndTime = 0.3f;
-    [SerializeField, Min(0f)] private float _settleEndTime = 0.42f;
     [SerializeField, Range(0.1f, 10f)] private float _animSpeedMultiplier = 1f;
+    [SerializeField] private float _slashRootMotionDistance = 3.5944f;
 
 
     private float _attackClipLength = 1.367f;
@@ -65,35 +64,45 @@ public class SlasherPiece : PieceBase
 
         int dx = target.GridX - GridX;
         int dy = target.GridY - GridY;
+        int distance = Mathf.Abs(dx) + Mathf.Abs(dy);
+        float worldDistance = Vector3.Distance(transform.position, target.transform.position);
+        Debug.Log($"[Slasher] {name} ({GridX},{GridY}) attacks {target.name} ({target.GridX},{target.GridY}) gridDistance={distance}, worldDistance={worldDistance:F2}", this);
+
         int targetGX = target.GridX;
         int targetGY = target.GridY;
-        Vector3 startWorldPos = transform.position;
-        Vector3 targetWorldPos = GetCellWorldPosition(targetGX, targetGY, target.transform.position);
-        float moveDuration = Mathf.Max(0.01f, _attackClipLength / _animSpeedMultiplier);
+        var (facingDx, facingDy) = GetFacingDelta();
+        Vector3 attackDirection = new Vector3(facingDx, 0f, facingDy);
+        Vector3 startCellPosition = GetCellWorldPosition(GridX, GridY, transform.position);
+        Vector3 targetCellPosition = GetCellWorldPosition(targetGX, targetGY, target.transform.position);
+        float desiredMoveDistance = Vector3.Distance(startCellPosition, targetCellPosition);
+        float rootMotionScale = _slashRootMotionDistance > 0f
+            ? desiredMoveDistance / _slashRootMotionDistance
+            : 1f;
 
         _knifeHitBox?.BeginAttack();
         if (_animator != null)
         {
+            SetAnimatorRootMotionOverride(attackDirection, rootMotionScale);
             _animator.speed = _animSpeedMultiplier;
+            _animator.Play(AttackStateName, 0, 0f);
+            _animator.Update(0f);
+            yield return WaitForAttackAnimationEnd();
         }
-        _animator?.SetTrigger("Attack");
-
-        float elapsed = 0f;
-        while (elapsed < moveDuration)
+        else
         {
-            elapsed += Time.deltaTime;
-            float animationTime = elapsed * _animSpeedMultiplier;
-            float moveProgress = EvaluateMoveProgress(animationTime);
-            transform.position = Vector3.Lerp(startWorldPos, targetWorldPos, moveProgress);
-            yield return null;
+            yield return new WaitForSeconds(_attackClipLength);
         }
 
-        transform.position = targetWorldPos;
+        _knifeHitBox?.EndAttack();
         GridX = targetGX;
         GridY = targetGY;
         if (_animator != null)
         {
             _animator.speed = 1f;
+        }
+        if (!IsDead)
+        {
+            SetAnimatorRootMotion(false);
         }
         FinishAction();
     }
@@ -130,29 +139,28 @@ public class SlasherPiece : PieceBase
             : fallback;
     }
 
-    private float EvaluateMoveProgress(float animationTime)
+    private IEnumerator WaitForAttackAnimationEnd()
     {
-        if (animationTime <= _windupEndTime)
-        {
-            float t = Mathf.Clamp01(animationTime / Mathf.Max(0.01f, _windupEndTime));
-            return Mathf.Lerp(0f, 0.08f, t);
-        }
+        bool enteredAttackState = false;
 
-        if (animationTime <= _slashMoveEndTime)
+        while (true)
         {
-            float t = Mathf.Clamp01((animationTime - _windupEndTime) / Mathf.Max(0.01f, _slashMoveEndTime - _windupEndTime));
-            t = 1f - Mathf.Pow(1f - t, 3f);
-            return Mathf.Lerp(0.08f, 0.95f, t);
-        }
+            AnimatorStateInfo stateInfo = _animator.GetCurrentAnimatorStateInfo(0);
+            if (stateInfo.IsName(AttackStateName))
+            {
+                enteredAttackState = true;
+                if (stateInfo.normalizedTime >= 1f)
+                {
+                    break;
+                }
+            }
+            else if (enteredAttackState)
+            {
+                break;
+            }
 
-        if (animationTime <= _settleEndTime)
-        {
-            float t = Mathf.Clamp01((animationTime - _slashMoveEndTime) / Mathf.Max(0.01f, _settleEndTime - _slashMoveEndTime));
-            t = t * t * (3f - 2f * t);
-            return Mathf.Lerp(0.95f, 1f, t);
+            yield return null;
         }
-
-        return 1f;
     }
 
     public void OnAttackAnimationEnd()

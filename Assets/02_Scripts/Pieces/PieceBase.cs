@@ -41,6 +41,13 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
     private int _spawnGridX;
     private int _spawnGridY;
     private Direction _spawnFacingDirection;
+    private Coroutine _retryRewindCoroutine;
+    private Animator _retryRewindAnimator;
+    private bool _useManualRootMotion;
+    private bool _skipNextRootMotionDelta;
+    private bool _overrideRootMotionDirection;
+    private Vector3 _rootMotionWorldDirection;
+    private float _rootMotionDistanceScale = 1f;
 
     /// <summary>페이즈 인덱스 (Brawler=1, Slasher=2, Gunman=3, 미행동=0)</summary>
     public virtual int SimulationPhaseIndex => 0;
@@ -176,6 +183,7 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
     {
         var animator = GetComponentInChildren<Animator>();
         if (animator == null) return;
+        SetAnimatorRootMotion(true, true);
         // Play()는 HasExitTime/Transition 완전 무시하고 즉시 강제 재생
         animator.SetTrigger("Hit");
     }
@@ -214,6 +222,96 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
         GridX = _spawnGridX;
         GridY = _spawnGridY;
         FacingDirection = _spawnFacingDirection;
+    }
+
+    public void StartRetryRewind(float duration)
+    {
+        if (_retryRewindCoroutine != null)
+        {
+            StopCoroutine(_retryRewindCoroutine);
+            DisableRetryRewindRootMotion();
+        }
+
+        _retryRewindCoroutine = StartCoroutine(RewindToSpawnForRetry(duration));
+    }
+
+    public IEnumerator RewindToSpawnForRetry(float duration)
+    {
+        if (!_hasSpawnState)
+        {
+            _retryRewindCoroutine = null;
+            yield break;
+        }
+
+        gameObject.SetActive(true);
+
+        var animator = GetComponentInChildren<Animator>();
+        if (animator != null)
+        {
+            _retryRewindAnimator = animator;
+            SetAnimatorRootMotion(false);
+            PlayResetAnimation();
+        }
+
+        Vector3 startPosition = transform.position;
+        Quaternion startRotation = transform.rotation;
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            float t = duration <= 0f ? 1f : Mathf.Clamp01(elapsed / duration);
+            float eased = 1f - Mathf.Pow(1f - t, 3f);
+
+            transform.SetPositionAndRotation(
+                Vector3.Lerp(startPosition, _spawnPosition, eased),
+                Quaternion.Slerp(startRotation, _spawnRotation, eased));
+
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        RestoreSpawnState();
+        OnSimulationStart();
+        StabilizeAnimatorForRetry(animator);
+        RestoreSpawnState();
+        yield return null;
+        RestoreSpawnState();
+
+        DisableRetryRewindRootMotion();
+        _retryRewindCoroutine = null;
+    }
+
+    private void StabilizeAnimatorForRetry(Animator animator)
+    {
+        if (animator == null)
+        {
+            return;
+        }
+
+        ResetAnimatorTrigger(animator, "Attack");
+        ResetAnimatorTrigger(animator, "Hit");
+        ResetAnimatorTrigger(animator, "Reset");
+
+        if (animator.HasState(0, Animator.StringToHash("Idle")))
+        {
+            animator.Play("Idle", 0, 0f);
+            animator.Update(0f);
+        }
+    }
+
+    private void DisableRetryRewindRootMotion()
+    {
+        if (_retryRewindAnimator != null)
+        {
+            _retryRewindAnimator.applyRootMotion = false;
+            _retryRewindAnimator = null;
+        }
+
+        _useManualRootMotion = false;
+        _skipNextRootMotionDelta = false;
+        _overrideRootMotionDirection = false;
+        _rootMotionWorldDirection = Vector3.zero;
+        _rootMotionDistanceScale = 1f;
     }
 
     public void PlayResetAnimation()
@@ -404,10 +502,74 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
         }
 
         animator.speed = 1f;
+        animator.applyRootMotion = false;
+        _useManualRootMotion = false;
+        _skipNextRootMotionDelta = false;
+        _overrideRootMotionDirection = false;
+        _rootMotionWorldDirection = Vector3.zero;
+        _rootMotionDistanceScale = 1f;
         if (snapToIdle && animator.HasState(0, Animator.StringToHash("Idle")))
         {
             animator.Play("Idle", 0, 0f);
         }
+    }
+
+    protected void SetAnimatorRootMotion(bool enabled, bool skipNextDelta = false)
+    {
+        var animator = GetComponentInChildren<Animator>();
+        if (animator != null)
+        {
+            animator.applyRootMotion = enabled;
+        }
+
+        _useManualRootMotion = enabled;
+        _skipNextRootMotionDelta = enabled && skipNextDelta;
+        _overrideRootMotionDirection = false;
+        _rootMotionWorldDirection = Vector3.zero;
+        _rootMotionDistanceScale = 1f;
+    }
+
+    protected void SetAnimatorRootMotionOverride(Vector3 worldDirection, float distanceScale, bool skipNextDelta = false)
+    {
+        SetAnimatorRootMotion(true, skipNextDelta);
+
+        worldDirection.y = 0f;
+        _rootMotionWorldDirection = worldDirection.sqrMagnitude > 0.0001f
+            ? worldDirection.normalized
+            : transform.forward;
+        _rootMotionDistanceScale = Mathf.Max(0f, distanceScale);
+        _overrideRootMotionDirection = true;
+    }
+
+    protected void SetAnimatorRootMotionVerticalOnly()
+    {
+        SetAnimatorRootMotionOverride(transform.forward, 0f);
+    }
+
+    private void OnAnimatorMove()
+    {
+        if (!_useManualRootMotion || _animator == null)
+        {
+            return;
+        }
+
+        if (_skipNextRootMotionDelta)
+        {
+            _skipNextRootMotionDelta = false;
+            return;
+        }
+
+        if (_overrideRootMotionDirection)
+        {
+            float forwardDistance = Mathf.Abs(Vector3.Dot(_animator.deltaPosition, transform.forward));
+            Vector3 horizontalDelta = _rootMotionWorldDirection * forwardDistance * _rootMotionDistanceScale;
+            Vector3 verticalDelta = Vector3.up * _animator.deltaPosition.y;
+            transform.position += horizontalDelta + verticalDelta;
+            return;
+        }
+
+        transform.position += _animator.deltaPosition;
+        transform.rotation *= _animator.deltaRotation;
     }
 
     private void ResetColliderState()
@@ -439,5 +601,17 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
         }
 
         return false;
+    }
+
+    private static void ResetAnimatorTrigger(Animator animator, string parameterName)
+    {
+        foreach (var parameter in animator.parameters)
+        {
+            if (parameter.type == AnimatorControllerParameterType.Trigger && parameter.name == parameterName)
+            {
+                animator.ResetTrigger(parameterName);
+                return;
+            }
+        }
     }
 }

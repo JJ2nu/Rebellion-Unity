@@ -11,12 +11,15 @@ public class GunmanPiece : PieceBase
 {
     [Header("Gunman Config")]
     [SerializeField] private Transform _flarePoint;
+    [SerializeField] private Transform _flarePoint2;
     [SerializeField, Range(0.1f, 50f)] private float _bulletSpeedMultiplier = 2f; // 총알 이동 속도 조절용
 
     [SerializeField] private GameObject _bullet;
 
     private float _attackClipLength;
-    [SerializeField, Range(0.1f, 10f)] private float _fireMotionClipLength = 1.43f;
+    private float _shoot1RecoilTime = 0.2f;
+    private float _shoot2RecoilTime = 1.3f;
+    [SerializeField] private float _sideAimYawOffset = -75f;
 
     private void Awake()
     {
@@ -55,18 +58,41 @@ public class GunmanPiece : PieceBase
     /// <summary>외부(스킬 등)에서도 직접 발사 가능.</summary>
     public IEnumerator Fire(IReadOnlyList<PieceBase> allPieces, float stepDuration)
     {
-        _animator?.SetTrigger("Attack");
-        yield return new WaitForSeconds(_fireMotionClipLength);
+        bool useSideAim = Random.value < 0.5f;
+        Quaternion originalRotation = transform.rotation;
+        float syncedFireDelay = Mathf.Max(_shoot1RecoilTime, _shoot2RecoilTime);
 
-        if (_bullet == null || _flarePoint == null)
+        if (useSideAim)
         {
+            transform.rotation = originalRotation * Quaternion.Euler(0f, _sideAimYawOffset, 0f);
+            _animator?.SetTrigger("Shoot2");
+        }
+        else
+        {
+            yield return new WaitForSeconds(Mathf.Max(0f, syncedFireDelay - _shoot1RecoilTime));
+            _animator?.SetTrigger("Shoot1");
+        }
+
+        float remainingFireDelay = useSideAim
+            ? syncedFireDelay
+            : _shoot1RecoilTime;
+        yield return new WaitForSeconds(remainingFireDelay);
+        Transform selectedFlarePoint = useSideAim && _flarePoint2 != null
+            ? _flarePoint2
+            : _flarePoint;
+
+        if (_bullet == null || selectedFlarePoint == null)
+        {
+            if (_animator != null) _animator.speed = 1f;
+            transform.rotation = originalRotation;
+            SetAnimatorRootMotion(false);
             FinishAction();
             yield break;
         }
 
         var (dx, dy) = GetFacingDelta();
         Vector3 fireDirection = new Vector3(dx, 0f, dy);
-        GameObject bulletInstance = Instantiate(_bullet, _flarePoint.position, _flarePoint.rotation);
+        GameObject bulletInstance = Instantiate(_bullet, selectedFlarePoint.position, selectedFlarePoint.rotation);
         bulletInstance.SetActive(true);
 
         AttackHitbox bulletHitBox = bulletInstance.GetComponent<AttackHitbox>();
@@ -78,6 +104,9 @@ public class GunmanPiece : PieceBase
         if (bulletController == null)
         {
             Destroy(bulletInstance);
+            if (_animator != null) _animator.speed = 1f;
+            transform.rotation = originalRotation;
+            SetAnimatorRootMotion(false);
             FinishAction();
             yield break;
         }
@@ -85,6 +114,12 @@ public class GunmanPiece : PieceBase
         bulletController.Fire(fireDirection, _bulletSpeedMultiplier);
         yield return new WaitUntil(() => bulletController == null || !bulletController.IsFlying);
 
+        if (!IsDead)
+        {
+            if (_animator != null) _animator.speed = 1f;
+            transform.rotation = originalRotation;
+            SetAnimatorRootMotion(false);
+        }
         FinishAction();
     }
     // ─── Helper ─────────────────────────────────────────────────────

@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 5149736389293729109}
   - component: {fileID: 991906837811491064}
   - component: {fileID: -7043814611566071503}
+  - component: {fileID: 1102057798195363567}
   m_Layer: 0
   m_Name: Ally_Slasher
   m_TagString: AllyBody
@@ -57,9 +58,6 @@ MonoBehaviour:
   _isInRange: 0
   IsDead: 0
   CanAct: 0
-  _dashFraction: 0.6
-  _approachTime: 0.25
-  _swingMoveEndTime: 0.25
   _animSpeedMultiplier: 1
 --- !u!65 &991906837811491064
 BoxCollider:
@@ -95,6 +93,28 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::OutlineEffect
   outlineMaterial: {fileID: 2100000, guid: fa53e17525caf054caa089214dbbc35f, type: 2}
+--- !u!95 &1102057798195363567
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3921962521532312310}
+  m_Enabled: 1
+  m_Avatar: {fileID: 9000000, guid: 34cbfb812215dfd43974b0c3ef59dad6, type: 3}
+  m_Controller: {fileID: 9100000, guid: 8e299782397a63c44b29222587059153, type: 2}
+  m_CullingMode: 1
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 1
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &4202315879867577487
 GameObject:
   m_ObjectHideFlags: 0
@@ -380,7 +400,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: Player_Knife2
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 5866666021909216657, guid: 34cbfb812215dfd43974b0c3ef59dad6, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 1852576806548013000, guid: 34cbfb812215dfd43974b0c3ef59dad6, type: 3}
@@ -390,9 +411,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 34cbfb812215dfd43974b0c3ef59dad6, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1169323208671581714}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 34cbfb812215dfd43974b0c3ef59dad6, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1746574999717348104}
   m_SourcePrefab: {fileID: 100100000, guid: 34cbfb812215dfd43974b0c3ef59dad6, type: 3}
 --- !u!1 &7369166740452797653 stripped
 GameObject:
@@ -412,28 +430,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   owner: {fileID: 5149736389293729109}
---- !u!95 &1746574999717348104
-Animator:
-  serializedVersion: 7
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7369166740452797653}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 8e299782397a63c44b29222587059153, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
 --- !u!4 &7858599620132189807 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 34cbfb812215dfd43974b0c3ef59dad6, type: 3}

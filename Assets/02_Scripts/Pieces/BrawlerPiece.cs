@@ -10,6 +10,9 @@ public class BrawlerPiece : PieceBase
 {
     private AttackHitbox _fistHitBox;
     private float _attackClipLength = -1f;
+    [SerializeField] private float _attackYawCorrection = 75f;
+    [SerializeField] private float _attackStepDistance = 0.65f;
+    [SerializeField] private float _retreatDuration = 0.15f;
 
     private void Awake()
     {
@@ -51,16 +54,44 @@ public class BrawlerPiece : PieceBase
         if (_animator != null && _attackClipLength > 0f)
             _animator.speed = _attackClipLength / stepDuration;
 
+        Vector3 originalPosition = transform.position;
+        var (dx, dy) = GetFacingDelta();
+        Vector3 attackDirection = new Vector3(dx, 0f, dy);
+        Vector3 attackPosition = originalPosition + attackDirection * _attackStepDistance;
+
         _fistHitBox?.BeginAttack();
+        SetAnimatorRootMotion(true,false);
         _animator?.SetTrigger("Attack");
 
-        // 애니메이션 절반 지점(주먹 뻗는 정점)에서 타격 판정
-        yield return new WaitForSeconds(stepDuration );
-        // if (!target.IsDead)
-        //     target.TakeDamage(1);
+        yield return MovePositionOverTime(originalPosition, attackPosition, stepDuration);
 
 
         if (_animator != null) _animator.speed = 1f;
+        if (!IsDead)
+        {
+            yield return MovePositionOverTime(transform.position, originalPosition, _retreatDuration);
+            SetAnimatorRootMotion(false);
+        }
         FinishAction();
+    }
+
+    private IEnumerator MovePositionOverTime(Vector3 from, Vector3 to, float duration)
+    {
+        if (duration <= 0f)
+        {
+            transform.position = to;
+            yield break;
+        }
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            float t = Mathf.Clamp01(elapsed / duration);
+            transform.position = Vector3.Lerp(from, to, t);
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        transform.position = to;
     }
 }
