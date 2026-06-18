@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -337,6 +337,12 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
 
     public void OnWorldLeftClick(WorldInputEventData eventData)
     {
+        // OpeningShot 타겟팅 중에는 적 선택만 받아야 하므로 아군 배치/회수 입력은 여기서 끊는다.
+        if (ShouldBlockAllyClickDuringOpeningShotTargeting())
+        {
+            return;
+        }
+
         SimulationController.Instance?.OnClickPiece(this);
         if (_faction != Faction.Ally) return;
         AllyLeftClicked?.Invoke(this);
@@ -344,8 +350,36 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
 
     public void OnWorldRightClick(WorldInputEventData eventData)
     {
+        // 같은 차단을 우클릭에도 적용해 타겟팅 중 아군 회수나 방향 조작이 섞이지 않게 한다.
+        if (ShouldBlockAllyClickDuringOpeningShotTargeting())
+        {
+            return;
+        }
+
+        SimulationController.Instance?.OnRightClickPiece(this);
+
         if (_faction != Faction.Ally) return;
         AllyRightClicked?.Invoke(this);
+    }
+
+    private bool ShouldBlockAllyClickDuringOpeningShotTargeting()
+    {
+        // 차단 범위를 아군 입력으로 한정해 적군 타겟 확정/해제 경로는 그대로 통과시킨다.
+        if (_faction != Faction.Ally || SimulationController.Instance == null)
+        {
+            return false;
+        }
+
+        foreach (SkillBase skill in SimulationController.Instance.GetStageSkills())
+        {
+            OpeningShotSkill openingShotSkill = skill as OpeningShotSkill;
+            if (openingShotSkill != null)
+            {
+                return openingShotSkill.isTargetingMode;
+            }
+        }
+
+        return false;
     }
 
     #endregion

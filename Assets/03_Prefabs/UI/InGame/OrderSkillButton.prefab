@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 385412226948696172}
   - component: {fileID: 5726684365629931956}
   - component: {fileID: 1559040221458474466}
+  - component: {fileID: 2149017590217309001}
   - component: {fileID: 795201673965625577}
   - component: {fileID: 7258470201174030371}
   m_Layer: 5
@@ -108,9 +109,9 @@ MonoBehaviour:
     m_FadeDuration: 0.1
   m_SpriteState:
     m_HighlightedSprite: {fileID: 21300000, guid: d234fbcec07d6aa46a39e5ae48b528f0, type: 3}
-    m_PressedSprite: {fileID: 21300000, guid: bbff12e6b8adbc34887289fb0a6105e4, type: 3}
-    m_SelectedSprite: {fileID: 21300000, guid: bbff12e6b8adbc34887289fb0a6105e4, type: 3}
-    m_DisabledSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 21300000, guid: d234fbcec07d6aa46a39e5ae48b528f0, type: 3}
+    m_SelectedSprite: {fileID: 21300000, guid: 003013acf324f864ca95934ff099885a, type: 3}
+    m_DisabledSprite: {fileID: 21300000, guid: bbff12e6b8adbc34887289fb0a6105e4, type: 3}
   m_AnimationTriggers:
     m_NormalTrigger: Normal
     m_HighlightedTrigger: Highlighted
@@ -122,6 +123,23 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &2149017590217309001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9129578763818932144}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9fa4ee27dbf94b6bbd5016e56000fc20, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  button: {fileID: 1559040221458474466}
+  targetImage: {fileID: 5726684365629931956}
+  activeSprite: {fileID: 21300000, guid: 003013acf324f864ca95934ff099885a, type: 3}
+  hoverSprite: {fileID: 21300000, guid: d234fbcec07d6aa46a39e5ae48b528f0, type: 3}
+  disabledSprite: {fileID: 21300000, guid: bbff12e6b8adbc34887289fb0a6105e4, type: 3}
 --- !u!82 &795201673965625577
 AudioSource:
   m_ObjectHideFlags: 0

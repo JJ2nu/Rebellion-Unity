@@ -104,6 +104,11 @@ public class SimulationController : MonoBehaviour
         {
             _currentDeadCount[i] = 0;
         }
+
+        foreach (var skill in _skills)
+        {
+            skill?.ResetTarget();
+        }
     }
 
     /// <summary>
@@ -239,8 +244,24 @@ public class SimulationController : MonoBehaviour
     }
     public void SetTargetForPreSimulation(int skillIndex)
     {
+        if (_skills == null || skillIndex < 0 || skillIndex >= _skills.Count)
+        {
+            return;
+        }
+
+        SetTargetForPreSimulation(_skills[skillIndex]);
+    }
+
+    public void SetTargetForPreSimulation(SkillBase skill)
+    {
+        // UI가 이미 찾은 스킬 인스턴스를 넘기면 리스트 순서에 의존하지 않고 타겟팅 모드를 시작할 수 있다.
+        if (skill == null || StageManager.Instance == null)
+        {
+            return;
+        }
+
         var pieces = StageManager.Instance.GetAllActivePieces();
-        StartCoroutine(_skills[skillIndex].TargetMode(this, pieces));
+        StartCoroutine(skill.TargetMode(this, pieces));
     }
     public void OnClickPiece(PieceBase piece)
     {
@@ -249,14 +270,36 @@ public class SimulationController : MonoBehaviour
         ClickAction();
        
     }
+
+    public void OnRightClickPiece(PieceBase piece)
+    {
+        // 확정된 OpeningShot 타겟을 다시 우클릭하면 선택을 해제해 버튼/스코프 상태를 초기화한다.
+        if (piece == null || _skills == null || _skills.Count == 0)
+        {
+            return;
+        }
+
+        OpeningShotSkill openingShotSkill = GetOpeningShotSkill();
+        if (openingShotSkill == null || !openingShotSkill.HasConfirmedTarget)
+        {
+            return;
+        }
+
+        if (openingShotSkill.Target == piece)
+        {
+            openingShotSkill.ResetTarget();
+        }
+    }
+
     void PreviousClickAction()
     {
-         var previousClickedPiece = _currentClickedPiece;
-        if (previousClickedPiece != null)
+        var previousClickedPiece = _currentClickedPiece;
+        OpeningShotSkill openingShotSkill = GetOpeningShotSkill();
+        if (previousClickedPiece != null && openingShotSkill != null)
         {
-            if (((OpeningShotSkill)_skills[0]).isTargetingMode)
+            // 타겟팅 중 다른 피스를 누를 때 이전 후보 표시가 남지 않게 정리한다.
+            if (openingShotSkill.isTargetingMode)
             {
-
                 if (previousClickedPiece._isTargeted)
                 {
                     previousClickedPiece._isTargeted = false;
@@ -268,16 +311,22 @@ public class SimulationController : MonoBehaviour
     {
          if (_currentClickedPiece != null)
         {
-            if (((OpeningShotSkill)_skills[0]).isTargetingMode)
+            // OpeningShot 타겟팅 중에는 월드 클릭을 일반 선택이 아니라 선처치 대상 확정으로 해석한다.
+            OpeningShotSkill openingShotSkill = GetOpeningShotSkill();
+            if (openingShotSkill != null && openingShotSkill.isTargetingMode)
             {
                 if (_currentClickedPiece.Faction == Faction.Enemy && !_currentClickedPiece.IsDead)
                 {
-                    ((OpeningShotSkill)_skills[0]).Target = _currentClickedPiece;
-                    ((OpeningShotSkill)_skills[0]).Target._isTargeted = true;
-                    ((OpeningShotSkill)_skills[0]).isTargetingMode = false;
+                    openingShotSkill.ConfirmTarget(_currentClickedPiece);
                 }
             }
         }
+    }
+
+    private OpeningShotSkill GetOpeningShotSkill()
+    {
+        // 스킬 리스트 순서가 바뀌어도 OpeningShot만 정확히 찾아 타겟팅 흐름에 사용한다.
+        return _skills != null ? _skills.OfType<OpeningShotSkill>().FirstOrDefault() : null;
     }
 
 }
