@@ -195,6 +195,11 @@ public class SimulationController : MonoBehaviour
         StartCoroutine(TickSteps());
 
         yield return new WaitUntil(() => active.All(p => p.IsActionFinished || p.IsDead));
+
+        foreach (var piece in active)
+        {
+            piece.EndAttackHitboxes();
+        }
     }
 
     private IEnumerator TickSteps()

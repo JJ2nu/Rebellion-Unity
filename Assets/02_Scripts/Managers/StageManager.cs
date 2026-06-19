@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -6,6 +7,7 @@ using UnityEngine;
 public class StageManager : MonoBehaviour
 {
     private const string ObjectGroupTag = "ObjectGroup";
+    private const float RetryRewindDuration = 0.45f;
 
     public static StageManager Instance { get; private set; }
     public static event System.Action<StageData> StageLoaded;
@@ -56,6 +58,7 @@ public class StageManager : MonoBehaviour
     private PieceBase[][] allyPieces;
     private PieceBase[][] enemyPieces;
     private PieceBase[][] civilianPieces;
+    private Coroutine retryResetCoroutine;
 
     private void Awake()
     {
@@ -156,6 +159,11 @@ public class StageManager : MonoBehaviour
     {
         if (currentStageData == null) return;
 
+        if (retryResetCoroutine != null)
+        {
+            StopCoroutine(retryResetCoroutine);
+        }
+
         foreach (var ally in spawnedAllyPieces)
         {
             ally?._HUD?.SetActive(true);
@@ -169,19 +177,27 @@ public class StageManager : MonoBehaviour
             civilian.piece?._HUD?.SetActive(true);
         }
 
+        retryResetCoroutine = StartCoroutine(ResetForRetryRoutine());
+    }
+
+    private IEnumerator ResetForRetryRoutine()
+    {
         foreach (var ally in spawnedAllyPieces)
         {
-            ResetPieceForRetry(ally);
+            ResetPieceForRetry(ally, RetryRewindDuration);
         }
 
         foreach (var civilian in spawnedCivilianPieces)
         {
-            ResetPieceForRetry(civilian.piece);
+            ResetPieceForRetry(civilian.piece, RetryRewindDuration);
         }
         foreach (var enemy in spawnedEnemyPieces)
         {
-            ResetPieceForRetry(enemy.piece);
+            ResetPieceForRetry(enemy.piece, RetryRewindDuration);
         }
+
+        yield return new WaitForSeconds(RetryRewindDuration);
+        retryResetCoroutine = null;
     }
     public GameObject GetAllyPiecePrefab(PieceType pieceType)
     {
@@ -949,7 +965,7 @@ public class StageManager : MonoBehaviour
         allyPool[prefabIndex].Enqueue(piece);
     }
 
-    private static void ResetPieceForRetry(PieceBase piece)
+    private static void ResetPieceForRetry(PieceBase piece, float duration)
     {
         if (piece == null)
         {
@@ -957,9 +973,7 @@ public class StageManager : MonoBehaviour
         }
 
         piece.gameObject.SetActive(true);
-        piece.RestoreSpawnState();
-        piece.OnSimulationStart();
-        piece.PlayResetAnimation();
+        piece.StartRetryRewind(duration);
     }
 
     public void SetAttackRange(int[] cellIndices)
