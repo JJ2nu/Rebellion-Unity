@@ -1,4 +1,4 @@
-// 대원 배치 버튼의 남은 배치 수를 표시하고 클릭에 따라 수량과 이미지를 갱신한다.
+﻿// 대원 배치 버튼의 남은 배치 수를 표시하고 클릭에 따라 수량과 이미지를 갱신한다.
 
 using System.Collections;
 using System;
@@ -16,7 +16,9 @@ public sealed class InGameUnitStorageSlotUI : MonoBehaviour, IPointerUpHandler
     [SerializeField] private Image storageImage;
     [SerializeField] private Sprite activeSprite;
     [SerializeField] private Sprite deactiveSprite;
+    [SerializeField] private Sprite lockedSprite;
     [SerializeField] private TMP_Text countText;
+    private UIButtonLockView buttonLockView;
 
     public PieceType UnitType { get; private set; }
     public int MaxDeployableCount { get; private set; }
@@ -24,7 +26,6 @@ public sealed class InGameUnitStorageSlotUI : MonoBehaviour, IPointerUpHandler
 
     public event Action<InGameUnitStorageSlotUI> Clicked;
     private bool interactionLocked;
-    private CanvasGroup canvasGroup;
 
     #endregion
 
@@ -32,8 +33,6 @@ public sealed class InGameUnitStorageSlotUI : MonoBehaviour, IPointerUpHandler
 
     public void Bind(PieceType unitType, int deployableCount)
     {
-        EnsureCanvasGroup();
-
         UnitType = unitType;
         MaxDeployableCount = Mathf.Max(0, deployableCount);
         RemainingDeployableCount = MaxDeployableCount;
@@ -46,7 +45,9 @@ public sealed class InGameUnitStorageSlotUI : MonoBehaviour, IPointerUpHandler
             ApplyButtonSpriteState();
         }
 
+        EnsureButtonLockView();
         UpdateView();
+        ApplyInteractionLockState();
     }
 
     public bool TryConsumeOne()
@@ -58,6 +59,7 @@ public sealed class InGameUnitStorageSlotUI : MonoBehaviour, IPointerUpHandler
 
         RemainingDeployableCount--;
         UpdateView();
+        ApplyInteractionLockState();
         return true;
     }
 
@@ -70,18 +72,17 @@ public sealed class InGameUnitStorageSlotUI : MonoBehaviour, IPointerUpHandler
 
         RemainingDeployableCount++;
         UpdateView();
+        ApplyInteractionLockState();
         return true;
     }
 
     public void SetInteractionLocked(bool isLocked)
     {
-        EnsureCanvasGroup();
-
         interactionLocked = isLocked;
 
-        // Button.interactable을 바꾸면 Disabled Sprite가 표시되므로 raycast만 차단해 수량 이미지를 보존한다.
-        canvasGroup.blocksRaycasts = !isLocked;
+        // 실행 중 잠금은 공용 버튼 잠금 컴포넌트에 위임하되, 수량별 이미지는 UpdateView가 계속 관리한다.
         UpdateView();
+        ApplyInteractionLockState();
     }
 
     #endregion
@@ -177,30 +178,49 @@ public sealed class InGameUnitStorageSlotUI : MonoBehaviour, IPointerUpHandler
         button.spriteState = spriteState;
     }
 
-    private void EnsureCanvasGroup()
+    private void EnsureButtonLockView()
     {
-        if (canvasGroup != null)
+        if (buttonLockView == null)
         {
-            return;
+            buttonLockView = GetComponent<UIButtonLockView>();
         }
 
-        canvasGroup = GetComponent<CanvasGroup>();
-        if (canvasGroup == null)
+        if (buttonLockView == null)
         {
-            // 기존 Storage Prefab에도 동작하도록 필요한 경우 런타임에 입력 차단용 CanvasGroup을 보충한다.
-            canvasGroup = gameObject.AddComponent<CanvasGroup>();
+            // 기존 Storage Prefab을 직접 수정하지 않아도 공용 잠금 방식을 사용할 수 있게 런타임에 보충한다.
+            buttonLockView = gameObject.AddComponent<UIButtonLockView>();
         }
 
-        canvasGroup.alpha = 1f;
-        canvasGroup.interactable = true;
-        canvasGroup.blocksRaycasts = !interactionLocked;
+        buttonLockView.Configure(
+            button,
+            storageImage,
+            activeSprite,
+            null,
+            deactiveSprite,
+            lockedSprite
+        );
+    }
+
+    private void ApplyInteractionLockState()
+    {
+        EnsureButtonLockView();
+
+        UIButtonLockMode lockMode = interactionLocked
+            ? UIButtonLockMode.VisualDisabled
+            : UIButtonLockMode.None;
+
+        if (buttonLockView != null)
+        {
+            buttonLockView.SetAvailableVisual(RemainingDeployableCount > 0);
+            buttonLockView.SetLockMode(lockMode);
+        }
     }
 
     private IEnumerator ResetActiveSpriteAfterClick()
     {
         yield return null;
 
-        if (RemainingDeployableCount <= 0)
+        if (interactionLocked || RemainingDeployableCount <= 0)
         {
             yield break;
         }

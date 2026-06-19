@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,6 +20,13 @@ public class OpeningShotSkill : SkillBase
     public override SkillTiming Timing => SkillTiming.PreSimulation;
     [SerializeField] public PieceBase Target = null;
     public bool isTargetingMode = false;
+
+    // 타겟팅 시작, 확정, 취소를 UI가 즉시 따라갈 수 있도록 상태 변경 시마다 알린다.
+    public event Action TargetStateChanged;
+
+    // 선택은 끝났고 선처치 대상이 남아 있는 상태다. Order 버튼 Deact 표시와 스코프 종료 기준으로 쓴다.
+    public bool HasConfirmedTarget => Target != null && !isTargetingMode;
+
     /// <summary>
     /// 살아있는 적이 한 명 이상일 때만 발동 가능.
     /// </summary>
@@ -27,29 +34,55 @@ public class OpeningShotSkill : SkillBase
     {
         return allPieces.Any(p => p.Faction == Faction.Enemy && !p.IsDead);
     }
+
     public override IEnumerator TargetMode(SimulationController controller, IReadOnlyList<PieceBase> allPieces)
     {
-        Debug.Log("SetTarget Called");
-        // 선택 모드 활성화
+        // 기존 타겟 표시를 지우고, UI가 스코프/버튼 상태를 갱신할 수 있도록 타겟팅 시작을 알린다.
         isTargetingMode = true;
-        if(Target != null)
+        if (Target != null)
         {
             Target._isTargeted = false;
         }
-        Target = null;
 
-        // 대상이 될 수 있는 적 목록 추출
-        var enemies = allPieces.Where(p => p.Faction == Faction.Enemy && !p.IsDead).ToList();
+        Target = null;
+        NotifyTargetStateChanged();
 
         // 플레이어가 선택할 때까지 대기 (선택되거나, 모드가 종료될 때까지)
-        yield return new WaitUntil(() => Target != null );
-        // 선택 모드 종료
+        yield return new WaitUntil(() => Target != null || !isTargetingMode);
+
+        // 타겟 확정 또는 취소 후에는 타겟팅 UI를 닫도록 상태 변경을 알린다.
         isTargetingMode = false;
+        NotifyTargetStateChanged();
     }
+
+    public void ConfirmTarget(PieceBase target)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        Target = target;
+        Target._isTargeted = true;
+
+        // ConfirmTarget은 SimulationController의 클릭 경로에서 호출되며, 즉시 타겟팅 모드를 종료한다.
+        isTargetingMode = false;
+        NotifyTargetStateChanged();
+    }
+
     public override void ResetTarget()
     {
+        // 확정 타겟을 해제할 때는 피스 위 타겟 표시도 함께 지워 다음 선택을 깨끗하게 시작한다.
+        if (Target != null)
+        {
+            Target._isTargeted = false;
+        }
+
         Target = null;
+        isTargetingMode = false;
+        NotifyTargetStateChanged();
     }
+
     public override void Execute(SimulationController controller, IReadOnlyList<PieceBase> allPieces)
     {
         if (Target != null)
@@ -62,5 +95,10 @@ public class OpeningShotSkill : SkillBase
         {
             Debug.LogWarning("[Simulation] Phase -1: No target selected for Opening Shot Skill.");
         }
+    }
+
+    private void NotifyTargetStateChanged()
+    {
+        TargetStateChanged?.Invoke();
     }
 }
