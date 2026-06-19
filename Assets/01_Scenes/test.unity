@@ -1205,7 +1205,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6562320009633688067, guid: f0e9e1a4490476f4e83197bb34b20713, type: 3}
       propertyPath: initialStagePath
-      value: Stages/stage_000.json
+      value: Stages/stage_007.json
       objectReference: {fileID: 0}
     - target: {fileID: 6562320009633688067, guid: f0e9e1a4490476f4e83197bb34b20713, type: 3}
       propertyPath: autoStartFirstStage
