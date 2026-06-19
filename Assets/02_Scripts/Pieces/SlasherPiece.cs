@@ -9,6 +9,7 @@ using UnityEngine;
 public class SlasherPiece : PieceBase
 {
     private const string AttackStateName = "Attack";
+    private const string IdleStateName = "idle";
 
     [Header("Slasher Config")]
     [SerializeField, Range(0.1f, 10f)] private float _animSpeedMultiplier = 1f;
@@ -41,11 +42,6 @@ public class SlasherPiece : PieceBase
     }
 
     public override int SimulationPhaseIndex => 2;
-
-    public override void OnSimulationStart()
-    {
-        base.OnSimulationStart();
-    }
 
     protected override PieceBase FindTarget(IReadOnlyList<PieceBase> allPieces)
     {
@@ -93,9 +89,6 @@ public class SlasherPiece : PieceBase
             yield return new WaitForSeconds(_attackClipLength);
         }
 
-        _knifeHitBox?.EndAttack();
-        GridX = targetGX;
-        GridY = targetGY;
         if (_animator != null)
         {
             _animator.speed = 1f;
@@ -103,6 +96,15 @@ public class SlasherPiece : PieceBase
         if (!IsDead)
         {
             SetAnimatorRootMotion(false);
+            transform.position = targetCellPosition;
+            GridX = targetGX;
+            GridY = targetGY;
+
+            if (_animator != null && _animator.HasState(0, Animator.StringToHash(IdleStateName)))
+            {
+                _animator.Play(IdleStateName, 0, 0f);
+                _animator.Update(0f);
+            }
         }
         FinishAction();
     }

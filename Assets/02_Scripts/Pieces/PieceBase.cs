@@ -15,6 +15,10 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
     [SerializeField] protected PieceType _pieceType = PieceType.Brawler;
     [SerializeField] protected int _maxHealth = 1;
     [SerializeField] protected int _attackRange = 1;
+
+    [Header("Animation")]
+    [SerializeField, Min(0f)] private float _deathCrossFadeDuration = 0.12f;
+
     public GameObject _HUD{get; set; }
     public GameObject _DirectionIndicator { get; set; }
     protected Animator _animator;
@@ -41,6 +45,9 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
     private int _spawnGridX;
     private int _spawnGridY;
     private Direction _spawnFacingDirection;
+    private Direction? _pendingDamageDirection;
+    private Quaternion _rotationBeforeDeath;
+    private bool _hasRotationBeforeDeath;
     private Coroutine _retryRewindCoroutine;
     private Animator _retryRewindAnimator;
     private bool _useManualRootMotion;
@@ -154,15 +161,18 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
 
     // ─── Combat ─────────────────────────────────────────────────────
 
-    public virtual void TakeDamage(int damage)
+    public virtual void TakeDamage(int damage, Direction? attackDirection = null)
     {
         if (IsDead) return;
 
+        _pendingDamageDirection = attackDirection;
         CurrentHealth -= damage;
         OnDamageTaken?.Invoke(this, damage);
 
         if (CurrentHealth <= 0)
             Die();
+        else
+            _pendingDamageDirection = null;
     }
 
     public virtual void Die()
@@ -171,11 +181,21 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
 
         IsDead = true;
         IsActionFinished = true;
+        _rotationBeforeDeath = transform.rotation;
+        _hasRotationBeforeDeath = true;
 
         foreach (var col in GetComponentsInChildren<Collider>())
+        {
+            if (col.GetComponent<AttackHitbox>() != null)
+            {
+                continue;
+            }
+
             col.enabled = false;
+        }
 
         PlayDeathAnimation();
+        _pendingDamageDirection = null;
         OnDied?.Invoke(this);
     }
 
@@ -183,8 +203,24 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
     {
         var animator = GetComponentInChildren<Animator>();
         if (animator == null) return;
+
+        animator.speed = 1f;
+        ResetAnimatorTrigger(animator, "Attack");
+        ResetAnimatorTrigger(animator, "Reset");
+        if (_pendingDamageDirection.HasValue)
+        {
+            transform.rotation = DirectionToRotation(_pendingDamageDirection.Value);
+        }
+
         SetAnimatorRootMotion(true, true);
-        // Play()는 HasExitTime/Transition 완전 무시하고 즉시 강제 재생
+
+        int hitStateHash = Animator.StringToHash("Hit");
+        if (animator.HasState(0, hitStateHash))
+        {
+            animator.CrossFadeInFixedTime(hitStateHash, _deathCrossFadeDuration, 0, 0f);
+            return;
+        }
+
         animator.SetTrigger("Hit");
     }
 
@@ -196,6 +232,13 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
         IsActionFinished = false;
         CanAct = false;
         PhaseOffset = 0;
+        _pendingDamageDirection = null;
+        if (_hasRotationBeforeDeath)
+        {
+            transform.rotation = _rotationBeforeDeath;
+            _hasRotationBeforeDeath = false;
+        }
+
         ResetAnimatorState(true);
         ResetColliderState();
         _DirectionIndicator?.SetActive(true);
@@ -271,7 +314,7 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
         }
 
         RestoreSpawnState();
-        OnSimulationStart();
+        ResetState();
         StabilizeAnimatorForRetry(animator);
         RestoreSpawnState();
         yield return null;
@@ -483,7 +526,12 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
 
     public Quaternion GetFacingRotation()
     {
-        return FacingDirection switch
+        return DirectionToRotation(FacingDirection);
+    }
+
+    public static Quaternion DirectionToRotation(Direction direction)
+    {
+        return direction switch
         {
             Direction.North => Quaternion.Euler(0, 0, 0),
             Direction.East => Quaternion.Euler(0, 90, 0),
@@ -574,10 +622,7 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
 
     private void ResetColliderState()
     {
-        foreach (var hitbox in GetComponentsInChildren<AttackHitbox>())
-        {
-            hitbox.EndAttack();
-        }
+        EndAttackHitboxes();
 
         foreach (var col in GetComponentsInChildren<Collider>())
         {
@@ -587,6 +632,14 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
             }
 
             col.enabled = true;
+        }
+    }
+
+    public void EndAttackHitboxes()
+    {
+        foreach (var hitbox in GetComponentsInChildren<AttackHitbox>())
+        {
+            hitbox.EndAttack();
         }
     }
 

@@ -10,9 +10,10 @@ public class BrawlerPiece : PieceBase
 {
     private AttackHitbox _fistHitBox;
     private float _attackClipLength = -1f;
-    [SerializeField] private float _attackYawCorrection = 75f;
     [SerializeField] private float _attackStepDistance = 0.65f;
     [SerializeField] private float _retreatDuration = 0.15f;
+    private bool _isExecutingAttack;
+    private Vector3 _attackStartPosition;
 
     private void Awake()
     {
@@ -55,6 +56,8 @@ public class BrawlerPiece : PieceBase
             _animator.speed = _attackClipLength / stepDuration;
 
         Vector3 originalPosition = transform.position;
+        _attackStartPosition = originalPosition;
+        _isExecutingAttack = true;
         var (dx, dy) = GetFacingDelta();
         Vector3 attackDirection = new Vector3(dx, 0f, dy);
         Vector3 attackPosition = originalPosition + attackDirection * _attackStepDistance;
@@ -65,14 +68,35 @@ public class BrawlerPiece : PieceBase
 
         yield return MovePositionOverTime(originalPosition, attackPosition, stepDuration);
 
-
         if (_animator != null) _animator.speed = 1f;
         if (!IsDead)
         {
             yield return MovePositionOverTime(transform.position, originalPosition, _retreatDuration);
             SetAnimatorRootMotion(false);
         }
+        _isExecutingAttack = false;
         FinishAction();
+    }
+
+    public override void Die()
+    {
+        if (IsDead)
+        {
+            return;
+        }
+
+        if (_isExecutingAttack)
+        {
+            transform.position = _attackStartPosition;
+        }
+
+        base.Die();
+    }
+
+    public override void ResetState()
+    {
+        _isExecutingAttack = false;
+        base.ResetState();
     }
 
     private IEnumerator MovePositionOverTime(Vector3 from, Vector3 to, float duration)
@@ -86,12 +110,20 @@ public class BrawlerPiece : PieceBase
         float elapsed = 0f;
         while (elapsed < duration)
         {
+            if (IsDead)
+            {
+                yield break;
+            }
+
             float t = Mathf.Clamp01(elapsed / duration);
             transform.position = Vector3.Lerp(from, to, t);
             elapsed += Time.deltaTime;
             yield return null;
         }
 
-        transform.position = to;
+        if (!IsDead)
+        {
+            transform.position = to;
+        }
     }
 }

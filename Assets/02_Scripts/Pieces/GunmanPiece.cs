@@ -16,7 +16,6 @@ public class GunmanPiece : PieceBase
 
     [SerializeField] private GameObject _bullet;
 
-    private float _attackClipLength;
     private float _shoot1RecoilTime = 0.2f;
     private float _shoot2RecoilTime = 1.3f;
     [SerializeField] private float _sideAimYawOffset = -75f;
@@ -27,18 +26,6 @@ public class GunmanPiece : PieceBase
         if (_bullet != null && _bullet.scene.IsValid())
         {
             _bullet.SetActive(false);
-        }
-
-        if (_animator != null)
-        {
-            foreach (var clip in _animator.runtimeAnimatorController.animationClips)
-            {
-                if (clip.name.Contains("Attack") || clip.name.Contains("Shoot") || clip.name.Contains("Fire"))
-                {
-                    _attackClipLength = clip.length;
-                    break;
-                }
-            }
         }
     }
 
@@ -121,21 +108,5 @@ public class GunmanPiece : PieceBase
             SetAnimatorRootMotion(false);
         }
         FinishAction();
-    }
-    // ─── Helper ─────────────────────────────────────────────────────
-
-    private static Transform FindDeepChild(Transform parent, string name)
-    {
-        foreach (Transform child in parent)
-        {
-            if (child.name == name) return child;
-            var found = FindDeepChild(child, name);
-            if (found != null) return found;
-        }
-        return null;
-    }
-    public override void ResetState()
-    {
-        base.ResetState();
     }
 }

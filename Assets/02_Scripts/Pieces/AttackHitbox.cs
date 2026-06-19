@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -10,6 +11,7 @@ public class AttackHitbox : MonoBehaviour
 {
     private PieceBase _owner;
     private Collider _col;
+    private readonly HashSet<PieceBase> _hitPieces = new();
 
     private bool _isBullet = false;
 
@@ -28,12 +30,14 @@ public class AttackHitbox : MonoBehaviour
 
     public void BeginAttack()
     {
+        _hitPieces.Clear();
         _col.enabled = true;
     }
 
     public void EndAttack()
     {
         _col.enabled = false;
+        _hitPieces.Clear();
     }
     public void SetAsBullet(bool isBullet)
     {
@@ -41,6 +45,16 @@ public class AttackHitbox : MonoBehaviour
     }
 
     private void OnTriggerEnter(Collider other)
+    {
+        TryHit(other);
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        TryHit(other);
+    }
+
+    private void TryHit(Collider other)
     {
         if (_owner == null) return;
 
@@ -54,8 +68,10 @@ public class AttackHitbox : MonoBehaviour
         var piece = other.GetComponentInParent<PieceBase>();
         if (piece == null || piece.IsDead) return;
         if (piece == _owner) return; // 자기 자신은 공격하지 않음
-        piece.TakeDamage(1);
-        if (!_isBullet)
-            EndAttack();
+        if (_hitPieces.Contains(piece)) return;
+
+        _hitPieces.Add(piece);
+        var hitDirection = (Direction)(((int) _owner.FacingDirection + 1) % 4);
+        piece.TakeDamage(1,hitDirection);
     }
 }
