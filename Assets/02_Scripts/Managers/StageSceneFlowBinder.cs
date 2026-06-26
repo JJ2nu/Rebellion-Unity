@@ -1,6 +1,5 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Stage Scene의 기존 매니저를 캠페인 흐름에 연결하고, 시뮬레이션 결과를 플레이어가 확정할 때까지 보관한다.
@@ -109,6 +108,19 @@ public sealed class StageSceneFlowBinder : MonoBehaviour
         yield return audioDramaPlayer.PlayByStageIdAndWait(stageId);
     }
 
+    public void PlayAudioDrama(string stageId)
+    {
+        EnsureBindings();
+
+        if (audioDramaPlayer == null)
+        {
+            Debug.LogWarning($"[StageSceneFlowBinder] AudioDramaPlayer is not assigned. Stage ID: {stageId}", this);
+            return;
+        }
+
+        audioDramaPlayer.PlayByStageId(stageId);
+    }
+
     public void ConfirmSimulationResult()
     {
         EnsureBindings();
@@ -136,7 +148,7 @@ public sealed class StageSceneFlowBinder : MonoBehaviour
             return;
         }
 
-        SceneManager.LoadScene(DialogueSceneName);
+        SceneTransitionOverlay.Instance.LoadScene(DialogueSceneName, EndLoadedStage);
     }
 
     public void ClearPendingSimulationResult()
