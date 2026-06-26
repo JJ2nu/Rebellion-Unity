@@ -71,7 +71,7 @@ public class AttackHitbox : MonoBehaviour
         if (_hitPieces.Contains(piece)) return;
 
         _hitPieces.Add(piece);
-        var hitDirection = (Direction)(((int) _owner.FacingDirection + 1) % 4);
+        var hitDirection = (Direction)(((int) _owner.FacingDirection + 3) % 4);
         piece.TakeDamage(1,hitDirection);
     }
 }
