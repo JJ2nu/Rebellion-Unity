@@ -76,6 +76,7 @@ GameObject:
   - component: {fileID: 1717871216010249088}
   - component: {fileID: 2063944228308776292}
   - component: {fileID: 838173157434276924}
+  - component: {fileID: 7671826031346529262}
   m_Layer: 0
   m_Name: Stage Camera
   m_TagString: Untagged
@@ -256,5 +257,29 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5918563521127734334, guid: 88df127b28fc29547aee8c8cd0de964f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7671826031346529262}
   m_SourcePrefab: {fileID: 100100000, guid: 88df127b28fc29547aee8c8cd0de964f, type: 3}
+--- !u!114 &7671826031346529262
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8386485110916463597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b1c35d38a1110244b3958f151cc50d7, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::SoftVignetteController
+  vignetteMaterial: {fileID: 2100000, guid: 6c0e32e337dddb6448c2a1191e20643b, type: 2}
+  effectEnabled: 1
+  opacity: 0.65
+  roundness: 0.75
+  feather: 1.1
+  size: 1.35
+  center: {x: 0.5, y: 0.5}
+  aspectRatio: 1
+  color: {r: 0, g: 0, b: 0, a: 1}
