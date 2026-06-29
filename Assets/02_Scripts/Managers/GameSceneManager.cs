@@ -26,9 +26,7 @@ public class GameSceneManager : MonoBehaviour
 
     public void LoadScene(string sceneName)
     {
-        // todo : 다음 씬에 필요한 에셋 로드
-
-        UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName);
+        SceneTransitionOverlay.Instance.LoadScene(sceneName);
     }
     #endregion
 
@@ -42,7 +40,7 @@ public class GameSceneManager : MonoBehaviour
         // todo : 저장 된 게임 데이터 불러오기
 
         // 현재 씬 다시 로드
-        UnityEngine.SceneManagement.SceneManager.LoadScene(currentSceneName);
+        SceneTransitionOverlay.Instance.LoadScene(currentSceneName);
 
     }
     #endregion

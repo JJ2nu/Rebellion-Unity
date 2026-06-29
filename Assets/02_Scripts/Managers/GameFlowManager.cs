@@ -1,6 +1,5 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 /// <summary>
 /// 캠페인 진행 상태를 Scene 전환 사이에 보관하고 Stage와 Dialogue Scene의 Binder를 연결한다.
@@ -26,6 +25,7 @@ public sealed class GameFlowManager : MonoBehaviour
     private const string AudioDramaStage7 = "7";
     private const string BadEndingAudioStageId = "BadEnding";
     private const string GoodEndingAudioStageId = "GoodEnding";
+    private const float IntroAudioDramaStartupDelay = 0.25f;
 
     private static readonly CampaignStageStep[] CampaignStages =
     {
@@ -47,6 +47,7 @@ public sealed class GameFlowManager : MonoBehaviour
     private DialogueSceneFlowBinder currentDialogueBinder;
     private Coroutine stageSceneRoutine;
     private Coroutine endingRoutine;
+    private Coroutine campaignSceneRoutine;
     private string currentStageId;
 
     // Stage Scene이 내려간 뒤 Dialogue Scene이 올라오므로 다음 대사 정보를 Scene 전환 전에 보관한다.
@@ -54,6 +55,7 @@ public sealed class GameFlowManager : MonoBehaviour
     private string pendingDialogueLevel;
     private SimulationController.SimulationResult pendingDialogueResult;
     private bool isCampaignRunning;
+    private bool isLoadingCampaignScene;
 
     public static GameFlowManager EnsureInstance()
     {
@@ -98,7 +100,7 @@ public sealed class GameFlowManager : MonoBehaviour
         nextStageAfterDialogue = null;
         pendingDialogueLevel = null;
 
-        LoadScene(StageSceneName);
+        LoadStageScene();
     }
 
     public void RegisterStageScene(StageSceneFlowBinder binder)
@@ -111,6 +113,11 @@ public sealed class GameFlowManager : MonoBehaviour
         currentStageBinder?.Unbind();
         currentStageBinder = binder;
         currentStageBinder.Bind(this);
+
+        if (isLoadingCampaignScene)
+        {
+            return;
+        }
 
         if (stageSceneRoutine != null)
         {
@@ -130,6 +137,11 @@ public sealed class GameFlowManager : MonoBehaviour
         currentDialogueBinder?.Unbind();
         currentDialogueBinder = binder;
         currentDialogueBinder.Bind(this);
+
+        if (isLoadingCampaignScene)
+        {
+            return;
+        }
 
         if (string.IsNullOrWhiteSpace(pendingDialogueLevel))
         {
@@ -169,8 +181,7 @@ public sealed class GameFlowManager : MonoBehaviour
         }
 
         ResolveDialogueAndNextStage(result);
-        currentStageBinder.EndLoadedStage();
-        LoadScene(DialogueSceneName);
+        LoadDialogueSceneFromStage();
     }
 
     public void HandleDialogueNextStageRequested(DialogueSceneFlowBinder sender)
@@ -189,7 +200,7 @@ public sealed class GameFlowManager : MonoBehaviour
         currentStageId = nextStageAfterDialogue;
         nextStageAfterDialogue = null;
         pendingDialogueLevel = null;
-        LoadScene(StageSceneName);
+        LoadStageScene();
     }
 
     private IEnumerator PrepareStageSceneRoutine(StageSceneFlowBinder binder)
@@ -201,13 +212,144 @@ public sealed class GameFlowManager : MonoBehaviour
             yield break;
         }
 
-        if (!string.IsNullOrWhiteSpace(step.IntroAudioDramaStageId))
+        SceneTransitionOverlay overlay = SceneTransitionOverlay.Instance;
+        if (!overlay.IsFullyOpaque)
         {
-            yield return binder.PlayAudioDramaAndWait(step.IntroAudioDramaStageId);
+            yield return overlay.FadeOut();
         }
 
         binder.LoadStage(step.StagePath);
+        yield return overlay.WaitForSceneSettled();
+
+        if (!string.IsNullOrWhiteSpace(step.IntroAudioDramaStageId))
+        {
+            binder.PlayAudioDrama(step.IntroAudioDramaStageId);
+            yield return new WaitForSeconds(IntroAudioDramaStartupDelay);
+        }
+
+        yield return overlay.FadeIn();
         stageSceneRoutine = null;
+    }
+
+    private void LoadStageScene()
+    {
+        StartCampaignSceneRoutine(LoadStageSceneRoutine());
+    }
+
+    private void LoadDialogueScene()
+    {
+        StartCampaignSceneRoutine(LoadDialogueSceneRoutine(true));
+    }
+
+    private void LoadDialogueSceneFromStage()
+    {
+        StartCampaignSceneRoutine(LoadDialogueSceneFromStageRoutine());
+    }
+
+    private void StartCampaignSceneRoutine(IEnumerator routine)
+    {
+        if (campaignSceneRoutine != null)
+        {
+            StopCoroutine(campaignSceneRoutine);
+        }
+
+        campaignSceneRoutine = StartCoroutine(routine);
+    }
+
+    private IEnumerator LoadStageSceneRoutine()
+    {
+        isLoadingCampaignScene = true;
+        currentStageBinder = null;
+
+        SceneTransitionOverlay overlay = SceneTransitionOverlay.Instance;
+        yield return overlay.FadeOut();
+        yield return overlay.LoadSceneOnly(StageSceneName);
+        yield return overlay.WaitForSceneSettled();
+        yield return WaitForStageBinder();
+
+        if (currentStageBinder != null)
+        {
+            yield return PrepareStageSceneRoutine(currentStageBinder);
+        }
+        else
+        {
+            yield return overlay.FadeIn();
+        }
+
+        isLoadingCampaignScene = false;
+        campaignSceneRoutine = null;
+    }
+
+    private IEnumerator LoadDialogueSceneFromStageRoutine()
+    {
+        SceneTransitionOverlay overlay = SceneTransitionOverlay.Instance;
+        yield return overlay.FadeOut();
+        currentStageBinder?.EndLoadedStage();
+        yield return LoadDialogueSceneRoutine(false);
+    }
+
+    private IEnumerator LoadDialogueSceneRoutine(bool fadeOutFirst)
+    {
+        isLoadingCampaignScene = true;
+        currentDialogueBinder = null;
+
+        SceneTransitionOverlay overlay = SceneTransitionOverlay.Instance;
+        if (fadeOutFirst)
+        {
+            yield return overlay.FadeOut();
+        }
+
+        yield return overlay.LoadSceneOnly(DialogueSceneName);
+        yield return overlay.WaitForSceneSettled();
+        yield return WaitForDialogueBinder();
+
+        if (currentDialogueBinder != null && !string.IsNullOrWhiteSpace(pendingDialogueLevel))
+        {
+            currentDialogueBinder.Play(pendingDialogueLevel, pendingDialogueResult);
+        }
+        else if (string.IsNullOrWhiteSpace(pendingDialogueLevel))
+        {
+            Debug.LogWarning("[GameFlowManager] Dialogue scene loaded without pending dialogue data.", this);
+        }
+
+        yield return overlay.WaitForSceneSettled();
+        yield return overlay.FadeIn();
+        isLoadingCampaignScene = false;
+        campaignSceneRoutine = null;
+    }
+
+    private IEnumerator WaitForStageBinder()
+    {
+        const float TimeoutSeconds = 5f;
+        float elapsed = 0f;
+
+        while (currentStageBinder == null && elapsed < TimeoutSeconds)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        if (currentStageBinder == null)
+        {
+            Debug.LogWarning("[GameFlowManager] Stage scene loaded, but StageSceneFlowBinder was not registered.", this);
+        }
+    }
+
+    private IEnumerator WaitForDialogueBinder()
+    {
+        const float TimeoutSeconds = 5f;
+        float elapsed = 0f;
+
+        while (currentDialogueBinder == null && elapsed < TimeoutSeconds)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        if (currentDialogueBinder == null)
+        {
+            Debug.LogWarning("[GameFlowManager] Dialogue scene loaded, but DialogueSceneFlowBinder was not registered.", this);
+        }
     }
 
     private void ResolveDialogueAndNextStage(SimulationController.SimulationResult result)
@@ -292,11 +434,6 @@ public sealed class GameFlowManager : MonoBehaviour
         }
 
         return null;
-    }
-
-    private static void LoadScene(string sceneName)
-    {
-        SceneManager.LoadScene(sceneName);
     }
 
     private sealed class CampaignStageStep
