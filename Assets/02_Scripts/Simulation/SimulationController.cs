@@ -30,6 +30,10 @@ public class SimulationController : MonoBehaviour
     public event Action<bool> RunningStateChanged;
 
     public List<int> _currentDeadCount;
+    [SerializeField] private int _currentStageEnemyCount;
+    [SerializeField] private List<int> _currentStageEnemyTypeCounts = new();
+    public int CurrentStageEnemyCount => _currentStageEnemyCount;
+    public IReadOnlyList<int> CurrentStageEnemyTypeCounts => _currentStageEnemyTypeCounts;
     public enum SimulationResult
     {
         PerfectWin,
@@ -66,6 +70,36 @@ public class SimulationController : MonoBehaviour
         }
         // DontDestroyOnLoad(gameObject);
     }
+
+    public void SetStageEnemyPieceCounts(IReadOnlyList<int> enemyTypeCounts)
+    {
+        _currentStageEnemyTypeCounts.Clear();
+        _currentStageEnemyCount = 0;
+
+        if (enemyTypeCounts == null)
+        {
+            return;
+        }
+
+        for (int index = 0; index < enemyTypeCounts.Count; index++)
+        {
+            int count = Mathf.Max(0, enemyTypeCounts[index]);
+            _currentStageEnemyTypeCounts.Add(count);
+            _currentStageEnemyCount += count;
+        }
+    }
+
+    public int GetCurrentStageEnemyCount(PieceType pieceType)
+    {
+        int index = (int)pieceType;
+        if (index < 0 || index >= _currentStageEnemyTypeCounts.Count)
+        {
+            return 0;
+        }
+
+        return _currentStageEnemyTypeCounts[index];
+    }
+
     public void StartSimulation()
     {
         if (_isRunning || isExecutingSimulation)

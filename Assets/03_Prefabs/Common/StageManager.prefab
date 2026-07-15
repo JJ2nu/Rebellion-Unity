@@ -60,3 +60,6 @@ MonoBehaviour:
   - {fileID: 5455071742382695461, guid: 76cc0c066ccc14545aa382e0ee1a4c72, type: 3}
   - {fileID: 5573549547454476352, guid: fdcb0907192a3b242b72aa57b238d064, type: 3}
   - {fileID: 3491224688107528927, guid: 33d8eeeb6ea2fa44a8c7373fe7a669a9, type: 3}
+  hitImpactRedPrefab: {fileID: 1102164982151106692, guid: 45d8995debb6f314aacf12d62cb6ecd2, type: 3}
+  hitImpactWhitePrefab: {fileID: 3606485128501302018, guid: 64ee3e8825b45be4c85b225cbf8114b9, type: 3}
+  hitImpactColorMode: 0
