@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 76844717866030056}
   - component: {fileID: 5610311678135513058}
   - component: {fileID: 1722866661062951263}
+  - component: {fileID: 6665043156357154019}
   m_Layer: 0
   m_Name: Camera_OpeningShotSimul
   m_TagString: Untagged
@@ -69,7 +70,7 @@ Camera:
   field of view: 5
   orthographic: 0
   orthographic size: 5
-  m_Depth: 0
+  m_Depth: 1
   m_CullingMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -128,6 +129,23 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!114 &6665043156357154019
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2254527392180671714}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0ac2605bb42a1f48a91ce80a24727c1, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::OpeningShotLensDistortionController
+  effectEnabled: 1
+  center: {x: 0.5, y: 0.5}
+  radius: 0.4
+  edgeWidth: 0.16
+  strength: 0.055
 --- !u!1 &3051556773279950871
 GameObject:
   m_ObjectHideFlags: 0
@@ -264,7 +282,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 0
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 0
+  m_SortingOrder: -10
   m_TargetDisplay: 0
 --- !u!114 &7796304602592705241
 MonoBehaviour:
