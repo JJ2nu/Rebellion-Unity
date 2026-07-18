@@ -27,13 +27,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2254527392180671714}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.08341457, y: 0.9016648, z: -0.20138071, w: -0.37348157}
-  m_LocalPosition: {x: 28, y: 21.92, z: 28}
+  m_LocalRotation: {x: -0.08191584, y: 0.90281606, z: -0.19849691, w: -0.37257475}
+  m_LocalPosition: {x: 43.91, y: 15.57, z: 58.54}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 4502646081804836943}
-  m_LocalEulerAnglesHint: {x: 25.18, y: 225, z: 0}
+  m_LocalEulerAnglesHint: {x: 24.8, y: 224.85, z: 0}
 --- !u!20 &5610311678135513058
 Camera:
   m_ObjectHideFlags: 0
@@ -65,11 +65,11 @@ Camera:
     y: 0
     width: 1
     height: 1
-  near clip plane: 0.3
-  far clip plane: 1000
-  field of view: 5
+  near clip plane: 0.01
+  far clip plane: 1015.46
+  field of view: 40
   orthographic: 0
-  orthographic size: 5
+  orthographic size: 5.3
   m_Depth: 1
   m_CullingMask:
     serializedVersion: 2
@@ -139,7 +139,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e0ac2605bb42a1f48a91ce80a24727c1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::OpeningShotLensDistortionController
   effectEnabled: 1
   center: {x: 0.5, y: 0.5}
