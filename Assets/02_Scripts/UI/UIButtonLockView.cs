@@ -21,6 +21,7 @@ public enum UIButtonLockMode
 /// Storage 버튼, OrderSkillButton, 이후 추가될 스킬 버튼의 잠금 방식을 한 곳에서 통일한다.
 /// </summary>
 [RequireComponent(typeof(Button))]
+[RequireComponent(typeof(CanvasGroup))]
 public sealed class UIButtonLockView : MonoBehaviour
 {
     #region Fields
@@ -38,7 +39,7 @@ public sealed class UIButtonLockView : MonoBehaviour
     // 시뮬레이션처럼 사용할 수 있는 버튼이 일시 잠길 때 표시할 전용 Sprite다.
     [SerializeField] private Sprite lockSprite;
 
-    private CanvasGroup canvasGroup;
+    [SerializeField] private CanvasGroup canvasGroup;
     private UIButtonLockMode currentMode = UIButtonLockMode.None;
     private bool isAvailableVisual = true;
 
@@ -237,8 +238,7 @@ public sealed class UIButtonLockView : MonoBehaviour
         canvasGroup = GetComponent<CanvasGroup>();
         if (canvasGroup == null)
         {
-            // 기존 Prefab도 즉시 사용할 수 있도록 입력 차단용 CanvasGroup을 런타임에 보충한다.
-            canvasGroup = gameObject.AddComponent<CanvasGroup>();
+            Debug.LogWarning($"{nameof(UIButtonLockView)} has no CanvasGroup assigned.", this);
         }
     }
 

@@ -4,31 +4,25 @@ public class InGameHUDUI : MonoBehaviour
 {
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     private Transform mainCameraTransform;
-    private GameObject _activeUI;
-    private GameObject _inactiveUI;
-    private GameObject _rotateUI;
-    private GameObject _deadUI;
-    private GameObject _targetUI;
+    [SerializeField] private GameObject _activeUI;
+    [SerializeField] private GameObject _inactiveUI;
+    [SerializeField] private GameObject _rotateUI;
+    [SerializeField] private GameObject _deadUI;
+    [SerializeField] private GameObject _targetUI;
 
 
     void Start()
     {
         // Main Camera 캐싱
         mainCameraTransform = Camera.main.transform;
-        _activeUI = transform.Find("Active").gameObject;
-        _inactiveUI = transform.Find("Inactive").gameObject;
-        _rotateUI = transform.Find("Rotate").gameObject;
-        _deadUI = transform.Find("Dead").gameObject;
-        _targetUI = transform.Find("Target").gameObject;
         Clear();
     }
     void Awake()
     {
-        if (_activeUI == null) _activeUI = transform.Find("Active").gameObject;
-        if (_inactiveUI == null) _inactiveUI = transform.Find("Inactive").gameObject;
-        if (_rotateUI == null) _rotateUI = transform.Find("Rotate").gameObject;
-        if (_deadUI == null) _deadUI = transform.Find("Dead").gameObject;
-        if (_targetUI == null) _targetUI = transform.Find("Target").gameObject;
+        if (_activeUI == null || _inactiveUI == null || _rotateUI == null || _deadUI == null || _targetUI == null)
+        {
+            Debug.LogWarning($"{nameof(InGameHUDUI)} has missing HUD state references.", this);
+        }
     }
 
     void LateUpdate()

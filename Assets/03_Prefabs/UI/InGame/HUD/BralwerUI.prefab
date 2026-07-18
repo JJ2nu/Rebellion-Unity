@@ -120,6 +120,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 19b5b408039a42d4bacc7c73b456ddea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+  _activeUI: {fileID: 8115837209665041677}
+  _inactiveUI: {fileID: 9203940378406685347}
+  _rotateUI: {fileID: 7645163012010662591}
+  _deadUI: {fileID: 8383829392942679601}
+  _targetUI: {fileID: 3274170514396383439}
 --- !u!1 &3274170514396383439
 GameObject:
   m_ObjectHideFlags: 0

@@ -150,6 +150,8 @@ GameObject:
   - component: {fileID: 3896313827174021439}
   - component: {fileID: 4041035073397175236}
   - component: {fileID: 7329526893493207979}
+  - component: {fileID: 90000000000000101}
+  - component: {fileID: 90000000000000102}
   - component: {fileID: 4728523819807856928}
   - component: {fileID: 4890293834795258258}
   m_Layer: 5
@@ -279,7 +281,38 @@ MonoBehaviour:
   deactiveSprite: {fileID: 21300000, guid: 6ef08048928e9a548b00b7ba3a9e2179, type: 3}
   lockedSprite: {fileID: 21300000, guid: 40fdf226f16f60847a44b22d2d4e8632, type: 3}
   countText: {fileID: 7473671234362213182}
-  buttonLockView: {fileID: 0}
+  buttonLockView: {fileID: 90000000000000102}
+--- !u!225 &90000000000000101
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7105006671385234466}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!114 &90000000000000102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7105006671385234466}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9fa4ee27dbf94b6bbd5016e56000fc20, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::UIButtonLockView
+  button: {fileID: 4041035073397175236}
+  targetImage: {fileID: 3896313827174021439}
+  activeSprite: {fileID: 21300000, guid: 72e1dc1421fb6f7478926754fbd9c923, type: 3}
+  hoverSprite: {fileID: 21300000, guid: 3b067b1e64b31d143a5dae53710ee44c, type: 3}
+  unavailableSprite: {fileID: 21300000, guid: 6ef08048928e9a548b00b7ba3a9e2179, type: 3}
+  lockSprite: {fileID: 21300000, guid: 40fdf226f16f60847a44b22d2d4e8632, type: 3}
+  canvasGroup: {fileID: 90000000000000101}
 --- !u!82 &4728523819807856928
 AudioSource:
   m_ObjectHideFlags: 0

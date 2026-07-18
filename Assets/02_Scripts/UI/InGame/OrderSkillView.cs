@@ -93,7 +93,7 @@ public sealed class OrderSkillView : MonoBehaviour
         orderSkillButtonLockView = buttonObject.GetComponent<UIButtonLockView>();
         if (orderSkillButtonLockView == null)
         {
-            orderSkillButtonLockView = buttonObject.AddComponent<UIButtonLockView>();
+            Debug.LogWarning("Order skill button prefab has no UIButtonLockView component.", this);
         }
 
         orderSkillButton.onClick.AddListener(HandleOrderRequested);

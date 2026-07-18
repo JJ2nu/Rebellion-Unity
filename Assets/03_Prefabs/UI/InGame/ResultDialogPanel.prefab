@@ -613,6 +613,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3880032226390826709}
   - component: {fileID: 3350390475171923605}
+  - component: {fileID: 3350390475171923606}
   - component: {fileID: 1576812763959041952}
   m_Layer: 5
   m_Name: ResultDialogPanel
@@ -661,6 +662,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ResultDialogController
   resultDialogueCsv: {fileID: 4900000, guid: 350cb5fd78312294da3ffa21f164bb1d, type: 3}
+  view: {fileID: 3350390475171923606}
+  stageSimulationControls: {fileID: 0}
+  stageSceneFlowBinder: {fileID: 0}
+--- !u!114 &3350390475171923606
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4041249041838462131}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 057353ac6025469b9295c1c8ae402c93, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ResultDialogView
   characterRoot: {fileID: 620637383366935828}
   characterAnimator: {fileID: 3457038488581769743}
   speakerText: {fileID: 5486892010761406895}
@@ -669,8 +685,6 @@ MonoBehaviour:
   advanceButton: {fileID: 6202524273096330894}
   confirmCommandButton: {fileID: 8501507081610886790}
   reconsiderButton: {fileID: 45521798671895661}
-  stageSimulationControls: {fileID: 0}
-  stageSceneFlowBinder: {fileID: 0}
   advanceAudioSource: {fileID: 1576812763959041952}
   advanceClip: {fileID: 8300000, guid: 6af1e2fddb166cc47800dd1f5e1a67d8, type: 3}
 --- !u!82 &1576812763959041952
