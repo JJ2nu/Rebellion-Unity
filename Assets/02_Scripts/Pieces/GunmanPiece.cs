@@ -79,6 +79,8 @@ public class GunmanPiece : PieceBase
 
         var (dx, dy) = GetFacingDelta();
         Vector3 fireDirection = new Vector3(dx, 0f, dy);
+        PlayMuzzleFlash(selectedFlarePoint, fireDirection);
+
         GameObject bulletInstance = Instantiate(_bullet, selectedFlarePoint.position, selectedFlarePoint.rotation);
         bulletInstance.SetActive(true);
 
@@ -108,5 +110,19 @@ public class GunmanPiece : PieceBase
             SetAnimatorRootMotion(false);
         }
         FinishAction();
+    }
+
+    private static void PlayMuzzleFlash(Transform flarePoint, Vector3 fireDirection)
+    {
+        ParticleSystem muzzleFlash = flarePoint.GetComponentInChildren<ParticleSystem>(true);
+        if (muzzleFlash == null)
+        {
+            return;
+        }
+
+        muzzleFlash.transform.localPosition = Vector3.zero;
+        muzzleFlash.transform.rotation = Quaternion.LookRotation(fireDirection, Vector3.up);
+        muzzleFlash.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        muzzleFlash.Play(true);
     }
 }
