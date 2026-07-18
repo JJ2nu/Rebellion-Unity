@@ -11,6 +11,7 @@ public class AttackHitbox : MonoBehaviour
 {
     private PieceBase _owner;
     private Collider _col;
+    private BladeMeshTrail[] _bladeTrails;
     private readonly HashSet<PieceBase> _hitPieces = new();
 
     private bool _isBullet = false;
@@ -26,18 +27,22 @@ public class AttackHitbox : MonoBehaviour
         _col = GetComponent<Collider>();
         _col.isTrigger = true;
         _col.enabled = false;
+        _bladeTrails = GetComponentsInChildren<BladeMeshTrail>(true);
+        SetBladeTrailsActive(false);
     }
 
     public void BeginAttack()
     {
         _hitPieces.Clear();
         _col.enabled = true;
+        SetBladeTrailsActive(true);
     }
 
     public void EndAttack()
     {
         _col.enabled = false;
         _hitPieces.Clear();
+        SetBladeTrailsActive(false);
     }
     public void SetAsBullet(bool isBullet)
     {
@@ -70,8 +75,87 @@ public class AttackHitbox : MonoBehaviour
         if (piece == _owner) return; // 자기 자신은 공격하지 않음
         if (_hitPieces.Contains(piece)) return;
 
+        Vector3 hitPoint = other.ClosestPoint(transform.position);
+        Vector3 impactDirection = GetImpactDirection(hitPoint, piece);
+        HitImpactAttackType attackType = GetAttackType();
+
         _hitPieces.Add(piece);
         var hitDirection = (Direction)(((int) _owner.FacingDirection + 3) % 4);
         piece.TakeDamage(1,hitDirection);
+        StageManager.Instance?.PlayHitImpact(hitPoint, impactDirection, attackType);
+    }
+
+    private void SetBladeTrailsActive(bool isActive)
+    {
+        if (_bladeTrails == null)
+        {
+            return;
+        }
+
+        foreach (var bladeTrail in _bladeTrails)
+        {
+            if (bladeTrail == null)
+            {
+                continue;
+            }
+
+            if (isActive)
+            {
+                bladeTrail.ResetTrail();
+            }
+
+            bladeTrail.Emitting = isActive;
+            bladeTrail.SetVisible(isActive);
+        }
+    }
+
+    private Vector3 GetImpactDirection(Vector3 hitPoint, PieceBase hitPiece)
+    {
+        if (_isBullet)
+        {
+            Rigidbody rb = GetComponent<Rigidbody>();
+            if (rb != null && rb.linearVelocity.sqrMagnitude > 0.0001f)
+            {
+                return rb.linearVelocity.normalized;
+            }
+
+            return transform.forward.sqrMagnitude > 0.0001f
+                ? transform.forward.normalized
+                : Vector3.forward;
+        }
+
+        Vector3 collisionVector = hitPoint - transform.position;
+        if (collisionVector.sqrMagnitude > 0.0001f)
+        {
+            return (collisionVector + Vector3.up * 0.15f).normalized;
+        }
+
+        if (_owner != null && hitPiece != null)
+        {
+            Vector3 ownerToTarget = hitPiece.transform.position - _owner.transform.position;
+            if (ownerToTarget.sqrMagnitude > 0.0001f)
+            {
+                return (ownerToTarget + Vector3.up * 0.15f).normalized;
+            }
+        }
+
+        return _owner != null && _owner.transform.forward.sqrMagnitude > 0.0001f
+            ? (_owner.transform.forward + Vector3.up * 0.15f).normalized
+            : Vector3.forward;
+    }
+
+    private HitImpactAttackType GetAttackType()
+    {
+        if (_isBullet)
+        {
+            return HitImpactAttackType.Projectile;
+        }
+
+        if (_owner is BrawlerPiece)
+        {
+            return HitImpactAttackType.Blunt;
+        }
+
+        return HitImpactAttackType.Slash;
     }
 }

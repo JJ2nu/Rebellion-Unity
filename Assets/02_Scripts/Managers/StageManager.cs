@@ -21,6 +21,9 @@ public class StageManager : MonoBehaviour
     [SerializeField] private GameObject[] enemyPiecePrefabs;
     [SerializeField] private GameObject[] civilianPiecePrefabs;
     [SerializeField] private GameObject[] mapPrefabs;
+    [SerializeField] private GameObject hitImpactRedPrefab;
+    [SerializeField] private GameObject hitImpactWhitePrefab;
+    [SerializeField] private HitImpactColorMode hitImpactColorMode = HitImpactColorMode.Red;
 
     [SerializeField] private GameObject[][] objectPrefabs;
 
@@ -41,11 +44,17 @@ public class StageManager : MonoBehaviour
     private readonly List<(int detailType, PieceBase piece)> spawnedEnemyPieces = new();
     private readonly List<(int detailType, PieceBase piece)> spawnedCivilianPieces = new();
     private readonly List<(int detailType, GameObject obj)> spawnedObjects = new();
+    [SerializeField] private int currentStageEnemyCount;
+    [SerializeField] private List<int> currentStageEnemyTypeCounts = new();
+    public int CurrentStageEnemyCount => currentStageEnemyCount;
+    public IReadOnlyList<int> CurrentStageEnemyTypeCounts => currentStageEnemyTypeCounts;
 
     /// <summary>
     /// 스킬로 인해 타겟을 선택해야 하는 모드인지 여부를 나타낸다.
     /// </summary>
     public bool IsSelectionMode { get; set; }
+    public int CurrentSpawnedEnemyPieceCount { get; private set; }
+    public int CurrentSpawnedPieceCount { get; private set; }
 
     // 풀: 스테이지 클리어 전까지 보관하고 재배치
 
@@ -54,6 +63,7 @@ public class StageManager : MonoBehaviour
     private readonly List<Queue<PieceBase>> enemyPool = new();
     private readonly List<Queue<PieceBase>> civilianPool = new();
     private readonly Dictionary<int, Queue<GameObject>> objectPool = new();
+    private HitImpactVfxPool hitImpactVfxPool;
 
     private PieceBase[][] allyPieces;
     private PieceBase[][] enemyPieces;
@@ -76,11 +86,13 @@ public class StageManager : MonoBehaviour
         MapCacheCheck();
         SetMapsActive(false);
         PrewarmAllyPool();
+        EnsureHitImpactVfxPool();
     }
 
     public void LoadStage(string stagePath)
     {
         currentStagePath = stagePath;
+        SetCurrentStageEnemyPieceCounts(null);
 
         Debug.Log($"[StageManager] LoadStage called: {currentStagePath}", this);
 
@@ -137,6 +149,8 @@ public class StageManager : MonoBehaviour
         SpawnEnemies(parsedData);
         SpawnCivilians(parsedData);
         SpawnObjects(parsedData);
+        RefreshSpawnedPieceCounts();
+        EnsureHitImpactPoolSize();
 
         //Debug.Log($"Stage parsed: mapIndex={parsedData.mapIndex}, entityCount={parsedData.entities.Length}", this);
         StageLoaded?.Invoke(currentStageData);
@@ -147,7 +161,16 @@ public class StageManager : MonoBehaviour
     public void EndStage()
     {
         SetMapsActive(false);
+        SetCurrentStageEnemyPieceCounts(null);
         ClearPools();
+        CurrentSpawnedEnemyPieceCount = 0;
+        CurrentSpawnedPieceCount = 0;
+    }
+
+    public void PlayHitImpact(Vector3 position, Vector3 direction, HitImpactAttackType attackType)
+    {
+        EnsureHitImpactVfxPool();
+        hitImpactVfxPool?.Play(position, direction, hitImpactColorMode, attackType);
     }
 
     /// <summary>
@@ -259,6 +282,8 @@ public class StageManager : MonoBehaviour
         if (removed)
         {
             ReturnAllyToPool(piece);
+            RefreshSpawnedPieceCounts();
+            EnsureHitImpactPoolSize();
         }
 
         return removed;
@@ -326,6 +351,8 @@ public class StageManager : MonoBehaviour
         allyPiece.FacingDirection = facingDirection;
         allyPiece.CaptureSpawnState();
         spawnedAllyPieces.Add(allyPiece);
+        RefreshSpawnedPieceCounts();
+        EnsureHitImpactPoolSize();
         return true;
     }
     private string ResolveStagePath(string stagePath)
@@ -384,6 +411,62 @@ public class StageManager : MonoBehaviour
             GameObject rootObject = new GameObject("MapRoot");
             rootObject.transform.SetParent(transform, false);
             mapRoot = rootObject.transform;
+        }
+    }
+
+    private void EnsureHitImpactVfxPool()
+    {
+        if (hitImpactVfxPool != null)
+        {
+            return;
+        }
+
+        GameObject poolObject = new GameObject("HitImpactVfxPool");
+        poolObject.transform.SetParent(transform, false);
+        hitImpactVfxPool = poolObject.AddComponent<HitImpactVfxPool>();
+        hitImpactVfxPool.Configure(hitImpactRedPrefab, hitImpactWhitePrefab, CurrentSpawnedPieceCount, hitImpactColorMode);
+    }
+
+    private void EnsureHitImpactPoolSize()
+    {
+        EnsureHitImpactVfxPool();
+        hitImpactVfxPool?.Prewarm(CurrentSpawnedPieceCount, hitImpactColorMode);
+    }
+
+    private void RefreshSpawnedPieceCounts()
+    {
+        CurrentSpawnedEnemyPieceCount = 0;
+        foreach ((_, PieceBase enemy) in spawnedEnemyPieces)
+        {
+            if (enemy != null && enemy.gameObject.activeInHierarchy)
+            {
+                CurrentSpawnedEnemyPieceCount++;
+            }
+        }
+
+        CurrentSpawnedPieceCount = 0;
+        foreach (PieceBase ally in spawnedAllyPieces)
+        {
+            if (ally != null && ally.gameObject.activeInHierarchy)
+            {
+                CurrentSpawnedPieceCount++;
+            }
+        }
+
+        foreach ((_, PieceBase enemy) in spawnedEnemyPieces)
+        {
+            if (enemy != null && enemy.gameObject.activeInHierarchy)
+            {
+                CurrentSpawnedPieceCount++;
+            }
+        }
+
+        foreach ((_, PieceBase civilian) in spawnedCivilianPieces)
+        {
+            if (civilian != null && civilian.gameObject.activeInHierarchy)
+            {
+                CurrentSpawnedPieceCount++;
+            }
         }
     }
     private void MapCacheCheck()
@@ -535,6 +618,7 @@ public class StageManager : MonoBehaviour
         }
 
         int[] enemyTypeIndices = new int[enemyPiecePrefabs.Length];
+        int[] spawnedEnemyTypeCounts = new int[Enum.GetValues(typeof(PieceType)).Length];
 
         foreach (StageEntityData enemyEntity in enemyEntities)
         {
@@ -583,8 +667,46 @@ public class StageManager : MonoBehaviour
             int enemyTypeIndex = enemyTypeIndices[enemyEntity.detailType]++;
             enemyPieces[enemyEntity.detailType][enemyTypeIndex] = enemyPiece;
             spawnedEnemyPieces.Add((enemyEntity.detailType, enemyPiece));
+
+            int pieceTypeIndex = (int)enemyPiece.PieceType;
+            if (pieceTypeIndex >= 0 && pieceTypeIndex < spawnedEnemyTypeCounts.Length)
+            {
+                spawnedEnemyTypeCounts[pieceTypeIndex]++;
+            }
         }
+
+        SetCurrentStageEnemyPieceCounts(spawnedEnemyTypeCounts);
     }
+
+    private void SetCurrentStageEnemyPieceCounts(IReadOnlyList<int> enemyTypeCounts)
+    {
+        currentStageEnemyTypeCounts.Clear();
+        currentStageEnemyCount = 0;
+
+        if (enemyTypeCounts != null)
+        {
+            for (int index = 0; index < enemyTypeCounts.Count; index++)
+            {
+                int count = Mathf.Max(0, enemyTypeCounts[index]);
+                currentStageEnemyTypeCounts.Add(count);
+                currentStageEnemyCount += count;
+            }
+        }
+
+        SimulationController.Instance?.SetStageEnemyPieceCounts(currentStageEnemyTypeCounts);
+    }
+
+    public int GetCurrentStageEnemyCount(PieceType pieceType)
+    {
+        int index = (int)pieceType;
+        if (index < 0 || index >= currentStageEnemyTypeCounts.Count)
+        {
+            return 0;
+        }
+
+        return currentStageEnemyTypeCounts[index];
+    }
+
     private void SpawnCivilians(StageData stageData)
     {
         if (gameManager == null)
@@ -784,6 +906,8 @@ public class StageManager : MonoBehaviour
 
     private void ClearPools()
     {
+        hitImpactVfxPool?.Clear();
+
         ClearSpawnedAllyPieces();
 
         foreach (Queue<PieceBase> pool in allyPool)
