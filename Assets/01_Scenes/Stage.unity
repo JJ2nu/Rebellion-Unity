@@ -272,7 +272,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
 --- !u!1 &372993842
 GameObject:
@@ -305,7 +305,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GraphicRaycaster
   m_IgnoreReversedGraphics: 1
   m_BlockingObjects: 0
@@ -322,7 +322,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
   m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
@@ -379,6 +379,7 @@ RectTransform:
   - {fileID: 529355088}
   - {fileID: 926636273}
   - {fileID: 1674918531}
+  - {fileID: 2098841001}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -396,27 +397,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 04c4ba7dd0616184e916f51c310f49d3, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::InGameUIController
-  missionRoot: {fileID: 584075550}
-  mainMissionPrefab: {fileID: 1718751954819697394, guid: d14ba8b93a94ad14cb100ecd886bb1d9, type: 3}
-  subMissionPrefab: {fileID: 6153926711214791119, guid: 1da463e8a1579df418d2ed66f3268e15, type: 3}
-  subMissionVerticalSpacing: 90
-  storageRoot: {fileID: 1632412137}
-  storagePrefabs:
-  - unitType: 0
-    prefab: {fileID: 7329526893493207979, guid: a48839b3c81b51342834ac5ca949f927, type: 3}
-  - unitType: 1
-    prefab: {fileID: 6280077286570951610, guid: b456f772248c3584098608783bd44678, type: 3}
-  - unitType: 2
-    prefab: {fileID: 234377154686284589, guid: 4b11bb69a12107a49843b4af32612e50, type: 3}
-  storageRightAnchoredPosition: {x: -50, y: 50}
-  storageHorizontalSpacing: 180
-  skillRoot: {fileID: 529355088}
-  orderSkillButtonPrefab: {fileID: 9129578763818932144, guid: b28f665980c3ccb4dbd8248b7206ca47, type: 3}
-  openingShotScopePreview: {fileID: 0}
-  placementController: {fileID: 372993848}
-  simulationController: {fileID: 0}
+  missionController: {fileID: 584075551}
+  storageController: {fileID: 1632412138}
+  orderSkillController: {fileID: 529355089}
 --- !u!114 &372993848
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -427,7 +412,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2e84af34c1deb344a97a8dadd9fb0c88, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::AllyPiecePlacementController
   stageManager: {fileID: 1045777020}
   previewHeight: 0.2
@@ -507,6 +492,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 529355088}
+  - component: {fileID: 529355089}
+  - component: {fileID: 529355090}
   m_Layer: 5
   m_Name: Skills
   m_TagString: Untagged
@@ -533,6 +520,110 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &529355089
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 529355087}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1d3b62bfa5c4c909e70cf2bd0b5443f, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::OrderSkillUIController
+  placementController: {fileID: 372993848}
+  simulationController: {fileID: 1344161039}
+--- !u!114 &529355090
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 529355087}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2eefc39c464d448fbd55986eafc460f5, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::OrderSkillView
+  orderSkillButtonPrefab: {fileID: 9129578763818932144, guid: b28f665980c3ccb4dbd8248b7206ca47, type: 3}
+  openingShotScopePreview: {fileID: 580445171}
+  targetingUiClickBlocker: {fileID: 2098841000}
+--- !u!1 &2098841000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2098841001}
+  - component: {fileID: 2098841002}
+  - component: {fileID: 2098841003}
+  m_Layer: 5
+  m_Name: OpeningShotUiClickBlocker
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!224 &2098841001
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2098841000}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 372993846}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &2098841002
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2098841000}
+  m_CullTransparentMesh: 1
+--- !u!114 &2098841003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2098841000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 0, g: 0, b: 0, a: 0}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
 --- !u!1001 &580445170
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -594,6 +685,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 8cc325b0f476a2c4c9eee1aaac5f3db4, type: 3}
+--- !u!114 &580445171 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4122977653614021165, guid: 8cc325b0f476a2c4c9eee1aaac5f3db4, type: 3}
+  m_PrefabInstance: {fileID: 580445170}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffd55bedd6ec38a4183b8837b81fdf45, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::OpeningShotScopePreview
 --- !u!1 &583792079
 GameObject:
   m_ObjectHideFlags: 0
@@ -622,7 +724,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
   m_UsePipelineSettings: 1
   m_AdditionalLightsShadowResolutionTier: 2
@@ -730,6 +832,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 584075550}
+  - component: {fileID: 584075552}
+  - component: {fileID: 584075551}
   m_Layer: 5
   m_Name: Missons
   m_TagString: Untagged
@@ -756,6 +860,33 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &584075551
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 584075549}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0d1b3624cf56714a9ae851832447e77, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::InGameMissionUIController
+--- !u!114 &584075552
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 584075549}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83a3a8c8344529345919703a3d1fbcfa, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::InGameMissionView
+  mainMissionPrefab: {fileID: 1718751954819697394, guid: d14ba8b93a94ad14cb100ecd886bb1d9, type: 3}
+  subMissionPrefab: {fileID: 6153926711214791119, guid: 1da463e8a1579df418d2ed66f3268e15, type: 3}
+  subMissionVerticalSpacing: 90
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -783,7 +914,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: 
   m_IsGlobal: 1
   priority: 0
@@ -1232,6 +1363,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1632412137}
+  - component: {fileID: 1632412138}
+  - component: {fileID: 1632412139}
   m_Layer: 5
   m_Name: Storages
   m_TagString: Untagged
@@ -1258,6 +1391,41 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1632412138
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1632412136}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f8d0ba4d7f64f3ea718ca6f3b9c1265, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::InGameStorageUIController
+  placementController: {fileID: 372993848}
+  simulationController: {fileID: 1344161039}
+--- !u!114 &1632412139
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1632412136}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9e5f15ee2bd43f89d73d53a94589620, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::InGameStorageView
+  storagePrefabs:
+  - unitType: 0
+    prefab: {fileID: 7329526893493207979, guid: a48839b3c81b51342834ac5ca949f927, type: 3}
+  - unitType: 1
+    prefab: {fileID: 6280077286570951610, guid: b456f772248c3584098608783bd44678, type: 3}
+  - unitType: 2
+    prefab: {fileID: 234377154686284589, guid: 4b11bb69a12107a49843b4af32612e50, type: 3}
+  rightAnchoredPosition: {x: -50, y: 50}
+  horizontalSpacing: 180
 --- !u!1001 &1674918530
 PrefabInstance:
   m_ObjectHideFlags: 0
