@@ -13,13 +13,15 @@ public readonly struct StageSimulationControlsViewState
     public bool AreResultActionsVisible { get; }
 
     public StageSimulationControlsViewState(
-        bool isSimulationRunning,
-        bool hasSimulationResult)
+        bool isPlayVisible,
+        bool isPlayInteractable,
+        bool useInactivePlaySprite,
+        bool areResultActionsVisible)
     {
-        IsPlayVisible = !hasSimulationResult;
-        IsPlayInteractable = !isSimulationRunning && !hasSimulationResult;
-        UseInactivePlaySprite = isSimulationRunning;
-        AreResultActionsVisible = hasSimulationResult;
+        IsPlayVisible = isPlayVisible;
+        IsPlayInteractable = isPlayInteractable;
+        UseInactivePlaySprite = useInactivePlaySprite;
+        AreResultActionsVisible = areResultActionsVisible;
     }
 }
 

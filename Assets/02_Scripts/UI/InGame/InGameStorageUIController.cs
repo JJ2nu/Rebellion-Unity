@@ -39,6 +39,7 @@ public sealed class InGameStorageUIController : MonoBehaviour
 
     private void OnDestroy()
     {
+        ReleasePlacementReferences();
         UnsubscribeSlotEvents();
         UnsubscribeSimulationState();
     }
@@ -57,6 +58,8 @@ public sealed class InGameStorageUIController : MonoBehaviour
             return;
         }
 
+        // 기존 슬롯이 제거되기 전에 배치를 끝내고 등록 맵을 비워 파괴 예정 인스턴스가 남지 않게 한다.
+        ReleasePlacementReferences();
         UnsubscribeSlotEvents();
 
         List<InGameStorageSlotViewData> slotData = new();
@@ -89,6 +92,17 @@ public sealed class InGameStorageUIController : MonoBehaviour
         }
 
         ApplyInteractionState();
+    }
+
+    private void ReleasePlacementReferences()
+    {
+        if (placementController == null)
+        {
+            return;
+        }
+
+        placementController.CancelPlacement();
+        placementController.ClearRegisteredSlots();
     }
 
     private void HandleStorageSlotClicked(InGameUnitStorageSlotUI slot)

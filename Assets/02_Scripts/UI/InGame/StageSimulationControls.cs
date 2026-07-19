@@ -149,7 +149,12 @@ public sealed class StageSimulationControls : MonoBehaviour
         bool isSimulationMode = simulationController != null && simulationController._isRunning;
         bool hasSimulationResult = stageSceneFlowBinder != null && stageSceneFlowBinder.HasPendingSimulationResult;
 
-        StageSimulationControlsViewState state = new(isSimulationMode, hasSimulationResult);
+        // ViewState에는 게임 상태가 아니라 View가 그대로 적용할 최종 표시 값만 담는다.
+        StageSimulationControlsViewState state = new(
+            isPlayVisible: !hasSimulationResult,
+            isPlayInteractable: !isSimulationMode && !hasSimulationResult,
+            useInactivePlaySprite: isSimulationMode,
+            areResultActionsVisible: hasSimulationResult);
         view?.Apply(state);
     }
 

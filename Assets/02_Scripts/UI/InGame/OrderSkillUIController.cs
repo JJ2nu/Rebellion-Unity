@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using Rebellion;
 using UnityEngine;
 
@@ -14,7 +14,6 @@ public sealed class OrderSkillUIController : MonoBehaviour
     private OrderSkillView view;
     private OpeningShotSkill openingShotSkill;
     private bool hasOrder;
-    private bool lastPlacementState;
 
     private void Awake()
     {
@@ -25,6 +24,7 @@ public sealed class OrderSkillUIController : MonoBehaviour
     private void OnEnable()
     {
         SubscribeViewEvents();
+        SubscribePlacementState();
         SubscribeSimulationState();
         SubscribeOpeningShotSkillState();
         ApplyViewState();
@@ -32,23 +32,16 @@ public sealed class OrderSkillUIController : MonoBehaviour
 
     private void Start()
     {
+        SubscribePlacementState();
         SubscribeSimulationState();
         SubscribeOpeningShotSkillState();
         ApplyViewState();
     }
 
-    private void Update()
-    {
-        bool isPlacing = placementController != null && placementController.IsPlacing;
-        if (isPlacing != lastPlacementState)
-        {
-            ApplyViewState();
-        }
-    }
-
     private void OnDisable()
     {
         UnsubscribeViewEvents();
+        UnsubscribePlacementState();
         UnsubscribeSimulationState();
         UnsubscribeOpeningShotSkillState();
         view?.Apply(OrderSkillViewState.Hidden);
@@ -57,6 +50,7 @@ public sealed class OrderSkillUIController : MonoBehaviour
     private void OnDestroy()
     {
         UnsubscribeViewEvents();
+        UnsubscribePlacementState();
         UnsubscribeSimulationState();
         UnsubscribeOpeningShotSkillState();
     }
@@ -166,6 +160,31 @@ public sealed class OrderSkillUIController : MonoBehaviour
         ApplyViewState();
     }
 
+    private void SubscribePlacementState()
+    {
+        if (placementController == null)
+        {
+            return;
+        }
+
+        // OnEnable과 Start 양쪽에서 호출되어도 구독이 한 번만 유지되게 한다.
+        placementController.PlacementStateChanged -= HandlePlacementStateChanged;
+        placementController.PlacementStateChanged += HandlePlacementStateChanged;
+    }
+
+    private void UnsubscribePlacementState()
+    {
+        if (placementController != null)
+        {
+            placementController.PlacementStateChanged -= HandlePlacementStateChanged;
+        }
+    }
+
+    private void HandlePlacementStateChanged(bool _)
+    {
+        ApplyViewState();
+    }
+
     private void EnsureSimulationController()
     {
         if (simulationController == null)
@@ -223,7 +242,6 @@ public sealed class OrderSkillUIController : MonoBehaviour
             isTargeting);
 
         view?.Apply(state);
-        lastPlacementState = placementController != null && placementController.IsPlacing;
     }
 
     private UIButtonLockMode GetLockMode(bool openingShotLocked)
