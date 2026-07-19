@@ -81,14 +81,27 @@ private void Update()
 
 public void BeginPlacement(InGameUnitStorageSlotUI slot)
     {
-        if (slot == null || slot.RemainingDeployableCount <= 0)
+        if (slot == null)
+        {
+            return;
+        }
+
+        if (pendingSlot == slot)
+        {
+            return;
+        }
+
+        if (pendingSlot != null)
+        {
+            CancelPlacement();
+        }
+
+        if (slot.RemainingDeployableCount <= 0)
         {
             return;
         }
 
         ResolveDependencies();
-
-        ClearPreview();
 
         currentFacingDirection = defaultFacingDirection;
         pendingSlot = slot;

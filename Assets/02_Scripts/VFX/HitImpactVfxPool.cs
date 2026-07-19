@@ -180,47 +180,49 @@ public class HitImpactVfxPool : MonoBehaviour
 
             if (particleSystem.name == "Burst_Streaks")
             {
+                main.startLifetime = new ParticleSystem.MinMaxCurve(0.5f, 0.78f);
                 switch (attackType)
                 {
                     case HitImpactAttackType.Projectile:
                         main.startSpeed = new ParticleSystem.MinMaxCurve(3.6f, 5.4f);
-                        main.startSize = new ParticleSystem.MinMaxCurve(0.09f, 0.48f);
+                        main.startSize = new ParticleSystem.MinMaxCurve(0.24f, 1.05f);
                         shape.angle = 6f;
-                        SetBurstCount(particleSystem, 3);
+                        SetBurstCount(particleSystem, 8);
                         break;
                     case HitImpactAttackType.Blunt:
                         main.startSpeed = new ParticleSystem.MinMaxCurve(0.9f, 1.6f);
-                        main.startSize = new ParticleSystem.MinMaxCurve(0.08f, 0.28f);
+                        main.startSize = new ParticleSystem.MinMaxCurve(0.22f, 0.72f);
                         shape.angle = 22f;
-                        SetBurstCount(particleSystem, 2);
+                        SetBurstCount(particleSystem, 7);
                         break;
                     default:
                         main.startSpeed = new ParticleSystem.MinMaxCurve(2.2f, 4f);
-                        main.startSize = new ParticleSystem.MinMaxCurve(0.1f, 0.42f);
+                        main.startSize = new ParticleSystem.MinMaxCurve(0.24f, 0.98f);
                         shape.angle = 12f;
-                        SetBurstCount(particleSystem, 4);
+                        SetBurstCount(particleSystem, 9);
                         break;
                 }
             }
             else if (particleSystem.name == "Burst_MeshShards")
             {
+                main.startLifetime = new ParticleSystem.MinMaxCurve(0.72f, 1.12f);
                 switch (attackType)
                 {
                     case HitImpactAttackType.Projectile:
                         main.startSpeed = new ParticleSystem.MinMaxCurve(2.6f, 5.2f);
-                        main.startSize = new ParticleSystem.MinMaxCurve(0.13f, 0.65f);
+                        main.startSize = new ParticleSystem.MinMaxCurve(0.3f, 1.28f);
                         shape.angle = 24f;
                         SetBurstCount(particleSystem, 18);
                         break;
                     case HitImpactAttackType.Blunt:
                         main.startSpeed = new ParticleSystem.MinMaxCurve(1f, 2.4f);
-                        main.startSize = new ParticleSystem.MinMaxCurve(0.16f, 0.7f);
+                        main.startSize = new ParticleSystem.MinMaxCurve(0.32f, 1.35f);
                         shape.angle = 58f;
                         SetBurstCount(particleSystem, 18);
                         break;
                     default:
                         main.startSpeed = new ParticleSystem.MinMaxCurve(1.8f, 3.8f);
-                        main.startSize = new ParticleSystem.MinMaxCurve(0.14f, 0.68f);
+                        main.startSize = new ParticleSystem.MinMaxCurve(0.31f, 1.32f);
                         shape.angle = 42f;
                         SetBurstCount(particleSystem, 20);
                         break;
@@ -228,23 +230,24 @@ public class HitImpactVfxPool : MonoBehaviour
             }
             else if (particleSystem.name == "Burst_DustMist")
             {
+                main.startLifetime = new ParticleSystem.MinMaxCurve(0.62f, 0.95f);
                 switch (attackType)
                 {
                     case HitImpactAttackType.Projectile:
                         main.startSpeed = new ParticleSystem.MinMaxCurve(0.6f, 1.55f);
-                        main.startSize = new ParticleSystem.MinMaxCurve(0.055f, 0.18f);
+                        main.startSize = new ParticleSystem.MinMaxCurve(0.16f, 0.46f);
                         shape.angle = 42f;
                         SetBurstCount(particleSystem, 28);
                         break;
                     case HitImpactAttackType.Blunt:
                         main.startSpeed = new ParticleSystem.MinMaxCurve(0.25f, 0.9f);
-                        main.startSize = new ParticleSystem.MinMaxCurve(0.055f, 0.16f);
+                        main.startSize = new ParticleSystem.MinMaxCurve(0.16f, 0.42f);
                         shape.angle = 78f;
                         SetBurstCount(particleSystem, 30);
                         break;
                     default:
                         main.startSpeed = new ParticleSystem.MinMaxCurve(0.35f, 1.25f);
-                        main.startSize = new ParticleSystem.MinMaxCurve(0.05f, 0.17f);
+                        main.startSize = new ParticleSystem.MinMaxCurve(0.15f, 0.44f);
                         shape.angle = 65f;
                         SetBurstCount(particleSystem, 28);
                         break;
@@ -252,9 +255,9 @@ public class HitImpactVfxPool : MonoBehaviour
             }
             else if (particleSystem.name == "Decal_SplashMark")
             {
-                main.startLifetime = new ParticleSystem.MinMaxCurve(0.14f, 0.22f);
+                main.startLifetime = new ParticleSystem.MinMaxCurve(0.3f, 0.42f);
                 main.startSpeed = new ParticleSystem.MinMaxCurve(0f, 0f);
-                main.startSize = new ParticleSystem.MinMaxCurve(0.72f, 1.18f);
+                main.startSize = new ParticleSystem.MinMaxCurve(1.6f, 2.3f);
                 shape.angle = 0f;
                 SetBurstCount(particleSystem, 1);
 
@@ -302,19 +305,21 @@ public class HitImpactVfxPool : MonoBehaviour
 
             if (particleSystem.name == "Burst_Streaks")
             {
-                main.startColor = new Color(0.56f, 0.012f, 0.01f, 0.72f);
+                // 빠른 궤적은 가장 잘 보이되 원색 빨강으로 번쩍이지 않게 짙은 적색을 사용한다.
+                main.startColor = new Color(0.52f, 0.012f, 0.008f, 1f);
             }
             else if (particleSystem.name == "Burst_DustMist")
             {
-                main.startColor = new Color(0.16f, 0f, 0.005f, 0.45f);
+                main.startColor = new Color(0.28f, 0.004f, 0.007f, 0.82f);
             }
             else if (particleSystem.name == "Decal_SplashMark")
             {
-                main.startColor = new Color(0.32f, 0f, 0.01f, 0.72f);
+                main.startColor = new Color(0.22f, 0.003f, 0.008f, 0.96f);
             }
             else
             {
-                main.startColor = new Color(0.38f, 0.01f, 0.015f, 1f);
+                // 메인 파편은 톤을 낮추고 알파를 유지해 어두운 배경에서도 형태가 남도록 한다.
+                main.startColor = new Color(0.44f, 0.008f, 0.012f, 1f);
             }
         }
     }

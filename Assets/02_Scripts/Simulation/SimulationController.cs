@@ -124,6 +124,7 @@ public class SimulationController : MonoBehaviour
         {
             if (piece != null)
             {
+                piece.GetComponent<OutlineEffect>()?.ClearPersistent();
                 piece.ResetState();
                 piece.IsDead = false;
             }
@@ -164,6 +165,11 @@ public class SimulationController : MonoBehaviour
 
         GameManager.Instance.ClearAllTile();
         var allPieces = StageManager.Instance.GetAllActivePieces();
+        foreach (PieceBase piece in allPieces)
+        {
+            piece?.GetComponent<OutlineEffect>()?.ClearPersistent();
+        }
+
         foreach (var skill in _skills)
         {
             if (skill.CanExecute(allPieces))
@@ -205,11 +211,25 @@ public class SimulationController : MonoBehaviour
 
 
         var result = DetermineResult(allPieces);
+        ShowSurvivingEnemyOutlines(allPieces);
         _lastResult = result.ToString();
         LastSimulationResult = result;
         isExecutingSimulation = false;
         Debug.Log($"[Simulation] Result: {result}");
         SimulationFinished?.Invoke(result);
+    }
+
+    private static void ShowSurvivingEnemyOutlines(IReadOnlyList<PieceBase> allPieces)
+    {
+        foreach (PieceBase piece in allPieces)
+        {
+            if (piece == null || piece.IsDead || piece.Faction != Faction.Enemy)
+            {
+                continue;
+            }
+
+            piece.GetComponent<OutlineEffect>()?.ShowPersistent(Color.red);
+        }
     }
 
     private IEnumerator RunPhase(int phaseIndex, IReadOnlyList<PieceBase> allPieces)
