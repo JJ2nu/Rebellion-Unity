@@ -1,4 +1,5 @@
-using Rebellion;
+﻿using Rebellion;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -23,6 +24,11 @@ public sealed class PlacementController : MonoBehaviour
     private bool isCellHovered;
     private float gridPlaneY;
     private Camera mainCamera;
+
+    /// <summary>
+    /// 배치 시작 또는 종료로 IsPlacing 값이 실제로 바뀐 직후 새 상태를 전달한다.
+    /// </summary>
+    public event Action<bool> PlacementStateChanged;
 
     public bool IsPlacing => pendingSlot != null;
 
@@ -88,16 +94,20 @@ public void BeginPlacement(InGameUnitStorageSlotUI slot)
 
         ResolveDependencies();
 
+        bool wasPlacing = IsPlacing;
         ClearPreview();
 
         currentFacingDirection = defaultFacingDirection;
         pendingSlot = slot;
         slot.TryConsumeOne();
         CreatePreview(slot.UnitType);
+        NotifyPlacementStateChanged(wasPlacing);
     }
 
     public void CancelPlacement()
     {
+        bool wasPlacing = IsPlacing;
+
         if (pendingSlot != null)
         {
             pendingSlot.TryRestoreOne();
@@ -106,6 +116,7 @@ public void BeginPlacement(InGameUnitStorageSlotUI slot)
         pendingSlot = null;
         isCellHovered = false;
         ClearPreview();
+        NotifyPlacementStateChanged(wasPlacing);
     }
 
 private void OnRotatePerformed(InputAction.CallbackContext context)
@@ -178,9 +189,11 @@ public void HandleCellLeftClick(GridCell cell)
             return;
         }
 
+        bool wasPlacing = IsPlacing;
         pendingSlot = null;
         cell.ResetVisual();
         ClearPreview();
+        NotifyPlacementStateChanged(wasPlacing);
     }
 
     public void HandleCellRightClick(GridCell cell)
@@ -244,6 +257,14 @@ public void HandleAllyPieceRightClick(PieceBase piece)
         {
             slotMap[slot.UnitType] = slot;
         }
+    }
+
+    /// <summary>
+    /// Storage UI 재생성 전에 제거될 슬롯 인스턴스를 타입별 등록 맵에서 비운다.
+    /// </summary>
+    public void ClearRegisteredSlots()
+    {
+        slotMap.Clear();
     }
 
 
@@ -328,6 +349,18 @@ public void HandleAllyPieceRightClick(PieceBase piece)
             Destroy(previewObject);
             previewObject = null;
         }
+    }
+
+    private void NotifyPlacementStateChanged(bool previousState)
+    {
+        bool currentState = IsPlacing;
+        if (previousState == currentState)
+        {
+            return;
+        }
+
+        // 상태 변경을 모두 마친 뒤 알리므로 구독자는 같은 프레임에 완성된 배치 상태를 읽을 수 있다.
+        PlacementStateChanged?.Invoke(currentState);
     }
 
     private void ResolveDependencies()

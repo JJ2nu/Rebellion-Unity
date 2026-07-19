@@ -169,9 +169,14 @@ public sealed class StageEditorController : MonoBehaviour
             changed = true;
         }
 
-        changed |= TextField("stage.mainMission", "Main Mission", currentStage.mainMission, out currentStage.mainMission);
-        changed |= TextField("stage.subMission1", "Sub Mission 1", currentStage.subMission1, out currentStage.subMission1);
-        changed |= TextField("stage.subMission2", "Sub Mission 2", currentStage.subMission2, out currentStage.subMission2);
+        EnsureMissionData();
+        changed |= TextField("stage.stageTitle", "Stage Title", currentStage.stageTitle, out currentStage.stageTitle);
+        changed |= TextField(
+            "stage.primaryMission.text",
+            "Primary Mission",
+            currentStage.primaryMission.text,
+            out currentStage.primaryMission.text);
+        changed |= DrawSubMissions();
 
         bool hasOrder = GUILayout.Toggle(currentStage.hasOrder, "Has Order Skill");
         if (hasOrder != currentStage.hasOrder)
@@ -190,6 +195,62 @@ public sealed class StageEditorController : MonoBehaviour
         {
             RebuildPreview();
         }
+    }
+
+    private bool DrawSubMissions()
+    {
+        bool changed = false;
+        GUILayout.Label("Sub Missions", GUI.skin.box);
+
+        for (int index = 0; index < currentStage.subMissions.Length; index++)
+        {
+            StageMissionData mission = currentStage.subMissions[index];
+            GUILayout.BeginVertical(GUI.skin.box);
+            GUILayout.Label($"Sub Mission {index + 1}");
+
+            string[] missionTypeNames = Enum.GetNames(typeof(MissionType));
+            int selectedType = GUILayout.SelectionGrid((int)mission.type, missionTypeNames, 2);
+            if (selectedType != (int)mission.type)
+            {
+                mission.type = (MissionType)selectedType;
+                changed = true;
+            }
+
+            changed |= TextField(
+                $"stage.subMissions.{index}.text",
+                "Mission Text",
+                mission.text,
+                out mission.text);
+
+            if (GUILayout.Button("Remove Sub Mission"))
+            {
+                var missions = new List<StageMissionData>(currentStage.subMissions);
+                missions.RemoveAt(index);
+                currentStage.subMissions = missions.ToArray();
+                inputBuffers.Clear();
+                changed = true;
+                GUILayout.EndVertical();
+                break;
+            }
+
+            GUILayout.EndVertical();
+        }
+
+        if (GUILayout.Button("Add Sub Mission"))
+        {
+            var missions = new List<StageMissionData>(currentStage.subMissions)
+            {
+                new StageMissionData
+                {
+                    type = MissionType.PreserveAllies,
+                    text = "새 미션",
+                },
+            };
+            currentStage.subMissions = missions.ToArray();
+            changed = true;
+        }
+
+        return changed;
     }
 
     private void DrawBrushControls()
@@ -969,9 +1030,30 @@ public sealed class StageEditorController : MonoBehaviour
     {
         currentStage.allySlots ??= Array.Empty<AllySlotData>();
         currentStage.entities ??= Array.Empty<StageEntityData>();
+        EnsureMissionData();
         if (currentStage.boardSize <= 0)
         {
             currentStage.boardSize = 6;
+        }
+    }
+
+    private void EnsureMissionData()
+    {
+        if (currentStage == null)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(currentStage.stageTitle))
+        {
+            currentStage.stageTitle = currentStage.mainMission;
+        }
+
+        currentStage.GetPrimaryMission();
+        currentStage.GetSubMissions();
+        for (int index = 0; index < currentStage.subMissions.Length; index++)
+        {
+            currentStage.subMissions[index] ??= new StageMissionData();
         }
     }
 
@@ -1210,9 +1292,15 @@ public sealed class StageEditorController : MonoBehaviour
 
         ApplyBufferedInt("stage.version", value => currentStage.version = value);
         ApplyBufferedInt("stage.boardSize", value => currentStage.boardSize = Mathf.Clamp(value, 1, 12));
-        ApplyBufferedText("stage.mainMission", value => currentStage.mainMission = value);
-        ApplyBufferedText("stage.subMission1", value => currentStage.subMission1 = value);
-        ApplyBufferedText("stage.subMission2", value => currentStage.subMission2 = value);
+        ApplyBufferedText("stage.stageTitle", value => currentStage.stageTitle = value);
+        ApplyBufferedText("stage.primaryMission.text", value => currentStage.primaryMission.text = value);
+        for (int index = 0; index < currentStage.subMissions.Length; index++)
+        {
+            int missionIndex = index;
+            ApplyBufferedText(
+                $"stage.subMissions.{missionIndex}.text",
+                value => currentStage.subMissions[missionIndex].text = value);
+        }
         ApplyBufferedInt("save.newStageNumber", value => newStageNumber = Mathf.Max(1, value));
 
         EnsureAllySlots();

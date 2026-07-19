@@ -1,10 +1,12 @@
 {
-    "version": 2,
+    "version": 3,
     "boardSize": 6,
     "mapIndex": 0,
-    "mainMission": "선술집 내 칼트 병력 제거",
-    "subMission1": "전투원 희생 없이 작전 수행",
-    "subMission2": "",
+    "stageTitle": "선술집 내 칼트 병력 제거",
+    "primaryMission": { "type": 0, "text": "모든 적 처치" },
+    "subMissions": [
+        { "type": 1, "text": "전투원 희생 없이 작전 수행" }
+    ],
     "hasOrder": false,
     "allySlots": [
         {
