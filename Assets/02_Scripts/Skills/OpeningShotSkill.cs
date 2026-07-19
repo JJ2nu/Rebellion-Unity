@@ -89,6 +89,8 @@ public class OpeningShotSkill : SkillBase
         {
             Debug.Log($"[Simulation] Phase -1: Executing Pre-Simulation Skill on {Target.name}");
             Target.Die();
+            // 미션 판정은 타겟 선택이 아니라 실제 선처치 효과가 발생한 실행만 사용한다.
+            controller?.RecordSkillExecution(SimulationController.Skills.OpeningShot);
             //Target = null;
         }
         else

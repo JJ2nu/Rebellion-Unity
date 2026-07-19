@@ -1,10 +1,13 @@
 {
-    "version": 2,
+    "version": 3,
     "boardSize": 6,
     "mapIndex": 1,
-    "mainMission": "총리를 제거하여 협정 저지",
-    "subMission1": "전투원 희생 없이 작전 수행",
-    "subMission2": "민간인 희생 없이 작전 수행",
+    "stageTitle": "총리를 제거하여 협정 저지",
+    "primaryMission": { "type": 0, "text": "모든 적 처치" },
+    "subMissions": [
+        { "type": 1, "text": "전투원 희생 없이 작전 수행" },
+        { "type": 2, "text": "민간인 희생 없이 작전 수행" }
+    ],
     "hasOrder": true,
     "allySlots": [
         {

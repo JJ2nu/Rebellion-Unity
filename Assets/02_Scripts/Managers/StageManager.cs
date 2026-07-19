@@ -1064,6 +1064,23 @@ public class StageManager : MonoBehaviour
         return result.AsReadOnly();
     }
 
+    public int GetDeadCivilianCount(CivilianType civilianType)
+    {
+        int detailType = (int)civilianType;
+        int deadCount = 0;
+
+        // Neutral 진영 하나로 합쳐진 일반 민간인과 엘리자를 Stage 데이터의 타입으로 구분한다.
+        foreach ((int spawnedDetailType, PieceBase piece) in spawnedCivilianPieces)
+        {
+            if (spawnedDetailType == detailType && piece != null && piece.IsDead)
+            {
+                deadCount++;
+            }
+        }
+
+        return deadCount;
+    }
+
     private void PrewarmAllyPool()
     {
         if (allyPiecePrefabs == null)

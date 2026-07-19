@@ -1,33 +1,33 @@
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.UI;
 
 /// <summary>
-/// Stage의 Play, Retry, Confirm 버튼을 시뮬레이션 실행 상태와 보관된 결과에 맞춰 전환한다.
+/// 시뮬레이션 실행 상태와 보관된 결과를 Simulation Controls View 상태로 변환한다.
 /// 결과 확정 전까지 배치 모드를 잠그고, 완전 승리 외 결과는 판정 다이얼로그를 거쳐 기존 확정/Retry 흐름으로 보낸다.
 /// </summary>
+[RequireComponent(typeof(StageSimulationControlsView))]
 public sealed class StageSimulationControls : MonoBehaviour
 {
     [Header("Bindings")]
     [SerializeField] private SimulationController simulationController;
     [SerializeField] private StageSceneFlowBinder stageSceneFlowBinder;
-    [SerializeField] private Button playButton;
-    [SerializeField] private Button retryButton;
-    [SerializeField] private Button confirmButton;
     [SerializeField] private ResultDialogController resultDialogController;
 
     [Header("Confirm Override")]
     [SerializeField] private bool useConfirmOverride;
     [SerializeField] private UnityEvent confirmOverride;
 
-    private Image playButtonImage;
-    private Sprite playActiveSprite;
-    private Sprite playInactiveSprite;
+    private StageSimulationControlsView view;
 
     private void Awake()
     {
+        view = GetComponent<StageSimulationControlsView>();
+        if (view == null)
+        {
+            Debug.LogWarning($"{nameof(StageSimulationControls)} has no Simulation Controls view assigned.", this);
+        }
+
         EnsureBindings();
-        CachePlayButtonSprites();
         MatchConfirmButtonToPlayButton();
         ApplyState();
     }
@@ -44,9 +44,7 @@ public sealed class StageSimulationControls : MonoBehaviour
             simulationController.SimulationFinished += HandleSimulationFinished;
         }
 
-        playButton?.onClick.AddListener(StartSimulation);
-        retryButton?.onClick.AddListener(RetrySimulation);
-        confirmButton?.onClick.AddListener(ConfirmSimulation);
+        SubscribeViewEvents();
         ApplyState();
     }
 
@@ -58,9 +56,7 @@ public sealed class StageSimulationControls : MonoBehaviour
             simulationController.SimulationFinished -= HandleSimulationFinished;
         }
 
-        playButton?.onClick.RemoveListener(StartSimulation);
-        retryButton?.onClick.RemoveListener(RetrySimulation);
-        confirmButton?.onClick.RemoveListener(ConfirmSimulation);
+        UnsubscribeViewEvents();
     }
 
     public void StartSimulation()
@@ -128,25 +124,7 @@ public sealed class StageSimulationControls : MonoBehaviour
 
     public void MatchConfirmButtonToPlayButton()
     {
-        if (playButton == null || confirmButton == null)
-        {
-            return;
-        }
-
-        RectTransform playRect = playButton.transform as RectTransform;
-        RectTransform confirmRect = confirmButton.transform as RectTransform;
-        if (playRect == null || confirmRect == null)
-        {
-            return;
-        }
-
-        confirmRect.anchorMin = playRect.anchorMin;
-        confirmRect.anchorMax = playRect.anchorMax;
-        confirmRect.pivot = playRect.pivot;
-        confirmRect.anchoredPosition = playRect.anchoredPosition;
-        confirmRect.sizeDelta = playRect.sizeDelta;
-        confirmRect.localRotation = playRect.localRotation;
-        confirmRect.localScale = playRect.localScale;
+        view?.MatchConfirmButtonToPlayButton();
     }
 
     private void HandleRunningStateChanged(bool _)
@@ -166,30 +144,18 @@ public sealed class StageSimulationControls : MonoBehaviour
     private void ApplyState()
     {
         EnsureBindings();
-        CachePlayButtonSprites();
 
         // 실행 중에는 Play를 비활성 스프라이트로 남기고, 결과가 생긴 뒤에만 Retry/Confirm으로 교체한다.
         bool isSimulationMode = simulationController != null && simulationController._isRunning;
         bool hasSimulationResult = stageSceneFlowBinder != null && stageSceneFlowBinder.HasPendingSimulationResult;
 
-        if (playButton != null)
-        {
-            playButton.gameObject.SetActive(!hasSimulationResult);
-            playButton.interactable = !isSimulationMode && !hasSimulationResult;
-            SetPlayButtonSprite(isSimulationMode ? playInactiveSprite : playActiveSprite);
-        }
-
-        if (retryButton != null)
-        {
-            retryButton.gameObject.SetActive(hasSimulationResult);
-            retryButton.interactable = hasSimulationResult;
-        }
-
-        if (confirmButton != null)
-        {
-            confirmButton.gameObject.SetActive(hasSimulationResult);
-            confirmButton.interactable = hasSimulationResult;
-        }
+        // ViewState에는 게임 상태가 아니라 View가 그대로 적용할 최종 표시 값만 담는다.
+        StageSimulationControlsViewState state = new(
+            isPlayVisible: !hasSimulationResult,
+            isPlayInteractable: !isSimulationMode && !hasSimulationResult,
+            useInactivePlaySprite: isSimulationMode,
+            areResultActionsVisible: hasSimulationResult);
+        view?.Apply(state);
     }
 
     private void EnsureBindings()
@@ -199,10 +165,6 @@ public sealed class StageSimulationControls : MonoBehaviour
             simulationController = SimulationController.Instance;
         }
 
-        if (stageSceneFlowBinder == null)
-        {
-            stageSceneFlowBinder = FindAnyObjectByType<StageSceneFlowBinder>();
-        }
     }
 
     private bool IsSimulationRunningOrPendingResult()
@@ -212,52 +174,30 @@ public sealed class StageSimulationControls : MonoBehaviour
         return isSimulationMode || hasSimulationResult;
     }
 
-    private void CachePlayButtonSprites()
+    private void SubscribeViewEvents()
     {
-        if (playButton == null)
+        if (view == null)
         {
             return;
         }
 
-        if (playButtonImage == null)
-        {
-            playButtonImage = playButton.targetGraphic as Image;
-        }
-
-        if (playActiveSprite == null && playButtonImage != null)
-        {
-            playActiveSprite = playButtonImage.sprite;
-        }
-
-        SpriteState spriteState = playButton.spriteState;
-        if (playInactiveSprite == null)
-        {
-            playInactiveSprite = spriteState.selectedSprite != null
-                ? spriteState.selectedSprite
-                : spriteState.pressedSprite;
-        }
-
-        if (playInactiveSprite != null && spriteState.disabledSprite == null)
-        {
-            spriteState.disabledSprite = playInactiveSprite;
-            playButton.spriteState = spriteState;
-        }
-
-        ColorBlock colors = playButton.colors;
-        if (colors.disabledColor.a < 1f || colors.disabledColor.r < 1f || colors.disabledColor.g < 1f || colors.disabledColor.b < 1f)
-        {
-            colors.disabledColor = Color.white;
-            playButton.colors = colors;
-        }
+        view.PlayRequested -= StartSimulation;
+        view.PlayRequested += StartSimulation;
+        view.RetryRequested -= RetrySimulation;
+        view.RetryRequested += RetrySimulation;
+        view.ConfirmRequested -= ConfirmSimulation;
+        view.ConfirmRequested += ConfirmSimulation;
     }
 
-    private void SetPlayButtonSprite(Sprite sprite)
+    private void UnsubscribeViewEvents()
     {
-        if (playButtonImage == null || sprite == null)
+        if (view == null)
         {
             return;
         }
 
-        playButtonImage.sprite = sprite;
+        view.PlayRequested -= StartSimulation;
+        view.RetryRequested -= RetrySimulation;
+        view.ConfirmRequested -= ConfirmSimulation;
     }
 }

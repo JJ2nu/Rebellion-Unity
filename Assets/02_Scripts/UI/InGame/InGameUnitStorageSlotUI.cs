@@ -18,7 +18,7 @@ public sealed class InGameUnitStorageSlotUI : MonoBehaviour, IPointerUpHandler
     [SerializeField] private Sprite deactiveSprite;
     [SerializeField] private Sprite lockedSprite;
     [SerializeField] private TMP_Text countText;
-    private UIButtonLockView buttonLockView;
+    [SerializeField] private UIButtonLockView buttonLockView;
 
     public PieceType UnitType { get; private set; }
     public int MaxDeployableCount { get; private set; }
@@ -187,8 +187,8 @@ public sealed class InGameUnitStorageSlotUI : MonoBehaviour, IPointerUpHandler
 
         if (buttonLockView == null)
         {
-            // 기존 Storage Prefab을 직접 수정하지 않아도 공용 잠금 방식을 사용할 수 있게 런타임에 보충한다.
-            buttonLockView = gameObject.AddComponent<UIButtonLockView>();
+            Debug.LogWarning($"{nameof(InGameUnitStorageSlotUI)} has no button lock view assigned.", this);
+            return;
         }
 
         buttonLockView.Configure(
