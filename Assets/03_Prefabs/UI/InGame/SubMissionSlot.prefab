@@ -306,6 +306,6 @@ MonoBehaviour:
   missionText: {fileID: 4836929688703455532}
   missionResultText: {fileID: 0}
   failImage: {fileID: 2344148540197880378}
-  failRevealDuration: 0.35
+  failRevealDuration: 0.3
   failAudioSource: {fileID: 0}
-  failSfx: {fileID: 8300000, guid: dbf3ce2fe37f6d149a06697f29b979ce, type: 3}
+  failSfx: {fileID: 8300000, guid: c709c617a5b64f249bdbef755cf531cf, type: 3}

@@ -95,9 +95,9 @@ MonoBehaviour:
   missionText: {fileID: 7967345978874675011}
   missionResultText: {fileID: 4709171036616998941}
   failImage: {fileID: 4548234266378162296}
-  failRevealDuration: 0.35
+  failRevealDuration: 0.3
   failAudioSource: {fileID: 0}
-  failSfx: {fileID: 8300000, guid: dbf3ce2fe37f6d149a06697f29b979ce, type: 3}
+  failSfx: {fileID: 8300000, guid: c709c617a5b64f249bdbef755cf531cf, type: 3}
 --- !u!1 &2241653173400171966
 GameObject:
   m_ObjectHideFlags: 0

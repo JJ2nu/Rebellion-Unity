@@ -16,6 +16,11 @@ public sealed class InGameMissionSlotUI : MonoBehaviour
 
     private Coroutine failRevealCoroutine;
 
+    public float FailRevealDuration => Mathf.Max(0.01f, failRevealDuration);
+    public float FailSequenceDuration => Mathf.Max(
+        FailRevealDuration,
+        failSfx != null ? failSfx.length : 0f);
+
     private void Awake()
     {
         EnsureFailAudioSource();
@@ -104,7 +109,7 @@ public sealed class InGameMissionSlotUI : MonoBehaviour
             failAudioSource.PlayOneShot(failSfx);
         }
 
-        float duration = Mathf.Max(0.01f, failRevealDuration);
+        float duration = FailRevealDuration;
         float elapsed = 0f;
         while (elapsed < duration)
         {

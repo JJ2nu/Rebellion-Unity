@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections;
 using UnityEngine;
 
 /// <summary>
@@ -12,6 +13,12 @@ public sealed class InGameMissionView : MonoBehaviour
 
     private readonly List<InGameMissionSlotUI> subMissionSlots = new();
     private InGameMissionSlotUI mainMissionSlot;
+    private Coroutine failureSequenceCoroutine;
+
+    private void OnDisable()
+    {
+        StopFailureSequence();
+    }
 
     public void Render(string stageTitle, IReadOnlyList<StageMissionData> subMissions)
     {
@@ -50,24 +57,67 @@ public sealed class InGameMissionView : MonoBehaviour
 
     public void ApplyMissionFailures(bool mainMissionFailed, IReadOnlyList<bool> subMissionFailures)
     {
-        mainMissionSlot?.ShowFailure(mainMissionFailed);
+        ResetMissionFailures();
+
+        List<InGameMissionSlotUI> failedSlots = new();
+        if (mainMissionFailed && mainMissionSlot != null)
+        {
+            failedSlots.Add(mainMissionSlot);
+        }
 
         for (int index = 0; index < subMissionSlots.Count; index++)
         {
             bool isFailed = subMissionFailures != null &&
                 index < subMissionFailures.Count &&
                 subMissionFailures[index];
-            subMissionSlots[index].ShowFailure(isFailed);
+            if (isFailed && subMissionSlots[index] != null)
+            {
+                failedSlots.Add(subMissionSlots[index]);
+            }
+        }
+
+        if (failedSlots.Count > 0)
+        {
+            failureSequenceCoroutine = StartCoroutine(PlayFailureSequence(failedSlots));
         }
     }
 
     public void ResetMissionFailures()
     {
+        StopFailureSequence();
         mainMissionSlot?.ResetFailureImmediate();
         foreach (InGameMissionSlotUI slot in subMissionSlots)
         {
             slot?.ResetFailureImmediate();
         }
+    }
+
+    private IEnumerator PlayFailureSequence(IReadOnlyList<InGameMissionSlotUI> failedSlots)
+    {
+        // 데이터 표시 순서와 같은 메인 → 서브 순서로 실패선과 SFX를 하나씩 재생한다.
+        foreach (InGameMissionSlotUI slot in failedSlots)
+        {
+            if (slot == null)
+            {
+                continue;
+            }
+
+            slot.ShowFailure(true);
+            yield return new WaitForSecondsRealtime(slot.FailSequenceDuration);
+        }
+
+        failureSequenceCoroutine = null;
+    }
+
+    private void StopFailureSequence()
+    {
+        if (failureSequenceCoroutine == null)
+        {
+            return;
+        }
+
+        StopCoroutine(failureSequenceCoroutine);
+        failureSequenceCoroutine = null;
     }
 
     private InGameMissionSlotUI CreateMission(InGameMissionSlotUI prefab, string mission, float yOffset)
@@ -92,6 +142,7 @@ public sealed class InGameMissionView : MonoBehaviour
 
     private void ClearRenderedMissions()
     {
+        StopFailureSequence();
         mainMissionSlot = null;
         subMissionSlots.Clear();
 
