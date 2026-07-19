@@ -93,6 +93,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InGameMissionSlotUI
   missionText: {fileID: 7967345978874675011}
+  missionResultText: {fileID: 4709171036616998941}
 --- !u!1 &2241653173400171966
 GameObject:
   m_ObjectHideFlags: 0

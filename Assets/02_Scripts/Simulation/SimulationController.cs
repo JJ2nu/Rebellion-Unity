@@ -28,12 +28,14 @@ public class SimulationController : MonoBehaviour
     // SimulationFinished는 결과 UI에 값을 전달하고, RunningStateChanged는 배치 UI 잠금 상태를 동기화한다.
     public event Action<SimulationResult> SimulationFinished;
     public event Action<bool> RunningStateChanged;
+    public event Action SimulationReset;
 
     public List<int> _currentDeadCount;
     [SerializeField] private int _currentStageEnemyCount;
     [SerializeField] private List<int> _currentStageEnemyTypeCounts = new();
     public int CurrentStageEnemyCount => _currentStageEnemyCount;
     public IReadOnlyList<int> CurrentStageEnemyTypeCounts => _currentStageEnemyTypeCounts;
+    public int CurrentDeadEnemyCount => GetDeadCount(Faction.Enemy);
     public enum SimulationResult
     {
         PerfectWin,
@@ -143,6 +145,9 @@ public class SimulationController : MonoBehaviour
         {
             skill?.ResetTarget();
         }
+
+        // Retry와 스테이지 재로드에서 결과 UI가 같은 초기화 시점을 사용하도록 알린다.
+        SimulationReset?.Invoke();
     }
 
     /// <summary>
@@ -281,6 +286,18 @@ public class SimulationController : MonoBehaviour
         if (anyCivilianDead) return SimulationResult.CivilianDeadWin;
         return SimulationResult.PerfectWin;
     }
+
+    private int GetDeadCount(Faction faction)
+    {
+        int index = (int)faction;
+        if (_currentDeadCount == null || index < 0 || index >= _currentDeadCount.Count)
+        {
+            return 0;
+        }
+
+        return Mathf.Max(0, _currentDeadCount[index]);
+    }
+
     public void SetTargetForPreSimulation(int skillIndex)
     {
         if (_skills == null || skillIndex < 0 || skillIndex >= _skills.Count)
