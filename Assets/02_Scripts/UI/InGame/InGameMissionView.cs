@@ -1,8 +1,8 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 /// <summary>
-/// 기존 Mission Prefab의 생성, 텍스트 표시, 간격 적용만 담당하는 Passive View다.
-/// StageData와 게임 Manager를 직접 참조하지 않고 Controller가 전달한 문자열만 화면에 반영한다.
+/// Mission Prefab의 생성, 텍스트 표시, 간격과 실패 연출 명령만 담당하는 Passive View다.
 /// </summary>
 public sealed class InGameMissionView : MonoBehaviour
 {
@@ -10,34 +10,64 @@ public sealed class InGameMissionView : MonoBehaviour
     [SerializeField] private InGameMissionSlotUI subMissionPrefab;
     [SerializeField] private float subMissionVerticalSpacing = 90f;
 
+    private readonly List<InGameMissionSlotUI> subMissionSlots = new();
     private InGameMissionSlotUI mainMissionSlot;
 
-    public void Render(string mainMission, string subMission1, string subMission2)
+    public void Render(string stageTitle, IReadOnlyList<StageMissionData> subMissions)
     {
         // 같은 StageData를 다시 받아도 기존 슬롯을 먼저 숨기고 제거해 화면 중복을 막는다.
         ClearRenderedMissions();
-        mainMissionSlot = CreateMission(mainMissionPrefab, mainMission, 0f);
+        mainMissionSlot = CreateMission(mainMissionPrefab, stageTitle, 0f);
 
-        int subMissionIndex = 0;
-        if (!string.IsNullOrWhiteSpace(subMission1))
+        if (subMissions == null)
         {
-            CreateSubMission(subMission1, subMissionIndex++);
+            return;
         }
 
-        if (!string.IsNullOrWhiteSpace(subMission2))
+        for (int index = 0; index < subMissions.Count; index++)
         {
-            CreateSubMission(subMission2, subMissionIndex);
+            StageMissionData mission = subMissions[index];
+            if (mission == null || string.IsNullOrWhiteSpace(mission.text))
+            {
+                continue;
+            }
+
+            InGameMissionSlotUI slot = CreateMission(
+                subMissionPrefab,
+                mission.text,
+                -subMissionVerticalSpacing * subMissionSlots.Count);
+            if (slot != null)
+            {
+                subMissionSlots.Add(slot);
+            }
         }
     }
 
-    public void ApplyMainMissionProgress(int deadEnemyCount, int totalEnemyCount)
+    public void ApplyMainMissionProgress(string missionLabel, int deadEnemyCount, int totalEnemyCount)
     {
-        mainMissionSlot?.BindEnemyProgress(deadEnemyCount, totalEnemyCount);
+        mainMissionSlot?.BindEnemyProgress(missionLabel, deadEnemyCount, totalEnemyCount);
     }
 
-    private void CreateSubMission(string mission, int index)
+    public void ApplyMissionFailures(bool mainMissionFailed, IReadOnlyList<bool> subMissionFailures)
     {
-        CreateMission(subMissionPrefab, mission, -subMissionVerticalSpacing * index);
+        mainMissionSlot?.ShowFailure(mainMissionFailed);
+
+        for (int index = 0; index < subMissionSlots.Count; index++)
+        {
+            bool isFailed = subMissionFailures != null &&
+                index < subMissionFailures.Count &&
+                subMissionFailures[index];
+            subMissionSlots[index].ShowFailure(isFailed);
+        }
+    }
+
+    public void ResetMissionFailures()
+    {
+        mainMissionSlot?.ResetFailureImmediate();
+        foreach (InGameMissionSlotUI slot in subMissionSlots)
+        {
+            slot?.ResetFailureImmediate();
+        }
     }
 
     private InGameMissionSlotUI CreateMission(InGameMissionSlotUI prefab, string mission, float yOffset)
@@ -56,12 +86,14 @@ public sealed class InGameMissionView : MonoBehaviour
         }
 
         slot.Bind(mission);
+        slot.ResetFailureImmediate();
         return slot;
     }
 
     private void ClearRenderedMissions()
     {
         mainMissionSlot = null;
+        subMissionSlots.Clear();
 
         for (int index = transform.childCount - 1; index >= 0; index--)
         {

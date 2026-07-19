@@ -1,10 +1,13 @@
 {
-    "version": 2,
+    "version": 3,
     "boardSize": 6,
     "mapIndex": 1,
-    "mainMission": "연설장 잠입 및 초대장 확보",
-    "subMission1": "전투원 희생 없이 작전 수행",
-    "subMission2": "부관 희생 없이 작전 수행",
+    "stageTitle": "연설장 잠입 및 초대장 확보",
+    "primaryMission": { "type": 0, "text": "모든 적 처치" },
+    "subMissions": [
+        { "type": 1, "text": "전투원 희생 없이 작전 수행" },
+        { "type": 3, "text": "부관 희생 없이 작전 수행" }
+    ],
     "hasOrder": false,
     "allySlots": [
         {

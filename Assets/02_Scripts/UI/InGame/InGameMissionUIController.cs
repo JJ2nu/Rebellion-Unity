@@ -1,8 +1,8 @@
-﻿using UnityEngine;
+﻿using System.Linq;
+using UnityEngine;
 
 /// <summary>
-/// StageData의 미션 문구를 Passive View에 전달하는 Mission UI Controller다.
-/// 스테이지 로드 구독은 상위 InGameUIController에 유지해 기능별 Controller가 게임 전역 상태를 직접 찾지 않게 한다.
+/// StageData와 시뮬레이션 사실을 미션별 화면 상태로 변환하는 Mission UI Controller다.
 /// </summary>
 [RequireComponent(typeof(InGameMissionView))]
 public sealed class InGameMissionUIController : MonoBehaviour
@@ -10,6 +10,8 @@ public sealed class InGameMissionUIController : MonoBehaviour
     [SerializeField] private SimulationController simulationController;
 
     private InGameMissionView view;
+    private StageMissionData currentPrimaryMission;
+    private StageMissionData[] currentSubMissions = System.Array.Empty<StageMissionData>();
     private int currentStageEnemyCount;
 
     private void Awake()
@@ -46,21 +48,57 @@ public sealed class InGameMissionUIController : MonoBehaviour
         currentStageEnemyCount = simulationController != null
             ? simulationController.CurrentStageEnemyCount
             : 0;
-        view.Render(data.mainMission, data.subMission1, data.subMission2);
-        view.ApplyMainMissionProgress(0, currentStageEnemyCount);
+        currentPrimaryMission = data.GetPrimaryMission();
+        currentSubMissions = data.GetSubMissions()
+            .Where(mission => mission != null && !string.IsNullOrWhiteSpace(mission.text))
+            .ToArray();
+
+        view.Render(data.GetStageTitle(), currentSubMissions);
+        view.ApplyMainMissionProgress(currentPrimaryMission.text, 0, currentStageEnemyCount);
+        view.ResetMissionFailures();
     }
 
     private void HandleSimulationFinished(SimulationController.SimulationResult _)
     {
-        int deadEnemyCount = simulationController != null
-            ? simulationController.CurrentDeadEnemyCount
-            : 0;
-        view?.ApplyMainMissionProgress(deadEnemyCount, currentStageEnemyCount);
+        if (simulationController == null)
+        {
+            return;
+        }
+
+        SimulationMissionFacts facts = simulationController.CurrentMissionFacts;
+
+        // 사용자에게 최종 처치 수를 먼저 적용한 뒤 같은 프레임에 실패선 연출을 시작한다.
+        view?.ApplyMainMissionProgress(
+            currentPrimaryMission?.text,
+            facts.DeadEnemyCount,
+            facts.TotalEnemyCount);
+
+        bool mainMissionFailed = IsMissionFailed(
+            currentPrimaryMission?.type ?? MissionType.EliminateAllEnemies,
+            facts);
+        bool[] subMissionFailures = currentSubMissions
+            .Select(mission => IsMissionFailed(mission.type, facts))
+            .ToArray();
+        view?.ApplyMissionFailures(mainMissionFailed, subMissionFailures);
     }
 
     private void HandleSimulationReset()
     {
-        view?.ApplyMainMissionProgress(0, currentStageEnemyCount);
+        view?.ApplyMainMissionProgress(currentPrimaryMission?.text, 0, currentStageEnemyCount);
+        view?.ResetMissionFailures();
+    }
+
+    private static bool IsMissionFailed(MissionType missionType, SimulationMissionFacts facts)
+    {
+        return missionType switch
+        {
+            MissionType.EliminateAllEnemies => facts.DeadEnemyCount < facts.TotalEnemyCount,
+            MissionType.PreserveAllies => facts.DeadAllyCount > 0,
+            MissionType.PreserveCivilians => facts.DeadCivilianCount > 0,
+            MissionType.PreserveEliza => facts.DeadElizaCount > 0,
+            MissionType.UseOpeningShot => !facts.OpeningShotExecuted,
+            _ => false,
+        };
     }
 
     private void SubscribeSimulationEvents()
