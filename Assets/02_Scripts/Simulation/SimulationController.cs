@@ -29,6 +29,8 @@ public class SimulationController : MonoBehaviour
     public event Action<SimulationResult> SimulationFinished;
     public event Action<bool> RunningStateChanged;
     public event Action SimulationReset;
+    public event Action<SimulationMissionFacts> MissionFactsChanged;
+    public event Action<SimulationMissionFacts> MissionStartFactsFinalized;
 
     public List<int> _currentDeadCount;
     [SerializeField] private int _currentStageEnemyCount;
@@ -50,6 +52,7 @@ public class SimulationController : MonoBehaviour
     [SerializeField] public SimulationResult LastSimulationResult = SimulationResult.Lose; 
     private bool isExecutingSimulation;
     private readonly HashSet<Skills> executedSkills = new();
+    private readonly List<PieceBase> missionFactTrackedPieces = new();
 
     public enum Skills
     {
@@ -73,6 +76,11 @@ public class SimulationController : MonoBehaviour
             _currentDeadCount.Add(0);
         }
         // DontDestroyOnLoad(gameObject);
+    }
+
+    private void OnDestroy()
+    {
+        StopMissionFactTracking();
     }
 
     public void SetStageEnemyPieceCounts(IReadOnlyList<int> enemyTypeCounts)
@@ -121,6 +129,7 @@ public class SimulationController : MonoBehaviour
     {
         StopAllCoroutines();
         isExecutingSimulation = false;
+        StopMissionFactTracking();
 
         foreach (var bullet in GameObject.FindGameObjectsWithTag("Bullet"))
         {
@@ -180,6 +189,7 @@ public class SimulationController : MonoBehaviour
 
         GameManager.Instance.ClearAllTile();
         var allPieces = StageManager.Instance.GetAllActivePieces();
+        StartMissionFactTracking(allPieces);
         foreach (PieceBase piece in allPieces)
         {
             piece?.GetComponent<OutlineEffect>()?.ClearPersistent();
@@ -193,6 +203,10 @@ public class SimulationController : MonoBehaviour
                 skill.Execute(this, allPieces);
             }
         }
+
+        // 선처리 스킬이 모두 실행된 뒤 시작 판정 미션이 사용할 사실을 한 번 확정한다.
+        CurrentMissionFacts = BuildMissionFacts(StageManager.Instance.GetAllPieces());
+        MissionStartFactsFinalized?.Invoke(CurrentMissionFacts);
         allPieces = StageManager.Instance.GetAllActivePieces();
 
         foreach (var piece in allPieces)
@@ -228,6 +242,7 @@ public class SimulationController : MonoBehaviour
         var result = DetermineResult(allPieces);
         ShowSurvivingEnemyOutlines(allPieces);
         CurrentMissionFacts = BuildMissionFacts(StageManager.Instance.GetAllPieces());
+        StopMissionFactTracking();
         _lastResult = result.ToString();
         LastSimulationResult = result;
         isExecutingSimulation = false;
@@ -252,6 +267,58 @@ public class SimulationController : MonoBehaviour
     {
         // 타겟 선택이 아니라 실제 효과 실행 시점만 기록해 미사용 미션을 정확히 판정한다.
         executedSkills.Add(skill);
+        RefreshMissionFactsAndNotify();
+    }
+
+    private void StartMissionFactTracking(IReadOnlyList<PieceBase> pieces)
+    {
+        StopMissionFactTracking();
+        if (pieces == null)
+        {
+            return;
+        }
+
+        // PieceBase가 실제 사망을 확정한 OnDied 시점을 사용해 보호 미션을 즉시 갱신한다.
+        foreach (PieceBase piece in pieces)
+        {
+            if (piece == null)
+            {
+                continue;
+            }
+
+            piece.OnDied -= HandleTrackedPieceDied;
+            piece.OnDied += HandleTrackedPieceDied;
+            missionFactTrackedPieces.Add(piece);
+        }
+    }
+
+    private void StopMissionFactTracking()
+    {
+        foreach (PieceBase piece in missionFactTrackedPieces)
+        {
+            if (piece != null)
+            {
+                piece.OnDied -= HandleTrackedPieceDied;
+            }
+        }
+
+        missionFactTrackedPieces.Clear();
+    }
+
+    private void HandleTrackedPieceDied(PieceBase _)
+    {
+        RefreshMissionFactsAndNotify();
+    }
+
+    private void RefreshMissionFactsAndNotify()
+    {
+        if (!isExecutingSimulation || StageManager.Instance == null)
+        {
+            return;
+        }
+
+        CurrentMissionFacts = BuildMissionFacts(StageManager.Instance.GetAllPieces());
+        MissionFactsChanged?.Invoke(CurrentMissionFacts);
     }
 
     private IEnumerator RunPhase(int phaseIndex, IReadOnlyList<PieceBase> allPieces)

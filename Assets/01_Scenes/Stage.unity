@@ -798,6 +798,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InGameMissionUIController
   simulationController: {fileID: 1344161039}
+  missionDefinitionRegistry: {fileID: 11400000, guid: 5526011eeca34264396de9ec51581f6f, type: 2}
 --- !u!114 &584075552
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2055,11 +2056,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6562320009633688067, guid: f0e9e1a4490476f4e83197bb34b20713, type: 3}
       propertyPath: initialStagePath
-      value: Stages/stage_007.json
+      value: Stages/stage_001.json
       objectReference: {fileID: 0}
     - target: {fileID: 6562320009633688067, guid: f0e9e1a4490476f4e83197bb34b20713, type: 3}
       propertyPath: autoStartFirstStage
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8006600841717635771, guid: f0e9e1a4490476f4e83197bb34b20713, type: 3}
       propertyPath: raycastCamera

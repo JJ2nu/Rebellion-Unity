@@ -149,6 +149,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StageEditorController
   stageFolder: Stages
+  missionDefinitionRegistry: {fileID: 11400000, guid: 5526011eeca34264396de9ec51581f6f, type: 2}
+  gridCellPrefab: {fileID: 0}
   mapPrefabs:
   - {fileID: 5455071742382695461, guid: 76cc0c066ccc14545aa382e0ee1a4c72, type: 3}
   - {fileID: 5573549547454476352, guid: fdcb0907192a3b242b72aa57b238d064, type: 3}

@@ -1,12 +1,12 @@
 {
-    "version": 3,
+    "version": 4,
     "boardSize": 6,
     "mapIndex": 1,
     "stageTitle": "총리를 제거하여 협정 저지",
-    "primaryMission": { "type": 0, "text": "모든 적 처치" },
+    "primaryMission": { "missionId": "eliminate_all_enemies" },
     "subMissions": [
-        { "type": 1, "text": "전투원 희생 없이 작전 수행" },
-        { "type": 2, "text": "민간인 희생 없이 작전 수행" }
+        { "missionId": "preserve_allies" },
+        { "missionId": "preserve_civilians" }
     ],
     "hasOrder": true,
     "allySlots": [
