@@ -73,11 +73,11 @@ public sealed class InGameMissionUIController : MonoBehaviour
             facts.DeadEnemyCount,
             facts.TotalEnemyCount);
 
-        bool mainMissionFailed = IsMissionFailed(
+        bool mainMissionFailed = EvaluateMissionFailure(
             currentPrimaryMission?.type ?? MissionType.EliminateAllEnemies,
             facts);
         bool[] subMissionFailures = currentSubMissions
-            .Select(mission => IsMissionFailed(mission.type, facts))
+            .Select(mission => EvaluateMissionFailure(mission.type, facts))
             .ToArray();
         view?.ApplyMissionFailures(mainMissionFailed, subMissionFailures);
     }
@@ -88,17 +88,18 @@ public sealed class InGameMissionUIController : MonoBehaviour
         view?.ResetMissionFailures();
     }
 
-    private static bool IsMissionFailed(MissionType missionType, SimulationMissionFacts facts)
+    private bool EvaluateMissionFailure(MissionType missionType, SimulationMissionFacts facts)
     {
-        return missionType switch
+        if (MissionEvaluator.TryEvaluate(missionType, facts, out bool isSuccessful))
         {
-            MissionType.EliminateAllEnemies => facts.DeadEnemyCount < facts.TotalEnemyCount,
-            MissionType.PreserveAllies => facts.DeadAllyCount > 0,
-            MissionType.PreserveCivilians => facts.DeadCivilianCount > 0,
-            MissionType.PreserveEliza => facts.DeadElizaCount > 0,
-            MissionType.UseOpeningShot => !facts.OpeningShotExecuted,
-            _ => false,
-        };
+            return !isSuccessful;
+        }
+
+        // 잘못된 JSON enum 값이 성공처럼 보이지 않게 경고하고 해당 미션을 실패로 표시한다.
+        Debug.LogWarning(
+            $"{nameof(InGameMissionUIController)} cannot evaluate unsupported mission type: {(int)missionType}.",
+            this);
+        return true;
     }
 
     private void SubscribeSimulationEvents()

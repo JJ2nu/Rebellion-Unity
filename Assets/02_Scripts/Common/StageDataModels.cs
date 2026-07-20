@@ -33,32 +33,6 @@ public enum CivilianType
     Eliza = 1,
 }
 
-public readonly struct SimulationMissionFacts
-{
-    public SimulationMissionFacts(
-        int totalEnemyCount,
-        int deadEnemyCount,
-        int deadAllyCount,
-        int deadCivilianCount,
-        int deadElizaCount,
-        bool openingShotExecuted)
-    {
-        TotalEnemyCount = totalEnemyCount;
-        DeadEnemyCount = deadEnemyCount;
-        DeadAllyCount = deadAllyCount;
-        DeadCivilianCount = deadCivilianCount;
-        DeadElizaCount = deadElizaCount;
-        OpeningShotExecuted = openingShotExecuted;
-    }
-
-    public int TotalEnemyCount { get; }
-    public int DeadEnemyCount { get; }
-    public int DeadAllyCount { get; }
-    public int DeadCivilianCount { get; }
-    public int DeadElizaCount { get; }
-    public bool OpeningShotExecuted { get; }
-}
-
 [Serializable]
 public class StageData
 {
