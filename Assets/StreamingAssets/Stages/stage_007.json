@@ -1,12 +1,12 @@
 {
-    "version": 3,
+    "version": 4,
     "boardSize": 6,
     "mapIndex": 1,
     "stageTitle": "연설장 잠입 및 초대장 확보",
-    "primaryMission": { "type": 0, "text": "모든 적 처치" },
+    "primaryMission": { "missionId": "eliminate_all_enemies" },
     "subMissions": [
-        { "type": 1, "text": "전투원 희생 없이 작전 수행" },
-        { "type": 3, "text": "부관 희생 없이 작전 수행" }
+        { "missionId": "preserve_allies" },
+        { "missionId": "preserve_eliza" }
     ],
     "hasOrder": false,
     "allySlots": [

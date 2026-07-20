@@ -1,18 +1,31 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 /// <summary>
-/// StageData와 시뮬레이션 사실을 미션별 화면 상태로 변환하는 Mission UI Controller다.
+/// Stage의 missionId를 정의 에셋과 평가 상태로 변환해 Mission View에 전달한다.
 /// </summary>
 [RequireComponent(typeof(InGameMissionView))]
 public sealed class InGameMissionUIController : MonoBehaviour
 {
     [SerializeField] private SimulationController simulationController;
+    [SerializeField] private MissionDefinitionRegistry missionDefinitionRegistry;
 
+    private readonly List<BoundMission> boundMissions = new();
     private InGameMissionView view;
-    private StageMissionData currentPrimaryMission;
-    private StageMissionData[] currentSubMissions = System.Array.Empty<StageMissionData>();
     private int currentStageEnemyCount;
+
+    private sealed class BoundMission
+    {
+        public string MissionId;
+        public MissionDefinition Definition;
+        public MissionEvaluationState State = MissionEvaluationState.InProgress;
+
+        public string DisplayText => Definition != null &&
+            !string.IsNullOrWhiteSpace(Definition.DisplayText)
+                ? Definition.DisplayText
+                : MissionId;
+    }
 
     private void Awake()
     {
@@ -48,56 +61,143 @@ public sealed class InGameMissionUIController : MonoBehaviour
         currentStageEnemyCount = simulationController != null
             ? simulationController.CurrentStageEnemyCount
             : 0;
-        currentPrimaryMission = data.GetPrimaryMission();
-        currentSubMissions = data.GetSubMissions()
-            .Where(mission => mission != null && !string.IsNullOrWhiteSpace(mission.text))
+
+        boundMissions.Clear();
+        boundMissions.Add(BindMission(data.GetPrimaryMission(), data.GetStageTitle()));
+        boundMissions.AddRange(data.GetSubMissions()
+            .Where(mission => mission != null && !string.IsNullOrWhiteSpace(mission.missionId))
+            .Select(mission => BindMission(mission, data.GetStageTitle())));
+
+        BoundMission primaryMission = boundMissions[0];
+        string[] subMissionTexts = boundMissions
+            .Skip(1)
+            .Select(mission => mission.DisplayText)
             .ToArray();
 
-        view.Render(data.GetStageTitle(), currentSubMissions);
-        view.ApplyMainMissionProgress(currentPrimaryMission.text, 0, currentStageEnemyCount);
+        view.Render(data.GetStageTitle(), subMissionTexts);
+        view.ApplyMainMissionProgress(primaryMission.DisplayText, 0, currentStageEnemyCount);
         view.ResetMissionFailures();
+    }
+
+    private void HandleMissionFactsChanged(SimulationMissionFacts facts)
+    {
+        EvaluateMissions(facts, MissionEvaluationMoment.FactsChanged);
+    }
+
+    private void HandleMissionStartFactsFinalized(SimulationMissionFacts facts)
+    {
+        EvaluateMissions(facts, MissionEvaluationMoment.SimulationStarted);
     }
 
     private void HandleSimulationFinished(SimulationController.SimulationResult _)
     {
-        if (simulationController == null)
+        if (simulationController == null || boundMissions.Count == 0)
         {
             return;
         }
 
         SimulationMissionFacts facts = simulationController.CurrentMissionFacts;
+        BoundMission primaryMission = boundMissions[0];
 
-        // 사용자에게 최종 처치 수를 먼저 적용한 뒤 같은 프레임에 실패선 연출을 시작한다.
+        // 사용자에게 최종 처치 수를 먼저 적용한 뒤 아직 확정되지 않은 미션을 최종 평가한다.
         view?.ApplyMainMissionProgress(
-            currentPrimaryMission?.text,
+            primaryMission.DisplayText,
             facts.DeadEnemyCount,
             facts.TotalEnemyCount);
-
-        bool mainMissionFailed = IsMissionFailed(
-            currentPrimaryMission?.type ?? MissionType.EliminateAllEnemies,
-            facts);
-        bool[] subMissionFailures = currentSubMissions
-            .Select(mission => IsMissionFailed(mission.type, facts))
-            .ToArray();
-        view?.ApplyMissionFailures(mainMissionFailed, subMissionFailures);
+        EvaluateMissions(facts, MissionEvaluationMoment.SimulationFinished);
     }
 
     private void HandleSimulationReset()
     {
-        view?.ApplyMainMissionProgress(currentPrimaryMission?.text, 0, currentStageEnemyCount);
+        foreach (BoundMission mission in boundMissions)
+        {
+            mission.State = MissionEvaluationState.InProgress;
+        }
+
+        BoundMission primaryMission = boundMissions.Count > 0 ? boundMissions[0] : null;
+        view?.ApplyMainMissionProgress(primaryMission?.DisplayText, 0, currentStageEnemyCount);
         view?.ResetMissionFailures();
     }
 
-    private static bool IsMissionFailed(MissionType missionType, SimulationMissionFacts facts)
+    private void EvaluateMissions(
+        SimulationMissionFacts facts,
+        MissionEvaluationMoment evaluationMoment)
     {
-        return missionType switch
+        for (int index = 0; index < boundMissions.Count; index++)
         {
-            MissionType.EliminateAllEnemies => facts.DeadEnemyCount < facts.TotalEnemyCount,
-            MissionType.PreserveAllies => facts.DeadAllyCount > 0,
-            MissionType.PreserveCivilians => facts.DeadCivilianCount > 0,
-            MissionType.PreserveEliza => facts.DeadElizaCount > 0,
-            MissionType.UseOpeningShot => !facts.OpeningShotExecuted,
-            _ => false,
+            BoundMission mission = boundMissions[index];
+            if (mission.State != MissionEvaluationState.InProgress)
+            {
+                continue;
+            }
+
+            MissionEvaluationState nextState = EvaluateMission(
+                mission,
+                facts,
+                evaluationMoment);
+            mission.State = nextState;
+
+            if (nextState == MissionEvaluationState.Failed)
+            {
+                // View의 0번은 주 미션이고 이후 인덱스는 화면의 서브 미션 순서와 같다.
+                view?.ShowMissionFailure(index);
+            }
+        }
+    }
+
+    private MissionEvaluationState EvaluateMission(
+        BoundMission mission,
+        SimulationMissionFacts facts,
+        MissionEvaluationMoment evaluationMoment)
+    {
+        if (mission.Definition == null)
+        {
+            return evaluationMoment == MissionEvaluationMoment.SimulationFinished
+                ? MissionEvaluationState.Failed
+                : MissionEvaluationState.InProgress;
+        }
+
+        if (MissionEvaluator.TryEvaluate(
+            mission.Definition.MissionType,
+            mission.Definition.EvaluationTiming,
+            facts,
+            evaluationMoment,
+            out MissionEvaluationState state))
+        {
+            return state;
+        }
+
+        Debug.LogWarning(
+            $"{nameof(InGameMissionUIController)} cannot evaluate missionId " +
+            $"'{mission.MissionId}' with mission type {(int)mission.Definition.MissionType}.",
+            this);
+        return MissionEvaluationState.Failed;
+    }
+
+    private BoundMission BindMission(StageMissionData missionData, string stageTitle)
+    {
+        string missionId = missionData?.missionId ?? string.Empty;
+        MissionDefinition definition = null;
+
+        if (missionDefinitionRegistry == null)
+        {
+            Debug.LogWarning(
+                $"{nameof(InGameMissionUIController)} has no MissionDefinitionRegistry " +
+                $"for stage '{stageTitle}'.",
+                this);
+        }
+        else if (!missionDefinitionRegistry.TryGetDefinition(missionId, out definition))
+        {
+            Debug.LogWarning(
+                $"{nameof(InGameMissionUIController)} cannot resolve missionId '{missionId}' " +
+                $"for stage '{stageTitle}'.",
+                this);
+        }
+
+        return new BoundMission
+        {
+            MissionId = missionId,
+            Definition = definition,
         };
     }
 
@@ -113,7 +213,11 @@ public sealed class InGameMissionUIController : MonoBehaviour
             return;
         }
 
-        // OnEnable과 StageData Bind가 모두 호출돼도 결과 이벤트가 중복 연결되지 않게 한다.
+        // OnEnable과 StageData Bind가 모두 호출돼도 각 이벤트가 중복 연결되지 않게 한다.
+        simulationController.MissionFactsChanged -= HandleMissionFactsChanged;
+        simulationController.MissionFactsChanged += HandleMissionFactsChanged;
+        simulationController.MissionStartFactsFinalized -= HandleMissionStartFactsFinalized;
+        simulationController.MissionStartFactsFinalized += HandleMissionStartFactsFinalized;
         simulationController.SimulationFinished -= HandleSimulationFinished;
         simulationController.SimulationFinished += HandleSimulationFinished;
         simulationController.SimulationReset -= HandleSimulationReset;
@@ -127,6 +231,8 @@ public sealed class InGameMissionUIController : MonoBehaviour
             return;
         }
 
+        simulationController.MissionFactsChanged -= HandleMissionFactsChanged;
+        simulationController.MissionStartFactsFinalized -= HandleMissionStartFactsFinalized;
         simulationController.SimulationFinished -= HandleSimulationFinished;
         simulationController.SimulationReset -= HandleSimulationReset;
     }
