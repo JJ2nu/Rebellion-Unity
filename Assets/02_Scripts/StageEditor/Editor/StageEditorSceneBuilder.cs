@@ -1,4 +1,4 @@
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
@@ -25,6 +25,9 @@ public static class StageEditorSceneBuilder
 
         var serializedObject = new SerializedObject(controller);
         serializedObject.FindProperty("stageFolder").stringValue = "Stages";
+        serializedObject.FindProperty("missionDefinitionRegistry").objectReferenceValue =
+            AssetDatabase.LoadAssetAtPath<MissionDefinitionRegistry>(
+                "Assets/09_Scriptables/Missions/MissionDefinitionRegistry.asset");
         serializedObject.FindProperty("mapPrefabFolder").stringValue = "Assets/03_Prefabs/Maps/InGame";
         serializedObject.FindProperty("enemyPrefabFolder").stringValue = "Assets/03_Prefabs/Pieces/Enemy";
         serializedObject.FindProperty("civilianPrefabFolder").stringValue = "Assets/03_Prefabs/Pieces/Civilian";

@@ -1,6 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
 #if UNITY_EDITOR
@@ -24,6 +25,9 @@ public sealed class StageEditorController : MonoBehaviour
 
     [Header("Stage Files")]
     [SerializeField] private string stageFolder = "Stages";
+
+    [Header("Mission Definitions")]
+    [SerializeField] private MissionDefinitionRegistry missionDefinitionRegistry;
 
     [Header("Preview Prefabs")]
     [SerializeField] private GameObject gridCellPrefab;
@@ -64,6 +68,14 @@ public sealed class StageEditorController : MonoBehaviour
         EnsurePreviewRoot();
         RefreshPrefabReferences();
         RefreshStageList();
+        if (missionDefinitionRegistry == null)
+        {
+            Debug.LogWarning("StageEditorController has no MissionDefinitionRegistry assigned.", this);
+        }
+        else if (!missionDefinitionRegistry.TryValidate(out string missionRegistryError))
+        {
+            Debug.LogWarning($"MissionDefinitionRegistry is invalid: {missionRegistryError}", this);
+        }
         Input.imeCompositionMode = IMECompositionMode.On;
         if (stagePaths.Count > 0)
         {
@@ -171,11 +183,7 @@ public sealed class StageEditorController : MonoBehaviour
 
         EnsureMissionData();
         changed |= TextField("stage.stageTitle", "Stage Title", currentStage.stageTitle, out currentStage.stageTitle);
-        changed |= TextField(
-            "stage.primaryMission.text",
-            "Primary Mission",
-            currentStage.primaryMission.text,
-            out currentStage.primaryMission.text);
+        DrawMissionDefinitionLabel("Primary Mission", currentStage.primaryMission);
         changed |= DrawSubMissions();
 
         bool hasOrder = GUILayout.Toggle(currentStage.hasOrder, "Has Order Skill");
@@ -208,19 +216,7 @@ public sealed class StageEditorController : MonoBehaviour
             GUILayout.BeginVertical(GUI.skin.box);
             GUILayout.Label($"Sub Mission {index + 1}");
 
-            string[] missionTypeNames = Enum.GetNames(typeof(MissionType));
-            int selectedType = GUILayout.SelectionGrid((int)mission.type, missionTypeNames, 2);
-            if (selectedType != (int)mission.type)
-            {
-                mission.type = (MissionType)selectedType;
-                changed = true;
-            }
-
-            changed |= TextField(
-                $"stage.subMissions.{index}.text",
-                "Mission Text",
-                mission.text,
-                out mission.text);
+            changed |= DrawMissionDefinitionSelector("Mission Definition", mission);
 
             if (GUILayout.Button("Remove Sub Mission"))
             {
@@ -242,8 +238,7 @@ public sealed class StageEditorController : MonoBehaviour
             {
                 new StageMissionData
                 {
-                    type = MissionType.PreserveAllies,
-                    text = "새 미션",
+                    missionId = MissionIds.PreserveAllies,
                 },
             };
             currentStage.subMissions = missions.ToArray();
@@ -251,6 +246,65 @@ public sealed class StageEditorController : MonoBehaviour
         }
 
         return changed;
+    }
+
+    private bool DrawMissionDefinitionSelector(string label, StageMissionData mission)
+    {
+        if (mission == null)
+        {
+            GUILayout.Label($"{label}: mission data is null.", GUI.skin.box);
+            return false;
+        }
+
+        if (missionDefinitionRegistry == null)
+        {
+            GUILayout.Label($"{label}: Registry missing ({mission.missionId})", GUI.skin.box);
+            return false;
+        }
+
+        MissionDefinition[] definitions = missionDefinitionRegistry.Definitions
+            .Where(definition => definition != null)
+            .ToArray();
+        if (definitions.Length == 0)
+        {
+            GUILayout.Label($"{label}: Registry is empty.", GUI.skin.box);
+            return false;
+        }
+
+        int selectedIndex = Array.FindIndex(
+            definitions,
+            definition => string.Equals(
+                definition.MissionId,
+                mission.missionId,
+                StringComparison.Ordinal));
+        if (selectedIndex < 0)
+        {
+            GUILayout.Label(
+                $"{label}: Unknown missionId '{mission.missionId}'",
+                GUI.skin.box);
+        }
+
+        string[] labels = definitions
+            .Select(definition => $"{definition.DisplayText} [{definition.MissionId}]")
+            .ToArray();
+        int nextIndex = GUILayout.SelectionGrid(selectedIndex, labels, 1);
+        if (nextIndex < 0 || nextIndex >= definitions.Length || nextIndex == selectedIndex)
+        {
+            return false;
+        }
+
+        mission.missionId = definitions[nextIndex].MissionId;
+        return true;
+    }
+
+    private void DrawMissionDefinitionLabel(string label, StageMissionData mission)
+    {
+        string missionId = mission?.missionId ?? string.Empty;
+        string displayText = missionDefinitionRegistry != null &&
+            missionDefinitionRegistry.TryGetDefinition(missionId, out MissionDefinition definition)
+                ? definition.DisplayText
+                : "Unknown missionId";
+        GUILayout.Label($"{label}: {displayText} [{missionId}]", GUI.skin.box);
     }
 
     private void DrawBrushControls()
@@ -1293,14 +1347,6 @@ public sealed class StageEditorController : MonoBehaviour
         ApplyBufferedInt("stage.version", value => currentStage.version = value);
         ApplyBufferedInt("stage.boardSize", value => currentStage.boardSize = Mathf.Clamp(value, 1, 12));
         ApplyBufferedText("stage.stageTitle", value => currentStage.stageTitle = value);
-        ApplyBufferedText("stage.primaryMission.text", value => currentStage.primaryMission.text = value);
-        for (int index = 0; index < currentStage.subMissions.Length; index++)
-        {
-            int missionIndex = index;
-            ApplyBufferedText(
-                $"stage.subMissions.{missionIndex}.text",
-                value => currentStage.subMissions[missionIndex].text = value);
-        }
         ApplyBufferedInt("save.newStageNumber", value => newStageNumber = Mathf.Max(1, value));
 
         EnsureAllySlots();

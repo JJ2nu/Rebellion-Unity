@@ -10,30 +10,62 @@ public static class MissionEvaluator
     /// </summary>
     public static bool TryEvaluate(
         MissionType missionType,
+        MissionEvaluationTiming evaluationTiming,
         SimulationMissionFacts facts,
-        out bool isSuccessful)
+        MissionEvaluationMoment evaluationMoment,
+        out MissionEvaluationState state)
     {
+        bool isSuccessful;
         switch (missionType)
         {
             case MissionType.EliminateAllEnemies:
                 isSuccessful = EvaluateEliminateAllEnemies(facts);
-                return true;
+                break;
             case MissionType.PreserveAllies:
                 isSuccessful = EvaluatePreserveAllies(facts);
-                return true;
+                break;
             case MissionType.PreserveCivilians:
                 isSuccessful = EvaluatePreserveCivilians(facts);
-                return true;
+                break;
             case MissionType.PreserveEliza:
                 isSuccessful = EvaluatePreserveEliza(facts);
-                return true;
+                break;
             case MissionType.UseOpeningShot:
                 isSuccessful = EvaluateUseOpeningShot(facts);
-                return true;
+                break;
             default:
-                isSuccessful = false;
+                state = MissionEvaluationState.Failed;
                 return false;
         }
+
+        // 즉시 실패 미션은 사실이 바뀌는 매 순간 조건 위반을 확인한다.
+        if (evaluationTiming == MissionEvaluationTiming.ImmediateOnFailure && !isSuccessful)
+        {
+            state = MissionEvaluationState.Failed;
+            return true;
+        }
+
+        bool shouldFinalize = evaluationTiming switch
+        {
+            MissionEvaluationTiming.SimulationStarted =>
+                evaluationMoment == MissionEvaluationMoment.SimulationStarted ||
+                evaluationMoment == MissionEvaluationMoment.SimulationFinished,
+            MissionEvaluationTiming.SimulationFinished =>
+                evaluationMoment == MissionEvaluationMoment.SimulationFinished,
+            MissionEvaluationTiming.ImmediateOnFailure =>
+                evaluationMoment == MissionEvaluationMoment.SimulationFinished,
+            _ => false,
+        };
+        if (!shouldFinalize)
+        {
+            state = MissionEvaluationState.InProgress;
+            return true;
+        }
+
+        state = isSuccessful
+            ? MissionEvaluationState.Succeeded
+            : MissionEvaluationState.Failed;
+        return true;
     }
 
     private static bool EvaluateEliminateAllEnemies(SimulationMissionFacts facts)

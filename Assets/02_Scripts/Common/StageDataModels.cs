@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 
 [Serializable]
@@ -22,9 +22,18 @@ public enum MissionType
 [Serializable]
 public class StageMissionData
 {
-    // 화면 문구와 판정 종류를 분리해 문구 수정이나 현지화가 미션 규칙을 바꾸지 않게 한다.
-    public MissionType type = MissionType.PreserveAllies;
-    public string text = "";
+    // Stage JSON은 재사용 가능한 미션 정의의 안정적인 ID만 저장한다.
+    // 화면 문구와 판정 규칙은 MissionDefinitionRegistry가 제공한다.
+    public string missionId = MissionIds.PreserveAllies;
+}
+
+public static class MissionIds
+{
+    public const string EliminateAllEnemies = "eliminate_all_enemies";
+    public const string PreserveAllies = "preserve_allies";
+    public const string PreserveCivilians = "preserve_civilians";
+    public const string PreserveEliza = "preserve_eliza";
+    public const string UseOpeningShot = "use_opening_shot";
 }
 
 public enum CivilianType
@@ -37,7 +46,7 @@ public enum CivilianType
 public class StageData
 {
     // 포맷 버전. 나중에 구조가 바뀌면 업그레이드 분기 기준으로 사용
-    public int version = 3;
+    public int version = 4;
 
     // 현재는 6x6 고정이지만 이후 확장을 위해 포함
     public int boardSize = 6;
@@ -54,8 +63,7 @@ public class StageData
     public string stageTitle = "";
     public StageMissionData primaryMission = new()
     {
-        type = MissionType.EliminateAllEnemies,
-        text = "모든 적 처치",
+        missionId = MissionIds.EliminateAllEnemies,
     };
     public StageMissionData[] subMissions = Array.Empty<StageMissionData>();
 
@@ -77,11 +85,8 @@ public class StageData
     public StageMissionData GetPrimaryMission()
     {
         primaryMission ??= new StageMissionData();
-        primaryMission.type = MissionType.EliminateAllEnemies;
-        if (string.IsNullOrWhiteSpace(primaryMission.text))
-        {
-            primaryMission.text = "모든 적 처치";
-        }
+        // 현재 MainMissionSlot의 진행도는 적 처치 수 전용이므로 주 미션 정책을 그대로 고정한다.
+        primaryMission.missionId = MissionIds.EliminateAllEnemies;
 
         return primaryMission;
     }

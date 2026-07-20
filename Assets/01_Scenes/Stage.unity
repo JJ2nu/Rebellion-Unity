@@ -798,6 +798,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InGameMissionUIController
   simulationController: {fileID: 1344161039}
+  missionDefinitionRegistry: {fileID: 11400000, guid: 5526011eeca34264396de9ec51581f6f, type: 2}
 --- !u!114 &584075552
 MonoBehaviour:
   m_ObjectHideFlags: 0
