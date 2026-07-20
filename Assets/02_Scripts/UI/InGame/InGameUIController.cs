@@ -10,6 +10,7 @@ public sealed class InGameUIController : MonoBehaviour
 
     private void Awake()
     {
+        ResolveControllers();
         WarnIfControllerIsMissing(missionController, "Mission");
         WarnIfControllerIsMissing(storageController, "Storage");
         WarnIfControllerIsMissing(orderSkillController, "Order Skill");
@@ -19,6 +20,7 @@ public sealed class InGameUIController : MonoBehaviour
 
     private void Start()
     {
+        ResolveControllers();
         StageData current = StageManager.Instance?.CurrentStageData;
         if (current != null)
         {
@@ -44,9 +46,19 @@ public sealed class InGameUIController : MonoBehaviour
             return;
         }
 
+        ResolveControllers();
         missionController?.Bind(data);
         storageController?.Bind(data);
         orderSkillController?.Bind(data);
+    }
+
+    private void ResolveControllers()
+    {
+        // UI 리팩터링 이전 Stage 씬에는 새 기능별 Controller 참조가 직렬화되어 있지 않다.
+        // 같은 Canvas 아래의 Controller를 자동으로 찾아 기존 씬도 데이터 바인딩을 계속 받게 한다.
+        missionController ??= GetComponentInChildren<InGameMissionUIController>(true);
+        storageController ??= GetComponentInChildren<InGameStorageUIController>(true);
+        orderSkillController ??= GetComponentInChildren<OrderSkillUIController>(true);
     }
 
     private void WarnIfControllerIsMissing(Object controller, string featureName)

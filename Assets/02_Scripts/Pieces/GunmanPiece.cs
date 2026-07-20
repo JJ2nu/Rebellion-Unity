@@ -122,6 +122,12 @@ public class GunmanPiece : PieceBase
 
         muzzleFlash.transform.localPosition = Vector3.zero;
         muzzleFlash.transform.rotation = Quaternion.LookRotation(fireDirection, Vector3.up);
+
+        ParticleSystem.MainModule main = muzzleFlash.main;
+        main.startSize = new ParticleSystem.MinMaxCurve(1.9f, 2.4f);
+        main.startColor = new Color(7f, 3.2f, 1.1f, 1f);
+        main.startLifetime = new ParticleSystem.MinMaxCurve(0.06f, 0.09f);
+
         muzzleFlash.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         muzzleFlash.Play(true);
     }

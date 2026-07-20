@@ -1122,6 +1122,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7571267310266605485}
+  - component: {fileID: 2857424292000641458}
   m_Layer: 0
   m_Name: Map_Museum
   m_TagString: Untagged
@@ -1162,6 +1163,34 @@ Transform:
   - {fileID: 5829308216379301374}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2857424292000641458
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5573549547454476352}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 349743ef122df9b4aa9d3af995f9af6e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MapLightingProfile
+  ambientSkyColor: {r: 0.26, g: 0.27, b: 0.29, a: 1}
+  ambientEquatorColor: {r: 0.17, g: 0.175, b: 0.185, a: 1}
+  ambientGroundColor: {r: 0.08, g: 0.078, b: 0.08, a: 1}
+  ambientIntensity: 1
+  reflectionIntensity: 0.85
+  keyColor: {r: 1, g: 0.98, b: 0.94, a: 1}
+  keyIntensity: 0.6
+  keyEulerAngles: {x: 58, y: 325, z: 0}
+  keyShadowStrength: 0.3
+  fillColor: {r: 0.72, g: 0.76, b: 0.82, a: 1}
+  fillIntensity: 0.2
+  fillEulerAngles: {x: 32, y: 145, z: 0}
+  postExposure: 0.16
+  contrast: 0
+  saturation: 0
+  colorFilter: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &7485097097545083481
 GameObject:
   m_ObjectHideFlags: 0

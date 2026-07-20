@@ -64,6 +64,7 @@ public class StageManager : MonoBehaviour
     private readonly List<Queue<PieceBase>> civilianPool = new();
     private readonly Dictionary<int, Queue<GameObject>> objectPool = new();
     private HitImpactVfxPool hitImpactVfxPool;
+    private GroundBloodDecalPool groundBloodDecalPool;
 
     private PieceBase[][] allyPieces;
     private PieceBase[][] enemyPieces;
@@ -162,6 +163,7 @@ public class StageManager : MonoBehaviour
     {
         SetMapsActive(false);
         SetCurrentStageEnemyPieceCounts(null);
+        groundBloodDecalPool?.Clear();
         ClearPools();
         CurrentSpawnedEnemyPieceCount = 0;
         CurrentSpawnedPieceCount = 0;
@@ -171,6 +173,12 @@ public class StageManager : MonoBehaviour
     {
         EnsureHitImpactVfxPool();
         hitImpactVfxPool?.Play(position, direction, hitImpactColorMode, attackType);
+
+        if (hitImpactColorMode == HitImpactColorMode.Red)
+        {
+            EnsureGroundBloodDecalPool();
+            groundBloodDecalPool?.Play(position);
+        }
     }
 
     /// <summary>
@@ -180,6 +188,9 @@ public class StageManager : MonoBehaviour
     /// </summary>
     public void ResetForRetry()
     {
+        // 재시작 입력 즉시 이전 시뮬레이션의 바닥 핏자국을 제거한다.
+        groundBloodDecalPool?.Clear();
+
         if (currentStageData == null) return;
 
         if (retryResetCoroutine != null)
@@ -425,6 +436,18 @@ public class StageManager : MonoBehaviour
         poolObject.transform.SetParent(transform, false);
         hitImpactVfxPool = poolObject.AddComponent<HitImpactVfxPool>();
         hitImpactVfxPool.Configure(hitImpactRedPrefab, hitImpactWhitePrefab, CurrentSpawnedPieceCount, hitImpactColorMode);
+    }
+
+    private void EnsureGroundBloodDecalPool()
+    {
+        if (groundBloodDecalPool != null)
+        {
+            return;
+        }
+
+        GameObject poolObject = new GameObject("GroundBloodDecalPool");
+        poolObject.transform.SetParent(transform, false);
+        groundBloodDecalPool = poolObject.AddComponent<GroundBloodDecalPool>();
     }
 
     private void EnsureHitImpactPoolSize()

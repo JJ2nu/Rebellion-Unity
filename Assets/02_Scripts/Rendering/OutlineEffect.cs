@@ -12,6 +12,7 @@ public class OutlineEffect : MonoBehaviour
     private Renderer[] renderers;
     private Material[][] originalMaterials;
     private bool isOutlineVisible;
+    private bool isPersistent;
 
     private void Awake()
     {
@@ -27,6 +28,11 @@ public void Show()
     public void ShowWithColor(Color color)
     {
         if (outlineMaterial == null) return;
+
+        if (isOutlineVisible)
+        {
+            RestoreOriginalMaterials();
+        }
 
         isOutlineVisible = true;
 
@@ -47,11 +53,29 @@ public void Show()
         }
     }
 
+    public void ShowPersistent(Color color)
+    {
+        isPersistent = true;
+        ShowWithColor(color);
+    }
+
+    public void ClearPersistent()
+    {
+        isPersistent = false;
+        Hide();
+    }
+
     public void Hide()
     {
+        if (isPersistent) return;
         if (!isOutlineVisible) return;
         isOutlineVisible = false;
 
+        RestoreOriginalMaterials();
+    }
+
+    private void RestoreOriginalMaterials()
+    {
         for (int i = 0; i < renderers.Length; i++)
         {
             if (renderers[i] == null) continue;

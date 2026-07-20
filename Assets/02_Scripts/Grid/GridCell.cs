@@ -34,6 +34,7 @@ public class GridCell : MonoBehaviour, IWorldInputTarget
     public int BoardSize { get; private set; }
 
     private bool isDirty = false;
+    private bool isVisualLockedClear;
     private TileState _tileState;
     private TileState tileState
     {
@@ -71,29 +72,34 @@ public class GridCell : MonoBehaviour, IWorldInputTarget
 
     public void ShowPlacementAvailability(bool canPlace)
     {
+        if (isVisualLockedClear) return;
         tileState = canPlace ? TileState.Active : TileState.Occupied;
         ApplyVisualState();
     }
 
     public void ShowRangeHighlight(bool show)
     {
+        if (isVisualLockedClear) return;
         tileState = show ? TileState.Active : TileState.Default;
         ApplyVisualState();
     }
     public void ShowMoveHighlight(bool show, Quaternion pieceRotation)
     {
+        if (isVisualLockedClear) return;
         tileState = show ? TileState.Direction : TileState.Default;
         transform.rotation = pieceRotation;
         ApplyVisualState();
     }
     public void ClearTile()
     {
+        isVisualLockedClear = true;
         tileState = TileState.Clear;
         ApplyVisualState();
     }
 
     public void ResetVisual()
     {
+        isVisualLockedClear = false;
         tileState = TileState.Default;
         ApplyVisualState();
     }

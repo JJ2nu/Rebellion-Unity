@@ -462,7 +462,7 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
     {
         var allPieces = StageManager.Instance?.GetAllActivePieces();
         bool willAttack = allPieces != null && CheckCanActNow(allPieces);
-        Color outlineColor = willAttack ? Color.green : Color.red;
+        Color outlineColor = Faction == Faction.Neutral || willAttack ? Color.green : Color.red;
         GetComponent<OutlineEffect>()?.ShowWithColor(outlineColor);
         ShowAttackRangeCells();
     }
