@@ -28,6 +28,10 @@ public class AttackHitbox : MonoBehaviour
         _col.isTrigger = true;
         _col.enabled = false;
         _bladeTrails = GetComponentsInChildren<BladeMeshTrail>(true);
+        if ((_bladeTrails == null || _bladeTrails.Length == 0) && _owner != null)
+        {
+            _bladeTrails = _owner.GetComponentsInChildren<BladeMeshTrail>(true);
+        }
         SetBladeTrailsActive(false);
     }
 
