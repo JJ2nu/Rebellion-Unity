@@ -28,6 +28,14 @@ public void Show()
     public void ShowWithColor(Color color)
     {
         if (outlineMaterial == null) return;
+        if (isPersistent) return;
+
+        ApplyOutline(color);
+    }
+
+    private void ApplyOutline(Color color)
+    {
+        if (outlineMaterial == null) return;
 
         if (isOutlineVisible)
         {
@@ -56,7 +64,7 @@ public void Show()
     public void ShowPersistent(Color color)
     {
         isPersistent = true;
-        ShowWithColor(color);
+        ApplyOutline(color);
     }
 
     public void ClearPersistent()
