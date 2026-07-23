@@ -42,6 +42,8 @@ public sealed class GameFlowManager : MonoBehaviour
 
     public static GameFlowManager Instance { get; private set; }
     public static bool HasInstance => Instance != null;
+    public static bool HasActiveCampaign => Instance != null && Instance.isCampaignRunning;
+    public string CurrentStageId => currentStageId;
 
     private StageSceneFlowBinder currentStageBinder;
     private DialogueSceneFlowBinder currentDialogueBinder;
@@ -73,6 +75,25 @@ public sealed class GameFlowManager : MonoBehaviour
         EnsureInstance().BeginCampaign();
     }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public static bool TryStartDebugCampaign(string stageId)
+    {
+        GameFlowManager manager = EnsureInstance();
+        bool started = manager.TryBeginCampaignAtStage(stageId);
+        if (started)
+        {
+            Debug.Log($"[GameFlowManager] Debug campaign requested: {stageId}", manager);
+        }
+
+        return started;
+    }
+#endif
+
+    public static bool TryStartFromLoadedStage(string stageId, StageSceneFlowBinder binder)
+    {
+        return EnsureInstance().TryBeginCampaignFromLoadedStage(stageId, binder);
+    }
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -95,12 +116,95 @@ public sealed class GameFlowManager : MonoBehaviour
 
     public void BeginCampaign()
     {
+        TryBeginCampaignAtStage(Stage001);
+    }
+
+    private bool TryBeginCampaignAtStage(string stageId)
+    {
+        if (FindStageStep(stageId) == null)
+        {
+            Debug.LogWarning($"[GameFlowManager] Cannot start campaign from unknown Stage: {stageId}", this);
+            return false;
+        }
+
+        // 디버그 단축키로 실행 중인 캠페인을 교체할 때 이전 Scene·Stage·엔딩 코루틴이 새 흐름을 덮지 않게 정리한다.
+        StopActiveCampaignRoutines();
+        if (currentStageBinder != null)
+        {
+            // Stage끼리 바로 이동해도 기존 피스 풀과 HUD가 파괴된 이전 Scene 카메라를 보관하지 않게 정상 종료한다.
+            currentStageBinder.EndLoadedStage();
+            currentStageBinder.Unbind();
+        }
+
+        if (currentDialogueBinder != null)
+        {
+            currentDialogueBinder.Unbind();
+        }
+
+        currentStageBinder = null;
+        currentDialogueBinder = null;
         isCampaignRunning = true;
-        currentStageId = Stage001;
+        isLoadingCampaignScene = false;
+        currentStageId = stageId;
         nextStageAfterDialogue = null;
         pendingDialogueLevel = null;
 
         LoadStageScene();
+        return true;
+    }
+
+    private bool TryBeginCampaignFromLoadedStage(string stageId, StageSceneFlowBinder binder)
+    {
+        if (isCampaignRunning)
+        {
+            return false;
+        }
+
+        if (binder == null)
+        {
+            Debug.LogWarning("[GameFlowManager] Cannot start from a loaded Stage without a StageSceneFlowBinder.", this);
+            return false;
+        }
+
+        if (FindStageStep(stageId) == null)
+        {
+            Debug.LogWarning($"[GameFlowManager] Cannot start campaign from unknown Stage: {stageId}", this);
+            return false;
+        }
+
+        // 이미 로드된 Stage를 다시 열지 않고 캠페인 위치와 Binder만 연결한다.
+        isCampaignRunning = true;
+        isLoadingCampaignScene = false;
+        currentStageId = stageId;
+        nextStageAfterDialogue = null;
+        pendingDialogueLevel = null;
+        currentDialogueBinder?.Unbind();
+        currentDialogueBinder = null;
+        BindStageScene(binder);
+
+        Debug.Log($"[GameFlowManager] Campaign flow started from loaded Stage: {stageId}", this);
+        return true;
+    }
+
+    private void StopActiveCampaignRoutines()
+    {
+        if (stageSceneRoutine != null)
+        {
+            StopCoroutine(stageSceneRoutine);
+            stageSceneRoutine = null;
+        }
+
+        if (endingRoutine != null)
+        {
+            StopCoroutine(endingRoutine);
+            endingRoutine = null;
+        }
+
+        if (campaignSceneRoutine != null)
+        {
+            StopCoroutine(campaignSceneRoutine);
+            campaignSceneRoutine = null;
+        }
     }
 
     public void RegisterStageScene(StageSceneFlowBinder binder)
@@ -110,9 +214,7 @@ public sealed class GameFlowManager : MonoBehaviour
             return;
         }
 
-        currentStageBinder?.Unbind();
-        currentStageBinder = binder;
-        currentStageBinder.Bind(this);
+        BindStageScene(binder);
 
         if (isLoadingCampaignScene)
         {
@@ -125,6 +227,13 @@ public sealed class GameFlowManager : MonoBehaviour
         }
 
         stageSceneRoutine = StartCoroutine(PrepareStageSceneRoutine(currentStageBinder));
+    }
+
+    private void BindStageScene(StageSceneFlowBinder binder)
+    {
+        currentStageBinder?.Unbind();
+        currentStageBinder = binder;
+        currentStageBinder.Bind(this);
     }
 
     public void RegisterDialogueScene(DialogueSceneFlowBinder binder)

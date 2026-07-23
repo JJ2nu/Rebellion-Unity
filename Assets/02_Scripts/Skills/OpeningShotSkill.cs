@@ -88,7 +88,14 @@ public class OpeningShotSkill : SkillBase
         if (Target != null)
         {
             Debug.Log($"[Simulation] Phase -1: Executing Pre-Simulation Skill on {Target.name}");
+            bool wasAlive = !Target.IsDead;
             Target.Die();
+            if (wasAlive && Target.IsDead)
+            {
+                // OpeningShot은 일반 공격의 피격 VFX 경로를 지나지 않으므로 처치가 확정된 위치에 혈흔을 직접 남긴다.
+                StageManager.Instance?.PlayGroundBloodDecal(Target.transform.position);
+            }
+
             // 미션 판정은 타겟 선택이 아니라 실제 선처치 효과가 발생한 실행만 사용한다.
             controller?.RecordSkillExecution(SimulationController.Skills.OpeningShot);
             //Target = null;

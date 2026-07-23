@@ -17,6 +17,9 @@ public class GameManager : MonoBehaviour
     // 게임 시작과 동시에 첫 스테이지를 열지 여부
     [SerializeField] private bool autoStartFirstStage = true;
 
+    // Stage Scene 단독 실행 시 선택한 Stage부터 Dialogue와 다음 Stage 흐름까지 이어서 확인할지 여부
+    [SerializeField] private bool autoStartCampaignFlow = true;
+
     [Header("Grid")]
     // 한 변에 배치할 셀 개수
     [SerializeField] private int gridSize = 6;
@@ -26,6 +29,9 @@ public class GameManager : MonoBehaviour
 
     // 어디서든 접근할 수 있도록 유지하는 싱글톤 인스턴스
     public static GameManager Instance { get; private set; }
+
+    // 자동 Stage 로드가 끝난 뒤 Binder가 실제 Stage ID로 캠페인 상태를 준비할 수 있게 알린다.
+    public event Action<string> InitialStageCampaignStartRequested;
 
     // 실제로 생성해서 재사용 중인 셀 인스턴스 목록
     private GameObject[] loadedGridCells = Array.Empty<GameObject>();
@@ -55,7 +61,30 @@ public class GameManager : MonoBehaviour
         if (autoStartFirstStage && !string.IsNullOrWhiteSpace(initialStagePath))
         {
             LoadStage(initialStagePath);
+
+            if (autoStartCampaignFlow)
+            {
+                RequestInitialStageCampaignStart();
+            }
         }
+    }
+
+    private void RequestInitialStageCampaignStart()
+    {
+        if (stageManager == null || stageManager.CurrentStageData == null)
+        {
+            Debug.LogWarning("[GameManager] Cannot start campaign flow because the initial Stage did not load.", this);
+            return;
+        }
+
+        string stageId = stageManager.CurrentStageId;
+        if (string.IsNullOrWhiteSpace(stageId))
+        {
+            Debug.LogWarning("[GameManager] Cannot start campaign flow because the initial Stage ID is empty.", this);
+            return;
+        }
+
+        InitialStageCampaignStartRequested?.Invoke(stageId);
     }
 
     public void LoadStage(string stagePath, bool playMapAudioImmediately = true)

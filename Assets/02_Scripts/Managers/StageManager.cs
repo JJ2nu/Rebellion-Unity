@@ -217,9 +217,17 @@ public class StageManager : MonoBehaviour
 
         if (hitImpactColorMode == HitImpactColorMode.Red)
         {
-            EnsureGroundBloodDecalPool();
-            groundBloodDecalPool?.Play(position);
+            PlayGroundBloodDecal(position);
         }
+    }
+
+    /// <summary>
+    /// 피격 VFX를 거치지 않는 처치도 일반 공격과 같은 바닥 혈흔을 남길 수 있게 한다.
+    /// </summary>
+    public void PlayGroundBloodDecal(Vector3 position)
+    {
+        EnsureGroundBloodDecalPool();
+        groundBloodDecalPool?.Play(position);
     }
 
     public void PlayBrawlerAttackSfx()
