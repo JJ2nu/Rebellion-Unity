@@ -76,7 +76,7 @@ public sealed class StageSceneFlowBinder : MonoBehaviour
         isBound = false;
     }
 
-    public void LoadStage(string stagePath)
+    public void LoadStage(string stagePath, bool playMapAudioImmediately = true)
     {
         EnsureBindings();
 
@@ -86,7 +86,13 @@ public sealed class StageSceneFlowBinder : MonoBehaviour
             return;
         }
 
-        gameManager.LoadStage(stagePath);
+        gameManager.LoadStage(stagePath, playMapAudioImmediately);
+    }
+
+    public void PlayCurrentMapAudio()
+    {
+        EnsureBindings();
+        gameManager?.PlayCurrentMapAudio();
     }
 
     public void EndLoadedStage()
@@ -119,6 +125,21 @@ public sealed class StageSceneFlowBinder : MonoBehaviour
         }
 
         audioDramaPlayer.PlayByStageId(stageId);
+    }
+
+    public IEnumerator WaitForAudioDramaToFinish()
+    {
+        EnsureBindings();
+
+        if (audioDramaPlayer == null)
+        {
+            yield break;
+        }
+
+        while (audioDramaPlayer.IsPlaying)
+        {
+            yield return null;
+        }
     }
 
     public void ConfirmSimulationResult()
