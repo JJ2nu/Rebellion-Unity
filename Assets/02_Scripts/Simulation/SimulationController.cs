@@ -124,6 +124,7 @@ public class SimulationController : MonoBehaviour
             return;
         }
 
+        StageManager.Instance?.CompleteRetryResetImmediately();
         StartCoroutine(RunSimulation());
     }
 

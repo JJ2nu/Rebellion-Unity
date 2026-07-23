@@ -156,6 +156,7 @@ MonoBehaviour:
   CanAct: 0
   _animSpeedMultiplier: 1
   _slashRootMotionDistance: 3.5944
+  _arrivalEaseDuration: 0.08
 --- !u!65 &991906837811491064
 BoxCollider:
   m_ObjectHideFlags: 0

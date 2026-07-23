@@ -278,6 +278,21 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
         _retryRewindCoroutine = StartCoroutine(RewindToSpawnForRetry(duration));
     }
 
+    public void CompleteRetryRewindImmediately()
+    {
+        if (_retryRewindCoroutine != null)
+        {
+            StopCoroutine(_retryRewindCoroutine);
+            _retryRewindCoroutine = null;
+        }
+
+        DisableRetryRewindRootMotion();
+        RestoreSpawnState();
+        ResetState();
+        StabilizeAnimatorForRetry(GetComponentInChildren<Animator>());
+        RestoreSpawnState();
+    }
+
     public IEnumerator RewindToSpawnForRetry(float duration)
     {
         if (!_hasSpawnState)

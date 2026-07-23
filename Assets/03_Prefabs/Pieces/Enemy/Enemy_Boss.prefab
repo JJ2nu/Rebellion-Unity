@@ -81,7 +81,9 @@ MonoBehaviour:
   IsDead: 0
   CanAct: 0
   _attackStepDistance: 0.65
-  _retreatDuration: 0.15
+  _advanceEndNormalizedTime: 0.52
+  _retreatStartNormalizedTime: 0.62
+  _retreatEndNormalizedTime: 0.95
 --- !u!114 &-4390087842685452055
 MonoBehaviour:
   m_ObjectHideFlags: 0
