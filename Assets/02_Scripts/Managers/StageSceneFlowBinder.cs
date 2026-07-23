@@ -3,12 +3,10 @@ using UnityEngine;
 
 /// <summary>
 /// Stage Scene의 기존 매니저를 캠페인 흐름에 연결하고, 시뮬레이션 결과를 플레이어가 확정할 때까지 보관한다.
-/// 캠페인 밖에서 Stage Scene을 단독 실행할 때는 기존 Dialogue Scene 직접 이동을 대체 경로로 사용한다.
+/// Stage Scene 단독 실행에서는 GameManager가 자동 로드한 Stage ID로 캠페인 흐름을 시작한다.
 /// </summary>
 public sealed class StageSceneFlowBinder : MonoBehaviour
 {
-    private const string DialogueSceneName = "Dialogue";
-
     [Header("Bindings")]
     [SerializeField] private GameManager gameManager;
     [SerializeField] private SimulationController simulationController;
@@ -26,6 +24,7 @@ public sealed class StageSceneFlowBinder : MonoBehaviour
     private void OnEnable()
     {
         EnsureBindings();
+        SubscribeInitialStageCampaignStart();
         SubscribeSimulationResult();
         TryRegisterWithFlowManager();
     }
@@ -34,12 +33,19 @@ public sealed class StageSceneFlowBinder : MonoBehaviour
     {
         // GameFlowManager와 기존 Singleton의 초기화 순서가 Scene마다 달라 Start에서도 한 번 더 연결을 시도한다.
         EnsureBindings();
+        SubscribeInitialStageCampaignStart();
         SubscribeSimulationResult();
         TryRegisterWithFlowManager();
     }
 
+    private void OnDisable()
+    {
+        UnsubscribeInitialStageCampaignStart();
+    }
+
     private void OnDestroy()
     {
+        UnsubscribeInitialStageCampaignStart();
         Unbind();
     }
 
@@ -160,16 +166,19 @@ public sealed class StageSceneFlowBinder : MonoBehaviour
             return;
         }
 
-        // pending 결과는 실제 확정 시점에만 지운다. 패널을 여는 첫 Confirm에서는 유지되어야 한다.
-        ClearPendingSimulationResult();
-        simulationController?.MarkSimulationConfirmed();
-        if (flowManager != null)
+        if (flowManager == null)
         {
-            flowManager.HandleStageSimulationFinished(this, confirmedResult);
+            Debug.LogError(
+                "[StageSceneFlowBinder] A simulation result was confirmed without campaign flow context. " +
+                "Enable Auto Start Campaign Flow on GameManager or start the campaign from Title.",
+                this);
             return;
         }
 
-        SceneTransitionOverlay.Instance.LoadScene(DialogueSceneName, EndLoadedStage);
+        // pending 결과는 실제 확정 시점에만 지운다. 패널을 여는 첫 Confirm에서는 유지되어야 한다.
+        ClearPendingSimulationResult();
+        simulationController?.MarkSimulationConfirmed();
+        flowManager.HandleStageSimulationFinished(this, confirmedResult);
     }
 
     public void ClearPendingSimulationResult()
@@ -204,6 +213,37 @@ public sealed class StageSceneFlowBinder : MonoBehaviour
 
         simulationController.SimulationFinished -= HandleSimulationFinished;
         simulationController.SimulationFinished += HandleSimulationFinished;
+    }
+
+    private void SubscribeInitialStageCampaignStart()
+    {
+        if (gameManager == null)
+        {
+            return;
+        }
+
+        gameManager.InitialStageCampaignStartRequested -= HandleInitialStageCampaignStartRequested;
+        gameManager.InitialStageCampaignStartRequested += HandleInitialStageCampaignStartRequested;
+    }
+
+    private void UnsubscribeInitialStageCampaignStart()
+    {
+        if (gameManager != null)
+        {
+            gameManager.InitialStageCampaignStartRequested -= HandleInitialStageCampaignStartRequested;
+        }
+    }
+
+    private void HandleInitialStageCampaignStartRequested(string stageId)
+    {
+        // Title에서 시작한 캠페인은 이미 올바른 Stage 상태를 갖고 있으므로 단독 실행 초기화로 덮어쓰지 않는다.
+        if (GameFlowManager.HasActiveCampaign)
+        {
+            TryRegisterWithFlowManager();
+            return;
+        }
+
+        GameFlowManager.TryStartFromLoadedStage(stageId, this);
     }
 
     private void TryRegisterWithFlowManager()
