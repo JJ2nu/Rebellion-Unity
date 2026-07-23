@@ -288,6 +288,7 @@ GameObject:
   - component: {fileID: 372993843}
   - component: {fileID: 372993847}
   - component: {fileID: 372993848}
+  - component: {fileID: 372993849}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -418,6 +419,18 @@ MonoBehaviour:
   previewHeight: 0.2
   defaultFacingDirection: 0
   rotateAction: {fileID: 72058764}
+--- !u!225 &372993849
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 372993842}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1001 &468629416
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -466,10 +479,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5610311678135513058, guid: 66cf0bdb33ad28b4ba4ce034f01ca618, type: 3}
-      propertyPath: field of view
-      value: 40
-      objectReference: {fileID: 0}
+    - target: {fileID: 4677745997740246874, guid: 66cf0bdb33ad28b4ba4ce034f01ca618, type: 3}
+      propertyPath: cancelAction
+      value: 
+      objectReference: {fileID: 7727032971491509709, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+    - target: {fileID: 4677745997740246874, guid: 66cf0bdb33ad28b4ba4ce034f01ca618, type: 3}
+      propertyPath: gameplayCamera
+      value: 
+      objectReference: {fileID: 1413033650}
+    - target: {fileID: 4677745997740246874, guid: 66cf0bdb33ad28b4ba4ce034f01ca618, type: 3}
+      propertyPath: gameplayUiCanvasGroup
+      value: 
+      objectReference: {fileID: 372993849}
     - target: {fileID: 8959773795669918663, guid: 66cf0bdb33ad28b4ba4ce034f01ca618, type: 3}
       propertyPath: m_Name
       value: OpeningShotSimul
@@ -483,6 +504,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 66cf0bdb33ad28b4ba4ce034f01ca618, type: 3}
+--- !u!114 &468629417 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8508210297212966221, guid: 66cf0bdb33ad28b4ba4ce034f01ca618, type: 3}
+  m_PrefabInstance: {fileID: 468629416}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 144898818dcbcce4b8da2d5c882f0df8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::OpeningShotPresentationController
 --- !u!1 &529355087
 GameObject:
   m_ObjectHideFlags: 0
@@ -1900,6 +1932,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8026042891643359905, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
+      propertyPath: presentations.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8026042891643359905, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
+      propertyPath: 'presentations.Array.data[0]'
+      value: 
+      objectReference: {fileID: 468629417}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

@@ -67,7 +67,7 @@ Camera:
     height: 1
   near clip plane: 0.01
   far clip plane: 1015.46
-  field of view: 40
+  field of view: 15
   orthographic: 0
   orthographic size: 5.3
   m_Depth: 1
@@ -181,7 +181,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 3000.0002, y: 3000.0002}
+  m_SizeDelta: {x: 3690, y: 3690}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7011955659707133419
 CanvasRenderer:
@@ -204,8 +204,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -333,6 +333,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4502646081804836943}
+  - component: {fileID: 4677745997740246874}
+  - component: {fileID: 8508210297212966221}
   m_Layer: 0
   m_Name: OpeningShotSimul
   m_TagString: Untagged
@@ -357,3 +359,49 @@ Transform:
   - {fileID: 1004037629499062716}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4677745997740246874
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8959773795669918663}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dbdc27af5c79afa47bebee51397fe936, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::OpeningShotPresentationView
+  cinematicCamera: {fileID: 5610311678135513058}
+  gameplayCamera: {fileID: 0}
+  gameplayUiCanvasGroup: {fileID: 0}
+  scopeOverlay: {fileID: 5096601526457256484}
+  scopeViewportSize: 0.78
+  scopeGraphicDiameterRatio: 0.2283
+  shotSfx: {fileID: 8300000, guid: fb045a694d5aff040bfe8c92e681a014, type: 3}
+  cancelAction: {fileID: 0}
+--- !u!114 &8508210297212966221
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8959773795669918663}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 144898818dcbcce4b8da2d5c882f0df8, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::OpeningShotPresentationController
+  view: {fileID: 4677745997740246874}
+  entryDuration: 0.5
+  zoomDuration: 0.85
+  aimHoldDuration: 0.55
+  shotReactionDuration: 0.18
+  deathHoldDuration: 0.1
+  returnDuration: 0.25
+  headAimHeight: 0.82
+  framingPadding: 1.2
+  cinematicVisibleHeight: 0.75
+  minimumCameraDistance: 2.5
+  shakePositionStrength: 0.12
+  shakeRotationStrength: 2.5
+  shakeFrequency: 18
