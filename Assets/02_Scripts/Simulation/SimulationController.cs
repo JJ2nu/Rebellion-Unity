@@ -23,6 +23,7 @@ public class SimulationController : MonoBehaviour
 
     private PieceBase _currentClickedPiece = null;
     [SerializeField] private List<SkillBase> _skills;
+    [SerializeField] private PreSimulationSkillPresentationController preSimulationPresentationController;
     public IReadOnlyList<SkillBase> GetStageSkills() => _skills.AsReadOnly();
 
     // SimulationFinished는 결과 UI에 값을 전달하고, RunningStateChanged는 배치 UI 잠금 상태를 동기화한다.
@@ -80,6 +81,7 @@ public class SimulationController : MonoBehaviour
 
     private void OnDestroy()
     {
+        preSimulationPresentationController?.CancelCurrentSequence();
         StopMissionFactTracking();
     }
 
@@ -127,6 +129,8 @@ public class SimulationController : MonoBehaviour
 
     public void ResetSimulation()
     {
+        // 외부 Presentation이 숨긴 화면과 입력을 먼저 복구한 뒤 Simulation 코루틴을 정리한다.
+        preSimulationPresentationController?.CancelCurrentSequence();
         StopAllCoroutines();
         isExecutingSimulation = false;
         StopMissionFactTracking();
@@ -195,13 +199,18 @@ public class SimulationController : MonoBehaviour
             piece?.GetComponent<OutlineEffect>()?.ClearPersistent();
         }
 
-        foreach (var skill in _skills)
+        if (preSimulationPresentationController != null)
         {
-            if (skill.CanExecute(allPieces))
-            {
-                Debug.Log($"[Simulation] Executing Skill: {skill.SkillName}");
-                skill.Execute(this, allPieces);
-            }
+            // 구체 스킬 연출을 알지 않고 공용 Controller가 각 항목 완료를 알릴 때까지 기다린다.
+            yield return preSimulationPresentationController.PlayInOrder(
+                _skills,
+                this,
+                GetActivePiecesForPreSimulation);
+        }
+        else
+        {
+            // Scene/Prefab 참조가 없는 기존 테스트 환경에서도 게임 효과와 시뮬레이션은 계속 진행한다.
+            ExecutePreSimulationSkillsImmediately(allPieces);
         }
 
         // 선처리 스킬이 모두 실행된 뒤 시작 판정 미션이 사용할 사실을 한 번 확정한다.
@@ -248,6 +257,34 @@ public class SimulationController : MonoBehaviour
         isExecutingSimulation = false;
         Debug.Log($"[Simulation] Result: {result}");
         SimulationFinished?.Invoke(result);
+    }
+
+    private IReadOnlyList<PieceBase> GetActivePiecesForPreSimulation()
+    {
+        return StageManager.Instance != null
+            ? StageManager.Instance.GetAllActivePieces()
+            : Array.Empty<PieceBase>();
+    }
+
+    private void ExecutePreSimulationSkillsImmediately(IReadOnlyList<PieceBase> allPieces)
+    {
+        if (_skills == null)
+        {
+            return;
+        }
+
+        foreach (SkillBase skill in _skills)
+        {
+            if (skill == null ||
+                skill.Timing != SkillTiming.PreSimulation ||
+                !skill.CanExecute(allPieces))
+            {
+                continue;
+            }
+
+            Debug.Log($"[Simulation] Executing Pre-Simulation Skill without Presentation: {skill.SkillName}", this);
+            skill.Execute(this, allPieces);
+        }
     }
 
     private static void ShowSurvivingEnemyOutlines(IReadOnlyList<PieceBase> allPieces)
