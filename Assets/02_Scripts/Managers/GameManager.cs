@@ -58,7 +58,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void LoadStage(string stagePath)
+    public void LoadStage(string stagePath, bool playMapAudioImmediately = true)
     {
         EnsureStageGridReady();
 
@@ -73,7 +73,17 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        stageManager.LoadStage(stagePath);
+        stageManager.LoadStage(stagePath, playMapAudioImmediately);
+    }
+
+    public void PlayCurrentMapAudio()
+    {
+        if (stageManager == null)
+        {
+            stageManager = StageManager.Instance;
+        }
+
+        stageManager?.PlayCurrentMapAudio();
     }
 
     public void EnsureStageGridReady()

@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6741203802058999015}
   - component: {fileID: 851078646391461078}
+  - component: {fileID: 8026042891643359905}
   m_Layer: 0
   m_Name: Simulator
   m_TagString: Untagged
@@ -53,3 +54,17 @@ MonoBehaviour:
   _rightClickAction: {fileID: 624618501342684686, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   _skills:
   - {fileID: 11400000, guid: 6af0069b787e35d468c50a38383c36f4, type: 2}
+  preSimulationPresentationController: {fileID: 8026042891643359905}
+--- !u!114 &8026042891643359905
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5363687376482141591}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8206b725fb96bb4badcae09dde31dc2, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::PreSimulationSkillPresentationController
+  presentations: []

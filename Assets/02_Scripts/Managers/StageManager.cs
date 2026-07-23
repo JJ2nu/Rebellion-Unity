@@ -27,6 +27,9 @@ public class StageManager : MonoBehaviour
     [SerializeField] private GameObject hitImpactWhitePrefab;
     [SerializeField] private HitImpactColorMode hitImpactColorMode = HitImpactColorMode.Red;
 
+    [Header("Map Audio")]
+    [SerializeField] private MapAudioController mapAudioController;
+
     [Header("Combat SFX")]
     [SerializeField] private AudioSource combatSfxAudioSource;
     [SerializeField] private AudioClip[] punchAttackSfx = Array.Empty<AudioClip>();
@@ -102,7 +105,7 @@ public class StageManager : MonoBehaviour
         EnsureCombatSfxAudioSource();
     }
 
-    public void LoadStage(string stagePath)
+    public void LoadStage(string stagePath, bool playMapAudioImmediately = true)
     {
         currentStagePath = stagePath;
         SetCurrentStageEnemyPieceCounts(null);
@@ -151,12 +154,29 @@ public class StageManager : MonoBehaviour
         if (loadedMaps.Length == 0)
         {
             currentMapIndex = -1;
+            mapAudioController?.Stop();
             return;
         }
 
         currentMapIndex = Mathf.Clamp(parsedData.mapIndex, 0, loadedMaps.Length - 1);
+        if (currentMapIndex != parsedData.mapIndex)
+        {
+            Debug.LogWarning(
+                $"Stage map index {parsedData.mapIndex} is out of range. Using {currentMapIndex} instead.",
+                this);
+        }
+
         Debug.Log($"[StageManager] Activating map index: {currentMapIndex}", this);
         UpdateActiveMap();
+        if (playMapAudioImmediately)
+        {
+            mapAudioController?.PlayForMap(currentMapIndex);
+        }
+        else
+        {
+            mapAudioController?.PrepareForMap(currentMapIndex);
+        }
+
         gameManager?.EnsureStageGridReady();
 
         SpawnEnemies(parsedData);
@@ -171,8 +191,17 @@ public class StageManager : MonoBehaviour
         SimulationController.Instance?.ResetSimulation();
     }
 
+    /// <summary>
+    /// 인트로 오디오드라마가 끝난 뒤 현재 맵에 준비된 BGM과 앰비언트를 시작한다.
+    /// </summary>
+    public void PlayCurrentMapAudio()
+    {
+        mapAudioController?.PlayPrepared();
+    }
+
     public void EndStage()
     {
+        mapAudioController?.Stop();
         SetMapsActive(false);
         SetCurrentStageEnemyPieceCounts(null);
         groundBloodDecalPool?.Clear();

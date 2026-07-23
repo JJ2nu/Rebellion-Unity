@@ -218,16 +218,25 @@ public sealed class GameFlowManager : MonoBehaviour
             yield return overlay.FadeOut();
         }
 
-        binder.LoadStage(step.StagePath);
+        bool hasIntroAudioDrama = !string.IsNullOrWhiteSpace(step.IntroAudioDramaStageId);
+        binder.LoadStage(step.StagePath, !hasIntroAudioDrama);
         yield return overlay.WaitForSceneSettled();
 
-        if (!string.IsNullOrWhiteSpace(step.IntroAudioDramaStageId))
+        if (hasIntroAudioDrama)
         {
             binder.PlayAudioDrama(step.IntroAudioDramaStageId);
             yield return new WaitForSeconds(IntroAudioDramaStartupDelay);
         }
 
         yield return overlay.FadeIn();
+
+        if (hasIntroAudioDrama)
+        {
+            // 오디오드라마가 끝나거나 스킵된 뒤에만 맵 BGM과 앰비언트를 시작한다.
+            yield return binder.WaitForAudioDramaToFinish();
+            binder.PlayCurrentMapAudio();
+        }
+
         stageSceneRoutine = null;
     }
 
