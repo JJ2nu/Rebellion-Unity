@@ -15,6 +15,7 @@ public sealed class PlacementController : MonoBehaviour
 
     [Header("Input")]
     [SerializeField] private InputActionReference rotateAction;
+    [SerializeField] private float mouseWheelRotateThreshold = 0.01f;
 
     private InGameUnitStorageSlotUI pendingSlot;
     private GameObject previewObject;
@@ -79,6 +80,8 @@ private void Update()
             return;
         }
 
+        HandleMouseWheelRotation();
+
         if (!isCellHovered)
         {
             MovePreviewToMouseOnGridPlane();
@@ -133,15 +136,52 @@ public void BeginPlacement(InGameUnitStorageSlotUI slot)
         NotifyPlacementStateChanged(wasPlacing);
     }
 
-private void OnRotatePerformed(InputAction.CallbackContext context)
+    private void OnRotatePerformed(InputAction.CallbackContext context)
     {
         if (!IsPlacing)
         {
             return;
         }
 
-        currentFacingDirection = (Direction)(((int)currentFacingDirection + 1) % 4);
+        RotatePreview(1);
+    }
 
+    private void HandleMouseWheelRotation()
+    {
+        if (!IsPlacing || Mouse.current == null)
+        {
+            return;
+        }
+
+        float scrollY = Mouse.current.scroll.ReadValue().y;
+        if (Mathf.Abs(scrollY) <= mouseWheelRotateThreshold)
+        {
+            return;
+        }
+
+        RotatePreview(scrollY > 0f ? 1 : -1);
+    }
+
+    private void RotatePreview(int directionDelta)
+    {
+        if (!IsPlacing || directionDelta == 0)
+        {
+            return;
+        }
+
+        int directionCount = Enum.GetValues(typeof(Direction)).Length;
+        int nextDirection = ((int)currentFacingDirection + directionDelta) % directionCount;
+        if (nextDirection < 0)
+        {
+            nextDirection += directionCount;
+        }
+
+        currentFacingDirection = (Direction)nextDirection;
+        ApplyPreviewRotation();
+    }
+
+    private void ApplyPreviewRotation()
+    {
         if (previewObject != null)
         {
             previewObject.transform.rotation = Quaternion.Euler(0f, (int)currentFacingDirection * 90f, 0f);

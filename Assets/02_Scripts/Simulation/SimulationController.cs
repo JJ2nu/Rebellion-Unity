@@ -10,6 +10,7 @@ public class SimulationController : MonoBehaviour
     public static SimulationController Instance { get; private set; }
 
     [SerializeField] private float stepDuration = 0.5f;
+    [SerializeField] private OrbitingCamera orbitingCamera;
 
     [Header("Debug (Read-only)")]
     public bool _isRunning;
@@ -125,10 +126,24 @@ public class SimulationController : MonoBehaviour
         }
 
         StageManager.Instance?.CompleteRetryResetImmediately();
+        ResetMapViewRotation();
         StartCoroutine(RunSimulation());
     }
 
-    public void ResetSimulation()
+    private void ResetMapViewRotation()
+    {
+        if (orbitingCamera == null)
+        {
+            orbitingCamera = FindFirstObjectByType<OrbitingCamera>();
+        }
+
+        if (orbitingCamera != null)
+        {
+            orbitingCamera.StartResetToDefaultOrbit();
+        }
+    }
+
+    public void ResetSimulation(bool resetSkillTargets = true)
     {
         // 외부 Presentation이 숨긴 화면과 입력을 먼저 복구한 뒤 Simulation 코루틴을 정리한다.
         preSimulationPresentationController?.CancelCurrentSequence();
@@ -164,9 +179,12 @@ public class SimulationController : MonoBehaviour
         executedSkills.Clear();
         ResetMissionFacts();
 
-        foreach (var skill in _skills)
+        if (resetSkillTargets)
         {
-            skill?.ResetTarget();
+            foreach (var skill in _skills)
+            {
+                skill?.ResetTarget();
+            }
         }
 
         // Retry와 스테이지 재로드에서 결과 UI가 같은 초기화 시점을 사용하도록 알린다.
@@ -178,7 +196,7 @@ public class SimulationController : MonoBehaviour
     /// </summary>
     public void RetrySimulation()
     {
-        ResetSimulation();
+        ResetSimulation(resetSkillTargets: false);
         StageManager.Instance?.ResetForRetry();
     }
 
