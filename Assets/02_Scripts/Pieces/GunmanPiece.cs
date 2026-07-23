@@ -49,6 +49,7 @@ public class GunmanPiece : PieceBase
         Quaternion originalRotation = transform.rotation;
         float syncedFireDelay = Mathf.Max(_shoot1RecoilTime, _shoot2RecoilTime);
 
+        StageManager.Instance?.PlayGunReadySfx();
         if (useSideAim)
         {
             transform.rotation = originalRotation * Quaternion.Euler(0f, _sideAimYawOffset, 0f);
@@ -79,6 +80,7 @@ public class GunmanPiece : PieceBase
 
         var (dx, dy) = GetFacingDelta();
         Vector3 fireDirection = new Vector3(dx, 0f, dy);
+        StageManager.Instance?.PlayGunFireSfx();
         PlayMuzzleFlash(selectedFlarePoint, fireDirection);
 
         GameObject bulletInstance = Instantiate(_bullet, selectedFlarePoint.position, selectedFlarePoint.rotation);

@@ -11,11 +11,13 @@ public class StageManager : MonoBehaviour
 
     public static StageManager Instance { get; private set; }
     public static event System.Action<StageData> StageLoaded;
+    public event Action<bool> RetryResetStateChanged;
 
     public StageData CurrentStageData => currentStageData;
     public string CurrentStageId => string.IsNullOrWhiteSpace(currentStagePath)
         ? string.Empty
         : Path.GetFileNameWithoutExtension(currentStagePath);
+    public bool IsRetryResetting { get; private set; }
 
     [SerializeField] private GameObject[] allyPiecePrefabs;
     [SerializeField] private GameObject[] enemyPiecePrefabs;
@@ -24,6 +26,15 @@ public class StageManager : MonoBehaviour
     [SerializeField] private GameObject hitImpactRedPrefab;
     [SerializeField] private GameObject hitImpactWhitePrefab;
     [SerializeField] private HitImpactColorMode hitImpactColorMode = HitImpactColorMode.Red;
+
+    [Header("Combat SFX")]
+    [SerializeField] private AudioSource combatSfxAudioSource;
+    [SerializeField] private AudioClip[] punchAttackSfx = Array.Empty<AudioClip>();
+    [SerializeField] private AudioClip[] rushAttackSfx = Array.Empty<AudioClip>();
+    [SerializeField] private AudioClip[] gunReadySfx = Array.Empty<AudioClip>();
+    [SerializeField] private AudioClip[] gunFireSfx = Array.Empty<AudioClip>();
+    [SerializeField] private AudioClip[] hitSfx = Array.Empty<AudioClip>();
+    [SerializeField] private AudioClip[] civilianHitSfx = Array.Empty<AudioClip>();
 
     [SerializeField] private GameObject[][] objectPrefabs;
 
@@ -88,6 +99,7 @@ public class StageManager : MonoBehaviour
         SetMapsActive(false);
         PrewarmAllyPool();
         EnsureHitImpactVfxPool();
+        EnsureCombatSfxAudioSource();
     }
 
     public void LoadStage(string stagePath)
@@ -181,6 +193,66 @@ public class StageManager : MonoBehaviour
         }
     }
 
+    public void PlayBrawlerAttackSfx()
+    {
+        PlayRandomCombatSfx(punchAttackSfx);
+    }
+
+    public void PlaySlasherAttackSfx()
+    {
+        PlayRandomCombatSfx(rushAttackSfx);
+    }
+
+    public void PlayGunReadySfx()
+    {
+        PlayRandomCombatSfx(gunReadySfx);
+    }
+
+    public void PlayGunFireSfx()
+    {
+        PlayRandomCombatSfx(gunFireSfx);
+    }
+
+    public void PlayPieceHitSfx(PieceBase hitPiece)
+    {
+        PlayRandomCombatSfx(hitPiece is CivilianPiece ? civilianHitSfx : hitSfx);
+    }
+
+    private void PlayRandomCombatSfx(AudioClip[] clips)
+    {
+        if (clips == null || clips.Length == 0)
+        {
+            return;
+        }
+
+        AudioClip clip = clips[UnityEngine.Random.Range(0, clips.Length)];
+        if (clip == null)
+        {
+            return;
+        }
+
+        EnsureCombatSfxAudioSource();
+        combatSfxAudioSource?.PlayOneShot(clip);
+    }
+
+    private void EnsureCombatSfxAudioSource()
+    {
+        if (combatSfxAudioSource != null)
+        {
+            return;
+        }
+
+        combatSfxAudioSource = GetComponent<AudioSource>();
+        if (combatSfxAudioSource == null)
+        {
+            combatSfxAudioSource = gameObject.AddComponent<AudioSource>();
+        }
+
+        combatSfxAudioSource.playOnAwake = false;
+        combatSfxAudioSource.loop = false;
+        combatSfxAudioSource.spatialBlend = 0f;
+    }
+
     /// <summary>
     /// 시뮬레이션 직전 상태로 되돌린다.
     /// 아군 기물은 위치/방향을 유지한 채 상태만 초기화하고,
@@ -196,6 +268,7 @@ public class StageManager : MonoBehaviour
         if (retryResetCoroutine != null)
         {
             StopCoroutine(retryResetCoroutine);
+            retryResetCoroutine = null;
         }
 
         foreach (var ally in spawnedAllyPieces)
@@ -211,7 +284,39 @@ public class StageManager : MonoBehaviour
             civilian.piece?._HUD?.SetActive(true);
         }
 
+        SetRetryResetting(true);
         retryResetCoroutine = StartCoroutine(ResetForRetryRoutine());
+    }
+
+    public void CompleteRetryResetImmediately()
+    {
+        if (!IsRetryResetting && retryResetCoroutine == null)
+        {
+            return;
+        }
+
+        if (retryResetCoroutine != null)
+        {
+            StopCoroutine(retryResetCoroutine);
+            retryResetCoroutine = null;
+        }
+
+        foreach (var ally in spawnedAllyPieces)
+        {
+            ally?.CompleteRetryRewindImmediately();
+        }
+
+        foreach (var civilian in spawnedCivilianPieces)
+        {
+            civilian.piece?.CompleteRetryRewindImmediately();
+        }
+
+        foreach (var enemy in spawnedEnemyPieces)
+        {
+            enemy.piece?.CompleteRetryRewindImmediately();
+        }
+
+        SetRetryResetting(false);
     }
 
     private IEnumerator ResetForRetryRoutine()
@@ -232,6 +337,18 @@ public class StageManager : MonoBehaviour
 
         yield return new WaitForSeconds(RetryRewindDuration);
         retryResetCoroutine = null;
+        SetRetryResetting(false);
+    }
+
+    private void SetRetryResetting(bool isResetting)
+    {
+        if (IsRetryResetting == isResetting)
+        {
+            return;
+        }
+
+        IsRetryResetting = isResetting;
+        RetryResetStateChanged?.Invoke(IsRetryResetting);
     }
     public GameObject GetAllyPiecePrefab(PieceType pieceType)
     {

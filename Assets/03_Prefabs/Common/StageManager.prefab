@@ -63,3 +63,34 @@ MonoBehaviour:
   hitImpactRedPrefab: {fileID: 1102164982151106692, guid: 45d8995debb6f314aacf12d62cb6ecd2, type: 3}
   hitImpactWhitePrefab: {fileID: 3606485128501302018, guid: 64ee3e8825b45be4c85b225cbf8114b9, type: 3}
   hitImpactColorMode: 0
+  combatSfxAudioSource: {fileID: 0}
+  punchAttackSfx:
+  - {fileID: 8300000, guid: 20034c0ec037c1d4ba936c644879580f, type: 3}
+  - {fileID: 8300000, guid: f1e3e2e1e2e695845b4bcc801148698b, type: 3}
+  - {fileID: 8300000, guid: 2cd3a39ad491c014ea7a753e70a7441a, type: 3}
+  - {fileID: 8300000, guid: b27b8857da1bfe4468260ba36a8a023f, type: 3}
+  rushAttackSfx:
+  - {fileID: 8300000, guid: bc036ddf7a07d5440a12ceda973accb8, type: 3}
+  - {fileID: 8300000, guid: 6a1b7b9120623994db90dd7bc9be5422, type: 3}
+  - {fileID: 8300000, guid: 535a80e5d8a0a2143b39fca3d432b156, type: 3}
+  gunReadySfx:
+  - {fileID: 8300000, guid: 2f5399c8037328c4ba09d92027ba44ee, type: 3}
+  - {fileID: 8300000, guid: 868f2e5ee93a4514bb87abe802ef0ba9, type: 3}
+  - {fileID: 8300000, guid: bdc1b3f36929a0c44a061a6960f5ec0a, type: 3}
+  gunFireSfx:
+  - {fileID: 8300000, guid: f47ed2d4330f7624680ff0d6cd0ba31f, type: 3}
+  - {fileID: 8300000, guid: 0939b9c92741a9e438927a9e0bbca7d1, type: 3}
+  hitSfx:
+  - {fileID: 8300000, guid: c97df92ad0dc5d644ba695f6e6fbfad0, type: 3}
+  - {fileID: 8300000, guid: d75548ac3aad779419f9c159b512aeba, type: 3}
+  - {fileID: 8300000, guid: 3bcbad5ddf4f42448ab42c90bfcde42e, type: 3}
+  - {fileID: 8300000, guid: 5c363653225734842ad09e2762383349, type: 3}
+  - {fileID: 8300000, guid: 2fa1b8f4d18598f4e9d989a1cc28d1bc, type: 3}
+  - {fileID: 8300000, guid: b345fb9c65b3bba47896a6ea9c828553, type: 3}
+  - {fileID: 8300000, guid: d5dc6fe0ab5be0b439df365f1784dacc, type: 3}
+  - {fileID: 8300000, guid: 84b964230b7ee674887000756b1378a2, type: 3}
+  - {fileID: 8300000, guid: 75ad602db20b4b54dbd62fd9bdf691e1, type: 3}
+  - {fileID: 8300000, guid: b4925f4be6bf7564c83e49f8c924d588, type: 3}
+  civilianHitSfx:
+  - {fileID: 8300000, guid: 268790034b3a9e84380cbf7704824003, type: 3}
+  - {fileID: 8300000, guid: d5796116e60ee4c478183f3ecdd48fe3, type: 3}
