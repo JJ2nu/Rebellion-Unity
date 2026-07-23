@@ -14,6 +14,7 @@ public class SlasherPiece : PieceBase
     [Header("Slasher Config")]
     [SerializeField, Range(0.1f, 10f)] private float _animSpeedMultiplier = 1f;
     [SerializeField] private float _slashRootMotionDistance = 3.5944f;
+    [SerializeField, Min(0f)] private float _arrivalEaseDuration = 0.08f;
 
 
     private float _attackClipLength = 1.367f;
@@ -75,6 +76,7 @@ public class SlasherPiece : PieceBase
             ? desiredMoveDistance / _slashRootMotionDistance
             : 1f;
 
+        StageManager.Instance?.PlaySlasherAttackSfx();
         _knifeHitBox?.BeginAttack();
         if (_animator != null)
         {
@@ -96,7 +98,7 @@ public class SlasherPiece : PieceBase
         if (!IsDead)
         {
             SetAnimatorRootMotion(false);
-            transform.position = targetCellPosition;
+            yield return EaseToPosition(transform.position, targetCellPosition, _arrivalEaseDuration);
             GridX = targetGX;
             GridY = targetGY;
 
@@ -162,6 +164,35 @@ public class SlasherPiece : PieceBase
             }
 
             yield return null;
+        }
+    }
+
+    private IEnumerator EaseToPosition(Vector3 from, Vector3 to, float duration)
+    {
+        if (duration <= 0f || Vector3.SqrMagnitude(from - to) < 0.0001f)
+        {
+            transform.position = to;
+            yield break;
+        }
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            if (IsDead)
+            {
+                yield break;
+            }
+
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            float eased = 1f - Mathf.Pow(1f - t, 3f);
+            transform.position = Vector3.LerpUnclamped(from, to, eased);
+            yield return null;
+        }
+
+        if (!IsDead)
+        {
+            transform.position = to;
         }
     }
 

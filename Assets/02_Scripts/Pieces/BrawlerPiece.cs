@@ -8,10 +8,14 @@ using UnityEngine;
 /// </summary>
 public class BrawlerPiece : PieceBase
 {
+    [Header("Attack Movement")]
+    [SerializeField] private float _attackStepDistance = 0.65f;
+    [SerializeField, Range(0f, 1f)] private float _advanceEndNormalizedTime = 0.52f;
+    [SerializeField, Range(0f, 1f)] private float _retreatStartNormalizedTime = 0.62f;
+    [SerializeField, Range(0f, 1f)] private float _retreatEndNormalizedTime = 0.95f;
+
     private AttackHitbox _fistHitBox;
     private float _attackClipLength = -1f;
-    [SerializeField] private float _attackStepDistance = 0.65f;
-    [SerializeField] private float _retreatDuration = 0.15f;
     private bool _isExecutingAttack;
     private Vector3 _attackStartPosition;
 
@@ -58,24 +62,81 @@ public class BrawlerPiece : PieceBase
         Vector3 originalPosition = transform.position;
         _attackStartPosition = originalPosition;
         _isExecutingAttack = true;
+
+        StageManager.Instance?.PlayBrawlerAttackSfx();
+        _fistHitBox?.BeginAttack();
+        SetAnimatorRootMotion(false);
+        _animator?.SetTrigger("Attack");
+
         var (dx, dy) = GetFacingDelta();
         Vector3 attackDirection = new Vector3(dx, 0f, dy);
         Vector3 attackPosition = originalPosition + attackDirection * _attackStepDistance;
+        float advanceEnd = Mathf.Clamp01(_advanceEndNormalizedTime);
+        float retreatStart = Mathf.Clamp01(Mathf.Max(_retreatStartNormalizedTime, advanceEnd));
+        float retreatEnd = Mathf.Clamp01(Mathf.Max(_retreatEndNormalizedTime, retreatStart));
 
-        _fistHitBox?.BeginAttack();
-        SetAnimatorRootMotion(true,false);
-        _animator?.SetTrigger("Attack");
+        float advanceDuration = stepDuration * advanceEnd;
+        float holdDuration = stepDuration * (retreatStart - advanceEnd);
+        float retreatDuration = stepDuration * (retreatEnd - retreatStart);
+        float remainingDuration = stepDuration * (1f - retreatEnd);
 
-        yield return MovePositionOverTime(originalPosition, attackPosition, stepDuration);
+        if (advanceDuration > 0f)
+        {
+            yield return MovePositionOverTime(originalPosition, attackPosition, advanceDuration);
+        }
+        else
+        {
+            transform.position = attackPosition;
+        }
 
-        if (_animator != null) _animator.speed = 1f;
+        if (IsDead)
+        {
+            FinishAttackExecution();
+            yield break;
+        }
+
+        if (holdDuration > 0f)
+        {
+            yield return WaitForAttackRemainingTime(holdDuration);
+        }
+
+        if (IsDead)
+        {
+            FinishAttackExecution();
+            yield break;
+        }
+
+        if (retreatDuration > 0f)
+        {
+            yield return MovePositionOverTime(attackPosition, originalPosition, retreatDuration);
+        }
+        else
+        {
+            transform.position = originalPosition;
+        }
+
+        if (IsDead)
+        {
+            FinishAttackExecution();
+            yield break;
+        }
+
+        if (remainingDuration > 0f)
+        {
+            yield return WaitForAttackRemainingTime(remainingDuration);
+        }
+
+        if (IsDead)
+        {
+            FinishAttackExecution();
+            yield break;
+        }
+
         if (!IsDead)
         {
-            yield return MovePositionOverTime(transform.position, originalPosition, _retreatDuration);
-            SetAnimatorRootMotion(false);
+            transform.position = originalPosition;
         }
-        _isExecutingAttack = false;
-        FinishAction();
+        FinishAttackExecution();
     }
 
     public override void Die()
@@ -115,9 +176,9 @@ public class BrawlerPiece : PieceBase
                 yield break;
             }
 
+            elapsed += Time.deltaTime;
             float t = Mathf.Clamp01(elapsed / duration);
             transform.position = Vector3.Lerp(from, to, t);
-            elapsed += Time.deltaTime;
             yield return null;
         }
 
@@ -125,5 +186,28 @@ public class BrawlerPiece : PieceBase
         {
             transform.position = to;
         }
+    }
+
+    private IEnumerator WaitForAttackRemainingTime(float duration)
+    {
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            if (IsDead)
+            {
+                yield break;
+            }
+
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+    }
+
+    private void FinishAttackExecution()
+    {
+        if (_animator != null) _animator.speed = 1f;
+        SetAnimatorRootMotion(false);
+        _isExecutingAttack = false;
+        FinishAction();
     }
 }
