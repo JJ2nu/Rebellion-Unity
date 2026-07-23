@@ -48,6 +48,7 @@ MonoBehaviour:
   gridCellPrefab: {fileID: 6135763539530983894, guid: 2efdefc720dd1bb4e8330b74b02bc920, type: 3}
   initialStagePath: Stages/stage_001.json
   autoStartFirstStage: 1
+  autoStartCampaignFlow: 1
   gridSize: 6
   gridYPosition: 0.1
   stageManager: {fileID: 0}
