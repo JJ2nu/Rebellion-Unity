@@ -20,6 +20,8 @@ public sealed class StageSceneFlowBinder : MonoBehaviour
     private SimulationController.SimulationResult pendingSimulationResult;
 
     public bool HasPendingSimulationResult => hasPendingSimulationResult;
+    public bool WasLastAudioDramaSkipped =>
+        audioDramaPlayer != null && audioDramaPlayer.WasLastPlaybackSkipped;
 
     private void OnEnable()
     {
