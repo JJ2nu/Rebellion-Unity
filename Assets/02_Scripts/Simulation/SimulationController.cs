@@ -266,10 +266,14 @@ public class SimulationController : MonoBehaviour
         foreach (var phase in phases)
             yield return RunPhase(phase, allPieces);
 
+        // 총알은 Stop 호출 후 프레임 끝에 파괴되므로, 실제로 모두 사라진 뒤 최종 상태를 판정한다.
+        yield return new WaitUntil(() =>
+            FindObjectsByType<BulletController>(FindObjectsSortMode.None).Length == 0);
 
-        var result = DetermineResult(allPieces);
-        ShowSurvivingEnemyOutlines(allPieces);
-        CurrentMissionFacts = BuildMissionFacts(StageManager.Instance.GetAllPieces());
+        var finalPieces = StageManager.Instance.GetAllPieces();
+        var result = DetermineResult(finalPieces);
+        ShowSurvivingEnemyOutlines(finalPieces);
+        CurrentMissionFacts = BuildMissionFacts(finalPieces);
         StopMissionFactTracking();
         _lastResult = result.ToString();
         LastSimulationResult = result;
