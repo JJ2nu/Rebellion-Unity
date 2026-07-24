@@ -1,0 +1,87 @@
+{
+    "version": 4,
+    "boardSize": 6,
+    "mapIndex": 1,
+    "stageTitle": "총리를 제거하여 협정 저지",
+    "primaryMission": { "missionId": "eliminate_all_enemies" },
+    "subMissions": [
+        { "missionId": "preserve_allies" }
+    ],
+    "hasOrder": false,
+    "allySlots": [
+        {
+            "pieceType": 0,
+            "count": 1
+        },
+        {
+            "pieceType": 1,
+            "count": 1
+        },
+        {
+            "pieceType": 2,
+            "count": 2
+        }
+    ],
+    "entities": [
+        {
+            "entityKind": 0,
+            "detailType": 3,
+            "facing": 0,
+            "cellIndex": 11
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 1,
+            "cellIndex": 5
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 0,
+            "cellIndex": 8
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 3,
+            "cellIndex": 0
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 3,
+            "cellIndex": 12
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 0,
+            "cellIndex": 24
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 2,
+            "cellIndex": 32
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 2,
+            "cellIndex": 35
+        },
+        {
+            "entityKind": 2,
+            "detailType": 1,
+            "facing": 0,
+            "cellIndex": 31
+        },
+        {
+            "entityKind": 2,
+            "detailType": 1,
+            "facing": 0,
+            "cellIndex": 7
+        }
+    ]
+}
