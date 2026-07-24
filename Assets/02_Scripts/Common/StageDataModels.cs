@@ -76,6 +76,9 @@ public class StageData
     // 적/시민/오브젝트를 한 배열로 저장
     public StageEntityData[] entities = Array.Empty<StageEntityData>();
 
+    // 튜토리얼에서 권장 배치를 보여주는 비상호작용 고스트 기물
+    public TutorialGhostPieceData[] tutorialGhostPieces = Array.Empty<TutorialGhostPieceData>();
+
     public string GetStageTitle()
     {
         // 아직 이관되지 않은 Challenge 데이터도 기존 제목으로 정상 표시한다.
@@ -115,6 +118,19 @@ public class StageData
 
         return 0;
     }
+}
+
+[Serializable]
+public class TutorialGhostPieceData
+{
+    // StageManager.tutorialGhostPrefabs 배열 인덱스
+    public int ghostType;
+
+    // 0 = North, 1 = East, 2 = South, 3 = West
+    public int facing;
+
+    // 배열 저장 규칙 기준 셀 인덱스
+    public int cellIndex;
 }
 
 [Serializable]

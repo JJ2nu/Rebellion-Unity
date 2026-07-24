@@ -180,6 +180,11 @@ MonoBehaviour:
   - {fileID: 8771929361919017144, guid: 2e8213972fb07fe4f8c62a6e82bd2c5b, type: 3}
   - {fileID: 3921962521532312310, guid: f6c562c8b9640fc4fa7e2934b83acec9, type: 3}
   - {fileID: 3328458296932663347, guid: 1a442a92bab579b428bb82f71776a462, type: 3}
+  tutorialGhostPrefabs:
+  - {fileID: 8771929361919017144, guid: 517e7d6fd77c81b48a7e41948f63af17, type: 3}
+  - {fileID: 3921962521532312310, guid: df69ea977506e8f4baa72d743bba394a, type: 3}
+  - {fileID: 3328458296932663347, guid: 85404163ba5f5b748ba003133767ec36, type: 3}
+  tutorialGhostOutlineMaterial: {fileID: 2100000, guid: 04edf99b7cd12da4b989c8515b19422e, type: 2}
   enemyPiecePrefabs:
   - {fileID: 5570943943485575194, guid: c135df083d556ca4a99429a38bee7547, type: 3}
   - {fileID: 0}
@@ -192,10 +197,10 @@ MonoBehaviour:
   - {fileID: 5455071742382695461, guid: 76cc0c066ccc14545aa382e0ee1a4c72, type: 3}
   - {fileID: 5573549547454476352, guid: fdcb0907192a3b242b72aa57b238d064, type: 3}
   - {fileID: 3491224688107528927, guid: 33d8eeeb6ea2fa44a8c7373fe7a669a9, type: 3}
-  mapAudioController: {fileID: 3897015681217720354}
   hitImpactRedPrefab: {fileID: 1102164982151106692, guid: 45d8995debb6f314aacf12d62cb6ecd2, type: 3}
   hitImpactWhitePrefab: {fileID: 3606485128501302018, guid: 64ee3e8825b45be4c85b225cbf8114b9, type: 3}
   hitImpactColorMode: 0
+  mapAudioController: {fileID: 3897015681217720354}
   combatSfxAudioSource: {fileID: 0}
   punchAttackSfx:
   - {fileID: 8300000, guid: 20034c0ec037c1d4ba936c644879580f, type: 3}
@@ -227,6 +232,8 @@ MonoBehaviour:
   civilianHitSfx:
   - {fileID: 8300000, guid: 268790034b3a9e84380cbf7704824003, type: 3}
   - {fileID: 8300000, guid: d5796116e60ee4c478183f3ecdd48fe3, type: 3}
+  currentStageEnemyCount: 0
+  currentStageEnemyTypeCounts: 
 --- !u!114 &3897015681217720354
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -237,7 +244,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3b09894d5417b204a9ebb4f88daa0347, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MapAudioController
   bgmAudioSource: {fileID: 5984429707659395221}
   ambientAudioSource: {fileID: 3068905126312375289}
