@@ -43,12 +43,14 @@ public sealed class AudioDramaPlayer : MonoBehaviour
     private AudioDramaDataTable dataTable;
     private Coroutine playRoutine;
     private bool skipRequested;
+    private bool holdPanelAfterPlayback;
 
     #endregion
 
     #region Properties
 
     public bool IsPlaying => playRoutine != null;
+    public bool IsFullyVisible => canvasGroup != null && canvasGroup.alpha >= 0.99f;
 
     #endregion
 
@@ -77,25 +79,54 @@ public sealed class AudioDramaPlayer : MonoBehaviour
 
     public void PlayByStageId(string stageId)
     {
+        StartPlayback(stageId, false);
+    }
+
+    public void PlayEndingByStageId(string stageId)
+    {
+        // 엔딩 전환막이 패널을 완전히 덮기 전에는 Stage 화면이 다시 드러나지 않도록 마지막 화면을 유지한다.
+        StartPlayback(stageId, true);
+    }
+
+    public IEnumerator PlayByStageIdAndWait(string stageId)
+    {
+        holdPanelAfterPlayback = false;
+        yield return PlayByStageIdAndWaitInternal(stageId, false);
+    }
+
+    public void ReleaseHeldEndingPanel()
+    {
+        holdPanelAfterPlayback = false;
+        HideImmediate();
+    }
+
+    private void StartPlayback(string stageId, bool shouldHoldPanelAfterPlayback)
+    {
         if (playRoutine != null)
         {
             StopCoroutine(playRoutine);
             playRoutine = null;
         }
 
+        holdPanelAfterPlayback = false;
         HideImmediate();
-        playRoutine = StartCoroutine(PlayByStageIdAndWait(stageId));
+        holdPanelAfterPlayback = shouldHoldPanelAfterPlayback;
+        playRoutine = StartCoroutine(
+            PlayByStageIdAndWaitInternal(stageId, shouldHoldPanelAfterPlayback));
     }
 
-    public IEnumerator PlayByStageIdAndWait(string stageId)
+    private IEnumerator PlayByStageIdAndWaitInternal(string stageId, bool shouldHoldPanelAfterPlayback)
     {
         Initialize();
         skipRequested = false;
+        // StartCoroutine 반환값이 playRoutine에 먼저 기록된 다음 실패/완료 상태를 해제할 수 있게 한 프레임 양보한다.
+        yield return null;
 
         if (!dataTable.TryGetByStageId(stageId, out AudioDramaData data))
         {
             Debug.LogWarning($"AudioDrama data was not found. Stage ID: {stageId}", this);
             HideImmediate();
+            holdPanelAfterPlayback = false;
             playRoutine = null;
             yield break;
         }
@@ -105,11 +136,12 @@ public sealed class AudioDramaPlayer : MonoBehaviour
         {
             Debug.LogWarning($"AudioDrama audio clip was not found. Audio ID: {data.AudioId}", this);
             HideImmediate();
+            holdPanelAfterPlayback = false;
             playRoutine = null;
             yield break;
         }
 
-        yield return PlayDataAndWait(data, clip);
+        yield return PlayDataAndWait(data, clip, shouldHoldPanelAfterPlayback);
         playRoutine = null;
     }
 
@@ -124,7 +156,14 @@ public sealed class AudioDramaPlayer : MonoBehaviour
             playRoutine = null;
         }
 
-        HideImmediate();
+        if (holdPanelAfterPlayback)
+        {
+            HoldPanelImmediate();
+        }
+        else
+        {
+            HideImmediate();
+        }
     }
 
     #endregion
@@ -203,9 +242,12 @@ public sealed class AudioDramaPlayer : MonoBehaviour
 
     #region Playback
 
-    private IEnumerator PlayDataAndWait(AudioDramaData data, AudioClip clip)
+    private IEnumerator PlayDataAndWait(
+        AudioDramaData data,
+        AudioClip clip,
+        bool shouldHoldPanelAfterPlayback)
     {
-        // 오디오 시간을 기준으로 자막을 맞추며, 어느 대기 구간에서도 스킵 즉시 패널을 정리한다.
+        // 일반 재생은 즉시 패널을 정리하고, 엔딩 재생은 전환막이 올라올 때까지 현재 화면을 유지한다.
         canvasGroup.blocksRaycasts = true;
         canvasGroup.interactable = false;
         dialogueText.text = string.Empty;
@@ -214,7 +256,7 @@ public sealed class AudioDramaPlayer : MonoBehaviour
         yield return FadePanel(0f, 1f, panelFadeDuration);
         if (skipRequested)
         {
-            HideImmediate();
+            FinishPlaybackVisibility(shouldHoldPanelAfterPlayback);
             yield break;
         }
 
@@ -234,7 +276,7 @@ public sealed class AudioDramaPlayer : MonoBehaviour
 
             if (skipRequested)
             {
-                HideImmediate();
+                FinishPlaybackVisibility(shouldHoldPanelAfterPlayback);
                 yield break;
             }
 
@@ -250,7 +292,7 @@ public sealed class AudioDramaPlayer : MonoBehaviour
 
             if (skipRequested)
             {
-                HideImmediate();
+                FinishPlaybackVisibility(shouldHoldPanelAfterPlayback);
                 yield break;
             }
         }
@@ -260,8 +302,15 @@ public sealed class AudioDramaPlayer : MonoBehaviour
             yield return null;
         }
 
-        yield return FadePanel(1f, 0f, panelFadeDuration);
-        HideImmediate();
+        if (shouldHoldPanelAfterPlayback)
+        {
+            HoldPanelImmediate();
+        }
+        else
+        {
+            yield return FadePanel(1f, 0f, panelFadeDuration);
+            HideImmediate();
+        }
     }
 
     private AudioClip FindAudioClip(string audioId)
@@ -364,6 +413,38 @@ public sealed class AudioDramaPlayer : MonoBehaviour
     #endregion
 
     #region Visibility
+
+    private void FinishPlaybackVisibility(bool shouldHoldPanelAfterPlayback)
+    {
+        if (shouldHoldPanelAfterPlayback)
+        {
+            HoldPanelImmediate();
+            return;
+        }
+
+        HideImmediate();
+    }
+
+    private void HoldPanelImmediate()
+    {
+        if (audioSource != null)
+        {
+            audioSource.Stop();
+            audioSource.clip = null;
+        }
+
+        if (videoPlayer != null)
+        {
+            videoPlayer.Pause();
+        }
+
+        if (canvasGroup != null)
+        {
+            canvasGroup.alpha = 1f;
+            canvasGroup.blocksRaycasts = true;
+            canvasGroup.interactable = false;
+        }
+    }
 
     private void HideImmediate()
     {
