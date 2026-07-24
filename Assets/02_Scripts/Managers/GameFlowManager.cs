@@ -85,7 +85,9 @@ public sealed class GameFlowManager : MonoBehaviour
     public static bool TryStartDebugCampaign(string stageId)
     {
         GameFlowManager manager = EnsureInstance();
-        bool started = manager.TryBeginCampaignAtStage(stageId);
+        bool started = manager.TryBeginCampaignAtStage(
+            stageId,
+            PlaytestLogger.DebugHotkeyEntrySource);
         if (started)
         {
             Debug.Log($"[GameFlowManager] Debug campaign requested: {stageId}", manager);
@@ -129,16 +131,19 @@ public sealed class GameFlowManager : MonoBehaviour
 
     public void BeginCampaign()
     {
-        TryBeginCampaignAtStage(Stage001);
+        TryBeginCampaignAtStage(Stage001, PlaytestLogger.TitleCampaignEntrySource);
     }
 
-    private bool TryBeginCampaignAtStage(string stageId)
+    private bool TryBeginCampaignAtStage(string stageId, string entrySource)
     {
         if (FindStageStep(stageId) == null)
         {
             Debug.LogWarning($"[GameFlowManager] Cannot start campaign from unknown Stage: {stageId}", this);
             return false;
         }
+
+        // Stage가 실제 로드될 때 같은 출처로 세션을 시작할 수 있도록 Title·디버그 진입 경로를 먼저 구분한다.
+        PlaytestLogger.PrepareCampaign(entrySource);
 
         // 디버그 단축키로 실행 중인 캠페인을 교체할 때 이전 Scene·Stage·엔딩 코루틴이 새 흐름을 덮지 않게 정리한다.
         StopActiveCampaignRoutines();
@@ -185,6 +190,8 @@ public sealed class GameFlowManager : MonoBehaviour
             return false;
         }
 
+        PlaytestLogger.PrepareCampaign(PlaytestLogger.StandaloneStageEntrySource);
+
         // 이미 로드된 Stage를 다시 열지 않고 캠페인 위치와 Binder만 연결한다.
         isCampaignRunning = true;
         isLoadingCampaignScene = false;
@@ -194,6 +201,8 @@ public sealed class GameFlowManager : MonoBehaviour
         currentDialogueBinder?.Unbind();
         currentDialogueBinder = null;
         BindStageScene(binder);
+        PlaytestLogger.RecordStageEntered(stageId);
+        PlaytestLogger.RecordStageReady();
 
         Debug.Log($"[GameFlowManager] Campaign flow started from loaded Stage: {stageId}", this);
         return true;
@@ -305,19 +314,28 @@ public sealed class GameFlowManager : MonoBehaviour
             return;
         }
 
+        // 성공 결과가 실제 확정된 시점만 완료로 집계해 결과 화면에서 이탈한 세션과 구분한다.
+        PlaytestLogger.RecordStageCompleted(result.ToString());
+
         // 엔딩 Stage는 Dialogue Scene으로 나가지 않고 현재 Stage 위에서 오디오드라마를 마친다.
         if (currentStageId == Stage008)
         {
-            PlayEndingOnCurrentStage(BadEndingAudioStageId);
+            PlaytestLogger.RecordStageExited(PlaytestLogger.EndingStartedStageExitReason);
+            PlayEndingOnCurrentStage(BadEndingAudioStageId, result);
             return;
         }
 
         if (currentStageId == Stage009)
         {
-            PlayEndingOnCurrentStage(HasElizaDeath(result) ? BadEndingAudioStageId : GoodEndingAudioStageId);
+            PlaytestLogger.RecordStageExited(PlaytestLogger.EndingStartedStageExitReason);
+            PlayEndingOnCurrentStage(
+                HasElizaDeath(result) ? BadEndingAudioStageId : GoodEndingAudioStageId,
+                result);
             return;
         }
 
+        PlaytestLogger.RecordStageExited(PlaytestLogger.ProgressedStageExitReason);
+        PlaytestLogger.RecordDialogueEntered();
         ResolveDialogueAndNextStage(result);
         LoadDialogueSceneFromStage();
     }
@@ -358,6 +376,13 @@ public sealed class GameFlowManager : MonoBehaviour
 
         bool hasIntroAudioDrama = !string.IsNullOrWhiteSpace(step.IntroAudioDramaStageId);
         binder.LoadStage(step.StagePath, !hasIntroAudioDrama);
+        bool stageLoaded = StageManager.Instance != null &&
+                           StageManager.Instance.CurrentStageId == currentStageId;
+        if (stageLoaded)
+        {
+            PlaytestLogger.RecordStageEntered(currentStageId);
+        }
+
         yield return overlay.WaitForSceneSettled();
 
         if (hasIntroAudioDrama)
@@ -373,6 +398,11 @@ public sealed class GameFlowManager : MonoBehaviour
             // 오디오드라마가 끝나거나 스킵된 뒤에만 맵 BGM과 앰비언트를 시작한다.
             yield return binder.WaitForAudioDramaToFinish();
             binder.PlayCurrentMapAudio();
+        }
+
+        if (stageLoaded)
+        {
+            PlaytestLogger.RecordStageReady();
         }
 
         stageSceneRoutine = null;
@@ -470,6 +500,10 @@ public sealed class GameFlowManager : MonoBehaviour
     {
         SceneTransitionOverlay overlay = SceneTransitionOverlay.Instance;
         yield return overlay.FadeOut();
+
+        PlaytestLogger.EndActiveSession(
+            PlaytestLogger.ReturnedToTitleSessionEndReason,
+            "f12DebugHotkey");
 
         // 진행 중인 Stage와 엔딩 패널은 검은 화면 아래에서만 정리해 F12 복귀 중 뒤쪽 맵이 노출되지 않게 한다.
         if (currentStageBinder != null)
@@ -572,20 +606,25 @@ public sealed class GameFlowManager : MonoBehaviour
         }
     }
 
-    private void PlayEndingOnCurrentStage(string endingAudioStageId)
+    private void PlayEndingOnCurrentStage(
+        string endingAudioStageId,
+        SimulationController.SimulationResult finalResult)
     {
         if (endingRoutine != null)
         {
             StopCoroutine(endingRoutine);
         }
 
-        endingRoutine = StartCoroutine(PlayEndingRoutine(endingAudioStageId));
+        endingRoutine = StartCoroutine(PlayEndingRoutine(endingAudioStageId, finalResult));
     }
 
-    private IEnumerator PlayEndingRoutine(string endingAudioStageId)
+    private IEnumerator PlayEndingRoutine(
+        string endingAudioStageId,
+        SimulationController.SimulationResult finalResult)
     {
         StageSceneFlowBinder endingStageBinder = currentStageBinder;
         SceneTransitionOverlay overlay = SceneTransitionOverlay.Instance;
+        string endingSourceStageId = currentStageId;
 
         // Stage 정리와 오디오드라마 패널 준비를 모두 검은 전환막 아래에서 처리한다.
         yield return overlay.FadeOut();
@@ -593,12 +632,30 @@ public sealed class GameFlowManager : MonoBehaviour
         endingStageBinder.PlayEndingAudioDrama(endingAudioStageId);
         yield return endingStageBinder.WaitForAudioDramaToBecomeVisible();
 
-        if (endingStageBinder.IsAudioDramaPlayingAndVisible())
+        bool endingStarted = endingStageBinder.IsAudioDramaPlayingAndVisible();
+        if (endingStarted)
         {
+            PlaytestLogger.RecordEndingStarted(
+                endingAudioStageId,
+                endingSourceStageId,
+                finalResult.ToString());
             yield return overlay.FadeIn();
         }
 
         yield return endingStageBinder.WaitForAudioDramaToFinish();
+        if (endingStarted)
+        {
+            PlaytestLogger.RecordEndingCompleted(
+                endingStageBinder.WasLastAudioDramaSkipped ? "skipped" : "natural");
+        }
+        else
+        {
+            // 리소스 누락 등으로 엔딩이 시작되지 않아도 열린 세션 상태가 다음 실행까지 남지 않게 마감한다.
+            PlaytestLogger.EndActiveSession(
+                PlaytestLogger.ReturnedToTitleSessionEndReason,
+                "endingPlaybackUnavailable");
+        }
+
         Debug.Log($"[GameFlowManager] Campaign ending finished: {endingAudioStageId}", this);
 
         if (!overlay.IsFullyOpaque)

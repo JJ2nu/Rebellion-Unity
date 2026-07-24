@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class GameSceneManager : MonoBehaviour
 {
@@ -50,6 +50,11 @@ public class GameSceneManager : MonoBehaviour
     public void QuitGame()
     {
         Debug.Log("게임 종료");
+
+        // Application.Quit 전에 먼저 닫아 Editor 종료와 빌드 종료 모두 마지막 세션 요약을 남긴다.
+        PlaytestLogger.EndActiveSession(
+            PlaytestLogger.ApplicationQuitSessionEndReason,
+            "titleExitButton");
 
         // 빌드된 게임에서 종료
         Application.Quit();
