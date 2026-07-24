@@ -10,6 +10,7 @@ public class SimulationController : MonoBehaviour
     public static SimulationController Instance { get; private set; }
 
     [SerializeField] private float stepDuration = 0.5f;
+    [SerializeField] private OrbitingCamera orbitingCamera;
 
     [Header("Debug (Read-only)")]
     public bool _isRunning;
@@ -125,10 +126,24 @@ public class SimulationController : MonoBehaviour
         }
 
         StageManager.Instance?.CompleteRetryResetImmediately();
+        ResetMapViewRotation();
         StartCoroutine(RunSimulation());
     }
 
-    public void ResetSimulation()
+    private void ResetMapViewRotation()
+    {
+        if (orbitingCamera == null)
+        {
+            orbitingCamera = FindFirstObjectByType<OrbitingCamera>();
+        }
+
+        if (orbitingCamera != null)
+        {
+            orbitingCamera.StartResetToDefaultOrbit();
+        }
+    }
+
+    public void ResetSimulation(bool resetSkillTargets = true)
     {
         // 외부 Presentation이 숨긴 화면과 입력을 먼저 복구한 뒤 Simulation 코루틴을 정리한다.
         preSimulationPresentationController?.CancelCurrentSequence();
@@ -164,9 +179,12 @@ public class SimulationController : MonoBehaviour
         executedSkills.Clear();
         ResetMissionFacts();
 
-        foreach (var skill in _skills)
+        if (resetSkillTargets)
         {
-            skill?.ResetTarget();
+            foreach (var skill in _skills)
+            {
+                skill?.ResetTarget();
+            }
         }
 
         // Retry와 스테이지 재로드에서 결과 UI가 같은 초기화 시점을 사용하도록 알린다.
@@ -178,7 +196,7 @@ public class SimulationController : MonoBehaviour
     /// </summary>
     public void RetrySimulation()
     {
-        ResetSimulation();
+        ResetSimulation(resetSkillTargets: false);
         StageManager.Instance?.ResetForRetry();
     }
 
@@ -248,10 +266,14 @@ public class SimulationController : MonoBehaviour
         foreach (var phase in phases)
             yield return RunPhase(phase, allPieces);
 
+        // 총알은 Stop 호출 후 프레임 끝에 파괴되므로, 실제로 모두 사라진 뒤 최종 상태를 판정한다.
+        yield return new WaitUntil(() =>
+            FindObjectsByType<BulletController>(FindObjectsSortMode.None).Length == 0);
 
-        var result = DetermineResult(allPieces);
-        ShowSurvivingEnemyOutlines(allPieces);
-        CurrentMissionFacts = BuildMissionFacts(StageManager.Instance.GetAllPieces());
+        var finalPieces = StageManager.Instance.GetAllPieces();
+        var result = DetermineResult(finalPieces);
+        ShowSurvivingEnemyOutlines(finalPieces);
+        CurrentMissionFacts = BuildMissionFacts(finalPieces);
         StopMissionFactTracking();
         _lastResult = result.ToString();
         LastSimulationResult = result;
