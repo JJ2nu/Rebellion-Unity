@@ -133,6 +133,34 @@ public sealed class StageSceneFlowBinder : MonoBehaviour
         audioDramaPlayer.PlayByStageId(stageId);
     }
 
+    public void PlayEndingAudioDrama(string stageId)
+    {
+        EnsureBindings();
+
+        if (audioDramaPlayer == null)
+        {
+            Debug.LogWarning($"[StageSceneFlowBinder] AudioDramaPlayer is not assigned. Stage ID: {stageId}", this);
+            return;
+        }
+
+        audioDramaPlayer.PlayEndingByStageId(stageId);
+    }
+
+    public IEnumerator WaitForAudioDramaToBecomeVisible()
+    {
+        EnsureBindings();
+
+        if (audioDramaPlayer == null)
+        {
+            yield break;
+        }
+
+        while (audioDramaPlayer.IsPlaying && !audioDramaPlayer.IsFullyVisible)
+        {
+            yield return null;
+        }
+    }
+
     public IEnumerator WaitForAudioDramaToFinish()
     {
         EnsureBindings();
@@ -146,6 +174,20 @@ public sealed class StageSceneFlowBinder : MonoBehaviour
         {
             yield return null;
         }
+    }
+
+    public bool IsAudioDramaPlayingAndVisible()
+    {
+        EnsureBindings();
+        return audioDramaPlayer != null &&
+               audioDramaPlayer.IsPlaying &&
+               audioDramaPlayer.IsFullyVisible;
+    }
+
+    public void ReleaseHeldEndingAudioDrama()
+    {
+        EnsureBindings();
+        audioDramaPlayer?.ReleaseHeldEndingPanel();
     }
 
     public void ConfirmSimulationResult()

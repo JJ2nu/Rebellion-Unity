@@ -3,10 +3,11 @@ using UnityEngine;
 
 /// <summary>
 /// 캠페인 진행 상태를 Scene 전환 사이에 보관하고 Stage와 Dialogue Scene의 Binder를 연결한다.
-/// 각 Scene의 기존 매니저는 그대로 두고, 캠페인 순서와 분기만 이 객체가 담당한다.
+/// 각 Scene의 기존 매니저는 그대로 두고, 캠페인 순서와 분기 및 엔딩 뒤 Title 복귀만 이 객체가 담당한다.
 /// </summary>
 public sealed class GameFlowManager : MonoBehaviour
 {
+    private const string TitleSceneName = "Title";
     private const string StageSceneName = "Stage";
     private const string DialogueSceneName = "Dialogue";
     private const string StagePathPrefix = "Stages/";
@@ -43,10 +44,13 @@ public sealed class GameFlowManager : MonoBehaviour
     public static GameFlowManager Instance { get; private set; }
     public static bool HasInstance => Instance != null;
     public static bool HasActiveCampaign => Instance != null && Instance.isCampaignRunning;
+    public static bool HasCompletedEndingTitleTransition =>
+        Instance != null && Instance.hasCompletedEndingTitleTransition;
     public string CurrentStageId => currentStageId;
 
     private StageSceneFlowBinder currentStageBinder;
     private DialogueSceneFlowBinder currentDialogueBinder;
+    private TitleBackgroundTransition currentTitleBackgroundTransition;
     private Coroutine stageSceneRoutine;
     private Coroutine endingRoutine;
     private Coroutine campaignSceneRoutine;
@@ -58,6 +62,8 @@ public sealed class GameFlowManager : MonoBehaviour
     private SimulationController.SimulationResult pendingDialogueResult;
     private bool isCampaignRunning;
     private bool isLoadingCampaignScene;
+    // SaveData가 도입되기 전까지는 DontDestroyOnLoad 매니저의 현재 실행 세션에서만 완료 상태를 보관한다.
+    private bool hasCompletedEndingTitleTransition;
 
     public static GameFlowManager EnsureInstance()
     {
@@ -86,6 +92,13 @@ public sealed class GameFlowManager : MonoBehaviour
         }
 
         return started;
+    }
+
+    public static void ReturnToTitleForDebug()
+    {
+        GameFlowManager manager = EnsureInstance();
+        manager.StopActiveCampaignRoutines();
+        manager.campaignSceneRoutine = manager.StartCoroutine(manager.ReturnToTitleForDebugRoutine());
     }
 #endif
 
@@ -259,6 +272,22 @@ public sealed class GameFlowManager : MonoBehaviour
         }
 
         currentDialogueBinder.Play(pendingDialogueLevel, pendingDialogueResult);
+    }
+
+    public void RegisterTitleBackgroundTransition(TitleBackgroundTransition transition)
+    {
+        if (transition != null)
+        {
+            currentTitleBackgroundTransition = transition;
+        }
+    }
+
+    public void UnregisterTitleBackgroundTransition(TitleBackgroundTransition transition)
+    {
+        if (currentTitleBackgroundTransition == transition)
+        {
+            currentTitleBackgroundTransition = null;
+        }
     }
 
     public void HandleStageSimulationFinished(StageSceneFlowBinder sender, SimulationController.SimulationResult result)
@@ -436,6 +465,37 @@ public sealed class GameFlowManager : MonoBehaviour
         campaignSceneRoutine = null;
     }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private IEnumerator ReturnToTitleForDebugRoutine()
+    {
+        SceneTransitionOverlay overlay = SceneTransitionOverlay.Instance;
+        yield return overlay.FadeOut();
+
+        // 진행 중인 Stage와 엔딩 패널은 검은 화면 아래에서만 정리해 F12 복귀 중 뒤쪽 맵이 노출되지 않게 한다.
+        if (currentStageBinder != null)
+        {
+            currentStageBinder.ReleaseHeldEndingAudioDrama();
+            currentStageBinder.EndLoadedStage();
+            currentStageBinder.Unbind();
+        }
+
+        currentDialogueBinder?.Unbind();
+        currentStageBinder = null;
+        currentDialogueBinder = null;
+        currentTitleBackgroundTransition = null;
+        isCampaignRunning = false;
+        isLoadingCampaignScene = false;
+        currentStageId = null;
+        pendingDialogueLevel = null;
+        nextStageAfterDialogue = null;
+
+        yield return overlay.LoadSceneOnly(TitleSceneName);
+        yield return overlay.WaitForSceneSettled();
+        yield return overlay.FadeIn();
+        campaignSceneRoutine = null;
+    }
+#endif
+
     private IEnumerator WaitForStageBinder()
     {
         const float TimeoutSeconds = 5f;
@@ -524,14 +584,79 @@ public sealed class GameFlowManager : MonoBehaviour
 
     private IEnumerator PlayEndingRoutine(string endingAudioStageId)
     {
-        currentStageBinder.EndLoadedStage();
-        yield return currentStageBinder.PlayAudioDramaAndWait(endingAudioStageId);
+        StageSceneFlowBinder endingStageBinder = currentStageBinder;
+        SceneTransitionOverlay overlay = SceneTransitionOverlay.Instance;
+
+        // Stage 정리와 오디오드라마 패널 준비를 모두 검은 전환막 아래에서 처리한다.
+        yield return overlay.FadeOut();
+        endingStageBinder.EndLoadedStage();
+        endingStageBinder.PlayEndingAudioDrama(endingAudioStageId);
+        yield return endingStageBinder.WaitForAudioDramaToBecomeVisible();
+
+        if (endingStageBinder.IsAudioDramaPlayingAndVisible())
+        {
+            yield return overlay.FadeIn();
+        }
+
+        yield return endingStageBinder.WaitForAudioDramaToFinish();
         Debug.Log($"[GameFlowManager] Campaign ending finished: {endingAudioStageId}", this);
+
+        if (!overlay.IsFullyOpaque)
+        {
+            yield return overlay.FadeOut();
+        }
+
+        // 패널은 전환막이 완전히 불투명해진 뒤에만 내려 Stage 화면이 노출되지 않게 한다.
+        endingStageBinder.ReleaseHeldEndingAudioDrama();
+
+        endingStageBinder.Unbind();
+        currentStageBinder = null;
+        currentDialogueBinder = null;
+        currentTitleBackgroundTransition = null;
         isCampaignRunning = false;
         currentStageId = null;
         pendingDialogueLevel = null;
         nextStageAfterDialogue = null;
+
+        // Title Scene이 검은 전환막 아래에서 기존 배경 상태를 먼저 준비한 뒤 화면에 나타나게 한다.
+        yield return overlay.LoadSceneOnly(TitleSceneName);
+        yield return overlay.WaitForSceneSettled();
+        yield return WaitForTitleBackgroundTransition();
+
+        bool shouldPlayTitleBackgroundTransition = !hasCompletedEndingTitleTransition;
+        if (!shouldPlayTitleBackgroundTransition && currentTitleBackgroundTransition != null)
+        {
+            currentTitleBackgroundTransition.ShowAfterBackgroundImmediate();
+        }
+
+        yield return overlay.FadeIn();
+
+        if (shouldPlayTitleBackgroundTransition && currentTitleBackgroundTransition != null)
+        {
+            yield return currentTitleBackgroundTransition.PlayAndWait();
+            hasCompletedEndingTitleTransition = true;
+        }
+
         endingRoutine = null;
+    }
+
+    private IEnumerator WaitForTitleBackgroundTransition()
+    {
+        const float TimeoutSeconds = 5f;
+        float elapsed = 0f;
+
+        while (currentTitleBackgroundTransition == null && elapsed < TimeoutSeconds)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        if (currentTitleBackgroundTransition == null)
+        {
+            Debug.LogWarning(
+                "[GameFlowManager] Title scene loaded, but TitleBackgroundTransition was not registered.",
+                this);
+        }
     }
 
     private static bool HasElizaDeath(SimulationController.SimulationResult result)
