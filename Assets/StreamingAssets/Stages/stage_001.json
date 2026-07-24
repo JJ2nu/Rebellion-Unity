@@ -1,0 +1,81 @@
+{
+    "version": 4,
+    "boardSize": 6,
+    "mapIndex": 0,
+    "stageTitle": "선술집 내 칼트 병력 제거",
+    "primaryMission": { "missionId": "eliminate_all_enemies" },
+    "subMissions": [
+        { "missionId": "preserve_allies" }
+    ],
+    "hasOrder": false,
+    "allySlots": [
+        {
+            "pieceType": 0,
+            "count": 1
+        },
+        {
+            "pieceType": 1,
+            "count": 1
+        },
+        {
+            "pieceType": 2,
+            "count": 1
+        }
+    ],
+    "entities": [
+        {
+            "entityKind": 2,
+            "detailType": 0,
+            "facing": 0,
+            "cellIndex": 5
+        },
+        {
+            "entityKind": 2,
+            "detailType": 2,
+            "facing": 0,
+            "cellIndex": 10
+        },
+        {
+            "entityKind": 2,
+            "detailType": 2,
+            "facing": 0,
+            "cellIndex": 16
+        },
+        {
+            "entityKind": 2,
+            "detailType": 2,
+            "facing": 0,
+            "cellIndex": 23
+        },
+        {
+            "entityKind": 2,
+            "detailType": 2,
+            "facing": 0,
+            "cellIndex": 29
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 3,
+            "cellIndex": 11
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 3,
+            "cellIndex": 17
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 1,
+            "cellIndex": 27
+        },
+        {
+            "entityKind": 0,
+            "detailType": 0,
+            "facing": 0,
+            "cellIndex": 14
+        }
+    ]
+}

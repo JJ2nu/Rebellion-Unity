@@ -1,0 +1,111 @@
+{
+    "version": 4,
+    "boardSize": 6,
+    "mapIndex": 2,
+    "stageTitle": "칼트 병력 제거 및 분산",
+    "primaryMission": { "missionId": "eliminate_all_enemies" },
+    "subMissions": [
+        { "missionId": "preserve_allies" }
+    ],
+    "hasOrder": true,
+    "allySlots": [
+        {
+            "pieceType": 0,
+            "count": 1
+        },
+        {
+            "pieceType": 1,
+            "count": 1
+        },
+        {
+            "pieceType": 2,
+            "count": 2
+        }
+    ],
+    "entities": [
+        {
+            "entityKind": 2,
+            "detailType": 1,
+            "facing": 0,
+            "cellIndex": 2
+        },
+        {
+            "entityKind": 2,
+            "detailType": 1,
+            "facing": 0,
+            "cellIndex": 4
+        },
+        {
+            "entityKind": 2,
+            "detailType": 2,
+            "facing": 0,
+            "cellIndex": 32
+        },
+        {
+            "entityKind": 2,
+            "detailType": 0,
+            "facing": 0,
+            "cellIndex": 29
+        },
+        {
+            "entityKind": 2,
+            "detailType": 0,
+            "facing": 0,
+            "cellIndex": 28
+        },
+        {
+            "entityKind": 0,
+            "detailType": 0,
+            "facing": 1,
+            "cellIndex": 1
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 2,
+            "cellIndex": 30
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 2,
+            "cellIndex": 31
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 0,
+            "cellIndex": 3
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 2,
+            "cellIndex": 11
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 3,
+            "cellIndex": 13
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 1,
+            "cellIndex": 17
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 3,
+            "cellIndex": 34
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 3,
+            "cellIndex": 18
+        }
+    ]
+}

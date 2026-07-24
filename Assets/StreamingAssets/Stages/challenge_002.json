@@ -1,0 +1,97 @@
+{
+    "version": 2,
+    "boardSize": 6,
+    "mapIndex": 1,
+    "mainMission": "도전 모드 2",
+    "subMission1": "",
+    "subMission2": "",
+    "hasOrder": false,
+    "allySlots": [
+        {
+            "pieceType": 0,
+            "count": 1
+        },
+        {
+            "pieceType": 1,
+            "count": 1
+        },
+        {
+            "pieceType": 2,
+            "count": 2
+        }
+    ],
+    "entities": [
+        {
+            "entityKind": 2,
+            "detailType": 1,
+            "facing": 2,
+            "cellIndex": 6
+        },
+        {
+            "entityKind": 2,
+            "detailType": 1,
+            "facing": 1,
+            "cellIndex": 1
+        },
+        {
+            "entityKind": 2,
+            "detailType": 1,
+            "facing": 1,
+            "cellIndex": 5
+        },
+        {
+            "entityKind": 2,
+            "detailType": 1,
+            "facing": 2,
+            "cellIndex": 10
+        },
+        {
+            "entityKind": 2,
+            "detailType": 0,
+            "facing": 2,
+            "cellIndex": 29
+        },
+        {
+            "entityKind": 2,
+            "detailType": 0,
+            "facing": 0,
+            "cellIndex": 24
+        },
+        {
+            "entityKind": 0,
+            "detailType": 0,
+            "facing": 2,
+            "cellIndex": 14
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 3,
+            "cellIndex": 0
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 1,
+            "cellIndex": 4
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 3,
+            "cellIndex": 17
+        },
+        {
+            "entityKind": 0,
+            "detailType": 0,
+            "facing": 1,
+            "cellIndex": 23
+        },
+        {
+            "entityKind": 0,
+            "detailType": 2,
+            "facing": 3,
+            "cellIndex": 30
+        }
+    ]
+}
