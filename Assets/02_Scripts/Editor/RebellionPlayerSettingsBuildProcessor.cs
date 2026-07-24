@@ -61,7 +61,7 @@ public sealed class RebellionPlayerSettingsBuildProcessor : IPreprocessBuildWith
         PlayerSettings.bundleVersion = BuildVersion;
         PlayerSettings.defaultScreenWidth = 1920;
         PlayerSettings.defaultScreenHeight = 1080;
-        PlayerSettings.resizableWindow = false;
+        PlayerSettings.resizableWindow = true;
         int[] iconSizes = PlayerSettings.GetIconSizesForTargetGroup(
             BuildTargetGroup.Standalone,
             IconKind.Application);
