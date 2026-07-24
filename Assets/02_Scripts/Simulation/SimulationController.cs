@@ -204,6 +204,8 @@ public class SimulationController : MonoBehaviour
     {
         SetRunning(true);
         isExecutingSimulation = true;
+        // UI 중복 입력이 걸러지고 실제 실행 상태에 진입한 뒤에만 시연 시도 횟수를 증가시킨다.
+        PlaytestLogger.RecordSimulationStarted();
         _currentPhase = 0;
         _currentStep = 0;
         _lastResult = "-";
@@ -279,6 +281,7 @@ public class SimulationController : MonoBehaviour
         LastSimulationResult = result;
         isExecutingSimulation = false;
         Debug.Log($"[Simulation] Result: {result}");
+        PlaytestLogger.RecordSimulationFinished(result.ToString());
         SimulationFinished?.Invoke(result);
     }
 

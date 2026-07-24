@@ -44,6 +44,7 @@ public sealed class AudioDramaPlayer : MonoBehaviour
     private Coroutine playRoutine;
     private bool skipRequested;
     private bool holdPanelAfterPlayback;
+    private bool wasLastPlaybackSkipped;
 
     #endregion
 
@@ -51,6 +52,7 @@ public sealed class AudioDramaPlayer : MonoBehaviour
 
     public bool IsPlaying => playRoutine != null;
     public bool IsFullyVisible => canvasGroup != null && canvasGroup.alpha >= 0.99f;
+    public bool WasLastPlaybackSkipped => wasLastPlaybackSkipped;
 
     #endregion
 
@@ -109,6 +111,7 @@ public sealed class AudioDramaPlayer : MonoBehaviour
         }
 
         holdPanelAfterPlayback = false;
+        wasLastPlaybackSkipped = false;
         HideImmediate();
         holdPanelAfterPlayback = shouldHoldPanelAfterPlayback;
         playRoutine = StartCoroutine(
@@ -149,6 +152,7 @@ public sealed class AudioDramaPlayer : MonoBehaviour
     {
         // 대기 중인 모든 fade/자막 루프가 같은 프레임에 종료 조건을 볼 수 있도록 먼저 표시한다.
         skipRequested = true;
+        wasLastPlaybackSkipped = true;
 
         if (playRoutine != null)
         {
