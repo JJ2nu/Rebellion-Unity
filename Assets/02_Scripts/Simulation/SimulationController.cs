@@ -126,6 +126,7 @@ public class SimulationController : MonoBehaviour
         }
 
         StageManager.Instance?.CompleteRetryResetImmediately();
+        StageManager.Instance?.SetTutorialGhostPiecesActive(false);
         ResetMapViewRotation();
         StartCoroutine(RunSimulation());
     }
@@ -167,6 +168,7 @@ public class SimulationController : MonoBehaviour
         }
 
         GameManager.Instance.ResetAllTile();
+        StageManager.Instance?.SetTutorialGhostPiecesActive(true);
         SetRunning(false);
         _currentPhase = 0;
         _currentStep = 0;

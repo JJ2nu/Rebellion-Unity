@@ -9,6 +9,7 @@ public class InGameHUDUI : MonoBehaviour
     [SerializeField] private GameObject _rotateUI;
     [SerializeField] private GameObject _deadUI;
     [SerializeField] private GameObject _targetUI;
+    private bool keepGuideStateOnStart;
 
 
     private void OnEnable()
@@ -19,7 +20,14 @@ public class InGameHUDUI : MonoBehaviour
     void Start()
     {
         RefreshMainCameraTransform();
-        Clear();
+        if (keepGuideStateOnStart)
+        {
+            Guide();
+        }
+        else
+        {
+            Clear();
+        }
     }
     void Awake()
     {
@@ -59,6 +67,18 @@ public class InGameHUDUI : MonoBehaviour
         _rotateUI.SetActive(false);
         _deadUI.SetActive(false);
         _targetUI.SetActive(false); 
+    }
+
+    public void InitializeGuide()
+    {
+        keepGuideStateOnStart = true;
+        Guide();
+    }
+
+    private void Guide()
+    {
+        // 가이드 기물은 공격 가능 여부를 판정하지 않으므로 비활성 색상의 종류 아이콘만 고정 표시한다.
+        Inactive();
     }
     public void Inactive()
     {

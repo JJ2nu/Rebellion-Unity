@@ -22,6 +22,13 @@
             "count": 1
         }
     ],
+    "tutorialGhostPieces": [
+        {
+            "ghostType": 1,
+            "facing": 0,
+            "cellIndex": 2
+        }
+    ],
     "entities": [
         {
             "entityKind": 2,

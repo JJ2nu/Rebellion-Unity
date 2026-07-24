@@ -8,6 +8,8 @@ public class StageManager : MonoBehaviour
 {
     private const string ObjectGroupTag = "ObjectGroup";
     private const float RetryRewindDuration = 0.45f;
+    private const float TutorialGhostOutlineWidth = 0.012f;
+    private static readonly Color TutorialGhostOutlineColor = new Color(0f, 1f, 0.1f, 1f);
 
     public static StageManager Instance { get; private set; }
     public static event System.Action<StageData> StageLoaded;
@@ -20,6 +22,9 @@ public class StageManager : MonoBehaviour
     public bool IsRetryResetting { get; private set; }
 
     [SerializeField] private GameObject[] allyPiecePrefabs;
+    [Header("Tutorial")]
+    [SerializeField] private GameObject[] tutorialGhostPrefabs = Array.Empty<GameObject>();
+    [SerializeField] private Material tutorialGhostOutlineMaterial;
     [SerializeField] private GameObject[] enemyPiecePrefabs;
     [SerializeField] private GameObject[] civilianPiecePrefabs;
     [SerializeField] private GameObject[] mapPrefabs;
@@ -58,6 +63,8 @@ public class StageManager : MonoBehaviour
     private readonly List<(int detailType, PieceBase piece)> spawnedEnemyPieces = new();
     private readonly List<(int detailType, PieceBase piece)> spawnedCivilianPieces = new();
     private readonly List<(int detailType, GameObject obj)> spawnedObjects = new();
+    private readonly List<(int cellIndex, GameObject obj)> tutorialGhostPieces = new();
+    private bool tutorialGhostPiecesVisible = true;
     [SerializeField] private int currentStageEnemyCount;
     [SerializeField] private List<int> currentStageEnemyTypeCounts = new();
     public int CurrentStageEnemyCount => currentStageEnemyCount;
@@ -140,6 +147,7 @@ public class StageManager : MonoBehaviour
         }
 
         ClearSpawnedAllyPieces();
+        ClearTutorialGhostPieces();
         currentStageData = parsedData;
         CacheStageEntities(parsedData);
 
@@ -182,6 +190,7 @@ public class StageManager : MonoBehaviour
         SpawnEnemies(parsedData);
         SpawnCivilians(parsedData);
         SpawnObjects(parsedData);
+        SpawnTutorialGhostPieces(parsedData);
         RefreshSpawnedPieceCounts();
         EnsureHitImpactPoolSize();
 
@@ -205,6 +214,7 @@ public class StageManager : MonoBehaviour
         SetMapsActive(false);
         SetCurrentStageEnemyPieceCounts(null);
         groundBloodDecalPool?.Clear();
+        ClearTutorialGhostPieces();
         ClearPools();
         CurrentSpawnedEnemyPieceCount = 0;
         CurrentSpawnedPieceCount = 0;
@@ -436,6 +446,45 @@ public class StageManager : MonoBehaviour
 
         return false;
     }
+
+    public void SetTutorialGhostPiecesActive(bool isActive)
+    {
+        tutorialGhostPiecesVisible = isActive;
+        RefreshTutorialGhostPieceVisibility();
+    }
+
+    private void RefreshTutorialGhostPieceVisibility()
+    {
+        for (int index = 0; index < tutorialGhostPieces.Count; index++)
+        {
+            (int cellIndex, GameObject ghost) = tutorialGhostPieces[index];
+            if (ghost != null)
+            {
+                ghost.SetActive(tutorialGhostPiecesVisible && !IsCellOccupiedBySpawnedAlly(cellIndex));
+            }
+        }
+    }
+
+    private bool IsCellOccupiedBySpawnedAlly(int cellIndex)
+    {
+        for (int index = 0; index < spawnedAllyPieces.Count; index++)
+        {
+            PieceBase allyPiece = spawnedAllyPieces[index];
+            if (allyPiece == null || !allyPiece.gameObject.activeInHierarchy)
+            {
+                continue;
+            }
+
+            int allyCellIndex = StageGridIndexUtility.ToCellIndex(GetBoardSize(), allyPiece.GridX, allyPiece.GridY);
+            if (allyCellIndex == cellIndex)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public bool TryRemoveAllyPiece(PieceBase piece)
     {
         if (piece == null)
@@ -449,6 +498,7 @@ public class StageManager : MonoBehaviour
             ReturnAllyToPool(piece);
             RefreshSpawnedPieceCounts();
             EnsureHitImpactPoolSize();
+            RefreshTutorialGhostPieceVisibility();
         }
 
         return removed;
@@ -518,6 +568,7 @@ public class StageManager : MonoBehaviour
         spawnedAllyPieces.Add(allyPiece);
         RefreshSpawnedPieceCounts();
         EnsureHitImpactPoolSize();
+        RefreshTutorialGhostPieceVisibility();
         return true;
     }
     private string ResolveStagePath(string stagePath)
@@ -1041,6 +1092,196 @@ public class StageManager : MonoBehaviour
 
             spawnedObjects.Add((objectEntity.detailType, spawnedObject));
         }
+    }
+
+    private void SpawnTutorialGhostPieces(StageData stageData)
+    {
+        ClearTutorialGhostPieces();
+
+        if (stageData?.tutorialGhostPieces == null || stageData.tutorialGhostPieces.Length == 0)
+        {
+            return;
+        }
+
+        if (gameManager == null)
+        {
+            gameManager = GameManager.Instance;
+        }
+
+        if (gameManager == null)
+        {
+            Debug.LogWarning("StageManager could not find GameManager for tutorial ghost pieces.", this);
+            return;
+        }
+
+        for (int index = 0; index < stageData.tutorialGhostPieces.Length; index++)
+        {
+            TutorialGhostPieceData ghostData = stageData.tutorialGhostPieces[index];
+            if (ghostData == null)
+            {
+                continue;
+            }
+
+            int prefabIndex = ghostData.ghostType;
+            if (tutorialGhostPrefabs == null || prefabIndex < 0 || prefabIndex >= tutorialGhostPrefabs.Length)
+            {
+                Debug.LogWarning($"Tutorial ghost type is out of range: {ghostData.ghostType}", this);
+                continue;
+            }
+
+            GameObject prefab = tutorialGhostPrefabs[prefabIndex];
+            if (prefab == null)
+            {
+                Debug.LogWarning($"Tutorial ghost prefab is missing for ghostType: {ghostData.ghostType}", this);
+                continue;
+            }
+
+            Vector3 spawnPosition = gameManager.GetCellPosition(ghostData.cellIndex);
+            Quaternion spawnRotation = Quaternion.Euler(0f, ghostData.facing * 90f, 0f);
+            GameObject ghost = Instantiate(prefab, spawnPosition, spawnRotation, transform);
+            ghost.name = $"{prefab.name}_TutorialGhost";
+            ConfigureTutorialGhostPiece(ghost);
+            tutorialGhostPieces.Add((ghostData.cellIndex, ghost));
+        }
+
+        tutorialGhostPiecesVisible = true;
+        RefreshTutorialGhostPieceVisibility();
+    }
+
+    private void ConfigureTutorialGhostPiece(GameObject ghost)
+    {
+        if (ghost == null)
+        {
+            return;
+        }
+
+        foreach (Collider collider in ghost.GetComponentsInChildren<Collider>(true))
+        {
+            collider.enabled = false;
+        }
+
+        foreach (Rigidbody rigidbody in ghost.GetComponentsInChildren<Rigidbody>(true))
+        {
+            rigidbody.isKinematic = true;
+            rigidbody.detectCollisions = false;
+        }
+
+        PieceBase piece = ghost.GetComponent<PieceBase>();
+        if (piece != null)
+        {
+            piece.enabled = false;
+        }
+
+        ConfigureTutorialGhostHud(ghost);
+        ConfigureTutorialGhostAnimator(ghost);
+
+        OutlineEffect outline = ghost.GetComponent<OutlineEffect>();
+        if (outline == null)
+        {
+            outline = ghost.AddComponent<OutlineEffect>();
+        }
+
+        if (tutorialGhostOutlineMaterial != null)
+        {
+            outline.SetOutlineMaterial(tutorialGhostOutlineMaterial);
+        }
+
+        outline.SetExcludedRoots(
+            ghost.transform.Find("HUD"),
+            FindChildByName(ghost.transform, "DirectionIndicator"));
+        outline.SetUseDuplicatedRenderers(true);
+        outline.SetOutlineWidth(TutorialGhostOutlineWidth);
+        outline.ShowPersistent(TutorialGhostOutlineColor);
+    }
+
+    private static void ConfigureTutorialGhostHud(GameObject ghost)
+    {
+        Transform hudTransform = ghost.transform.Find("HUD");
+        if (hudTransform == null)
+        {
+            return;
+        }
+
+        GameObject hud = hudTransform.gameObject;
+        hud.SetActive(true);
+
+        InGameHUDUI hudUi = hud.GetComponent<InGameHUDUI>();
+        if (hudUi != null)
+        {
+            hudUi.InitializeGuide();
+        }
+    }
+
+    private static Transform FindChildByName(Transform root, string childName)
+    {
+        foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
+        {
+            if (child.name == childName)
+            {
+                return child;
+            }
+        }
+
+        return null;
+    }
+
+    private static void ConfigureTutorialGhostAnimator(GameObject ghost)
+    {
+        foreach (Animator animator in ghost.GetComponentsInChildren<Animator>(true))
+        {
+            if (animator == null || animator.runtimeAnimatorController == null)
+            {
+                continue;
+            }
+
+            animator.enabled = true;
+            animator.speed = 1f;
+            animator.Rebind();
+            ResetTriggerIfExists(animator, "Attack");
+            ResetTriggerIfExists(animator, "Hit");
+            ResetTriggerIfExists(animator, "Reset");
+            ResetTriggerIfExists(animator, "Shoot1");
+            ResetTriggerIfExists(animator, "Shoot2");
+
+            int idleHash = Animator.StringToHash("Base Layer.idle");
+            if (animator.HasState(0, idleHash))
+            {
+                animator.Play(idleHash, 0, 0f);
+            }
+            else
+            {
+                animator.Play("idle", 0, 0f);
+            }
+
+            animator.Update(0f);
+        }
+    }
+
+    private static void ResetTriggerIfExists(Animator animator, string triggerName)
+    {
+        foreach (AnimatorControllerParameter parameter in animator.parameters)
+        {
+            if (parameter.type == AnimatorControllerParameterType.Trigger && parameter.name == triggerName)
+            {
+                animator.ResetTrigger(triggerName);
+                return;
+            }
+        }
+    }
+
+    private void ClearTutorialGhostPieces()
+    {
+        for (int index = 0; index < tutorialGhostPieces.Count; index++)
+        {
+            GameObject ghost = tutorialGhostPieces[index].obj;
+            if (ghost != null)
+            {
+                Destroy(ghost);
+            }
+        }
+
+        tutorialGhostPieces.Clear();
+        tutorialGhostPiecesVisible = true;
     }
     private void PoolEnemies()
     {
