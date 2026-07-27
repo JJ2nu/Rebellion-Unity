@@ -8,9 +8,10 @@ using System.Linq;
 public sealed class RebellionPlayerSettingsBuildProcessor : IPreprocessBuildWithReport
 {
     private const string IconPath = "Assets/04_Images/Cursor/UI_Cursor_Basic.png";
-    private const string BuildVersion = "1.0.1";
+    private const string DefaultBuildVersion = "1.0.1";
     private const string BuildRoot = "Builds";
     private const string ExecutableName = "Rebellion.exe";
+    private const string DebugBuildFolderSuffix = "-Debug";
 
     public int callbackOrder => -1000;
 
@@ -25,12 +26,26 @@ public sealed class RebellionPlayerSettingsBuildProcessor : IPreprocessBuildWith
         ApplyPlayerSettings();
     }
 
-    [MenuItem("Rebellion/Build Windows/Version 1.0.1")]
-    private static void BuildWindowsVersioned()
+    [MenuItem("Rebellion/Build Windows/Release")]
+    private static void BuildWindowsRelease()
+    {
+        BuildWindows(string.Empty, BuildOptions.None);
+    }
+
+    [MenuItem("Rebellion/Build Windows/Debug")]
+    private static void BuildWindowsDebug()
+    {
+        BuildWindows(
+            DebugBuildFolderSuffix,
+            BuildOptions.Development | BuildOptions.AllowDebugging);
+    }
+
+    private static void BuildWindows(string outputFolderSuffix, BuildOptions buildOptions)
     {
         ApplyPlayerSettings();
 
-        string outputDirectory = Path.Combine(BuildRoot, BuildVersion);
+        string outputFolderName = GetBuildVersion() + outputFolderSuffix;
+        string outputDirectory = Path.Combine(BuildRoot, SanitizePathSegment(outputFolderName));
         Directory.CreateDirectory(outputDirectory);
 
         string[] scenes = EditorBuildSettings.scenes
@@ -43,7 +58,7 @@ public sealed class RebellionPlayerSettingsBuildProcessor : IPreprocessBuildWith
             scenes = scenes,
             locationPathName = Path.Combine(outputDirectory, ExecutableName),
             target = BuildTarget.StandaloneWindows64,
-            options = BuildOptions.None
+            options = buildOptions
         });
     }
 
@@ -58,7 +73,11 @@ public sealed class RebellionPlayerSettingsBuildProcessor : IPreprocessBuildWith
 
         PlayerSettings.defaultCursor = null;
         PlayerSettings.cursorHotspot = Vector2.zero;
-        PlayerSettings.bundleVersion = BuildVersion;
+        if (string.IsNullOrWhiteSpace(PlayerSettings.bundleVersion))
+        {
+            PlayerSettings.bundleVersion = DefaultBuildVersion;
+        }
+
         PlayerSettings.defaultScreenWidth = 1920;
         PlayerSettings.defaultScreenHeight = 1080;
         PlayerSettings.resizableWindow = true;
@@ -72,5 +91,19 @@ public sealed class RebellionPlayerSettingsBuildProcessor : IPreprocessBuildWith
             IconKind.Application);
 
         AssetDatabase.SaveAssets();
+    }
+
+    private static string GetBuildVersion()
+    {
+        return string.IsNullOrWhiteSpace(PlayerSettings.bundleVersion)
+            ? DefaultBuildVersion
+            : PlayerSettings.bundleVersion.Trim();
+    }
+
+    private static string SanitizePathSegment(string value)
+    {
+        char[] invalidChars = Path.GetInvalidFileNameChars();
+        return new string(value.Select(character =>
+            invalidChars.Contains(character) ? '_' : character).ToArray());
     }
 }
