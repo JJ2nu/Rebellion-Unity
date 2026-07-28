@@ -10,6 +10,9 @@ public sealed class GameFlowManager : MonoBehaviour
     private const string TitleSceneName = "Title";
     private const string StageSceneName = "Stage";
     private const string DialogueSceneName = "Dialogue";
+#if UNITY_EDITOR || REBELLION_DEMO_BUILD
+    private const string DemoTimeOverSceneName = "DemoTimeOver";
+#endif
     private const string StagePathPrefix = "Stages/";
     private const string StagePathSuffix = ".json";
     private const string Stage001 = "stage_001";
@@ -81,9 +84,10 @@ public sealed class GameFlowManager : MonoBehaviour
         EnsureInstance().BeginCampaign();
     }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REBELLION_DEMO_BUILD
     public static bool TryStartDebugCampaign(string stageId)
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         GameFlowManager manager = EnsureInstance();
         bool started = manager.TryBeginCampaignAtStage(
             stageId,
@@ -94,13 +98,23 @@ public sealed class GameFlowManager : MonoBehaviour
         }
 
         return started;
+#else
+        return false;
+#endif
     }
 
     public static void ReturnToTitleForDebug()
     {
         GameFlowManager manager = EnsureInstance();
-        manager.StopActiveCampaignRoutines();
-        manager.campaignSceneRoutine = manager.StartCoroutine(manager.ReturnToTitleForDebugRoutine());
+        manager.BeginForcedSceneReturn(TitleSceneName, "f12DebugHotkey");
+    }
+#endif
+
+#if UNITY_EDITOR || REBELLION_DEMO_BUILD
+    public static void ReturnToDemoTimeOver()
+    {
+        GameFlowManager manager = EnsureInstance();
+        manager.BeginForcedSceneReturn(DemoTimeOverSceneName, "demoTimeExpired");
     }
 #endif
 
@@ -203,6 +217,9 @@ public sealed class GameFlowManager : MonoBehaviour
         BindStageScene(binder);
         PlaytestLogger.RecordStageEntered(stageId);
         PlaytestLogger.RecordStageReady();
+#if UNITY_EDITOR || REBELLION_DEMO_BUILD
+        DemoSessionController.NotifyCampaignContentVisible();
+#endif
 
         Debug.Log($"[GameFlowManager] Campaign flow started from loaded Stage: {stageId}", this);
         return true;
@@ -228,6 +245,16 @@ public sealed class GameFlowManager : MonoBehaviour
             campaignSceneRoutine = null;
         }
     }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REBELLION_DEMO_BUILD
+    private void BeginForcedSceneReturn(string destinationSceneName, string endTrigger)
+    {
+        // TimeOver 전환의 FadeIn 중 F12/0초 자동 복귀가 들어와도 최신 목적지 요청을 우선한다.
+        StopActiveCampaignRoutines();
+        campaignSceneRoutine = StartCoroutine(
+            ReturnFromCampaignRoutine(destinationSceneName, endTrigger));
+    }
+#endif
 
     public void RegisterStageScene(StageSceneFlowBinder binder)
     {
@@ -393,6 +420,14 @@ public sealed class GameFlowManager : MonoBehaviour
 
         yield return overlay.FadeIn();
 
+        if (stageLoaded)
+        {
+#if UNITY_EDITOR || REBELLION_DEMO_BUILD
+            // 첫 Stage가 화면에 보이는 순간부터 시간을 계산해 Scene·데이터 로딩 시간을 체험 시간에서 제외한다.
+            DemoSessionController.NotifyCampaignContentVisible();
+#endif
+        }
+
         if (hasIntroAudioDrama)
         {
             // 오디오드라마가 끝나거나 스킵된 뒤에만 맵 BGM과 앰비언트를 시작한다.
@@ -495,17 +530,19 @@ public sealed class GameFlowManager : MonoBehaviour
         campaignSceneRoutine = null;
     }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-    private IEnumerator ReturnToTitleForDebugRoutine()
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REBELLION_DEMO_BUILD
+    private IEnumerator ReturnFromCampaignRoutine(
+        string destinationSceneName,
+        string endTrigger)
     {
         SceneTransitionOverlay overlay = SceneTransitionOverlay.Instance;
         yield return overlay.FadeOut();
 
         PlaytestLogger.EndActiveSession(
             PlaytestLogger.ReturnedToTitleSessionEndReason,
-            "f12DebugHotkey");
+            endTrigger);
 
-        // 진행 중인 Stage와 엔딩 패널은 검은 화면 아래에서만 정리해 F12 복귀 중 뒤쪽 맵이 노출되지 않게 한다.
+        // 진행 중인 Stage와 엔딩 패널은 검은 화면 아래에서만 정리해 강제 라운드 종료 중 뒤쪽 화면이 노출되지 않게 한다.
         if (currentStageBinder != null)
         {
             currentStageBinder.ReleaseHeldEndingAudioDrama();
@@ -522,8 +559,9 @@ public sealed class GameFlowManager : MonoBehaviour
         currentStageId = null;
         pendingDialogueLevel = null;
         nextStageAfterDialogue = null;
+        hasCompletedEndingTitleTransition = false;
 
-        yield return overlay.LoadSceneOnly(TitleSceneName);
+        yield return overlay.LoadSceneOnly(destinationSceneName);
         yield return overlay.WaitForSceneSettled();
         yield return overlay.FadeIn();
         campaignSceneRoutine = null;
@@ -635,6 +673,11 @@ public sealed class GameFlowManager : MonoBehaviour
         bool endingStarted = endingStageBinder.IsAudioDramaPlayingAndVisible();
         if (endingStarted)
         {
+#if UNITY_EDITOR || REBELLION_DEMO_BUILD
+            // 엔딩에 도달한 시연 참가자는 제한 시간이 끝나도 Title 배경 전환까지 연출을 보장한다.
+            DemoSessionController.NotifyEndingStarted();
+#endif
+
             PlaytestLogger.RecordEndingStarted(
                 endingAudioStageId,
                 endingSourceStageId,
@@ -693,6 +736,11 @@ public sealed class GameFlowManager : MonoBehaviour
             yield return currentTitleBackgroundTransition.PlayAndWait();
             hasCompletedEndingTitleTransition = true;
         }
+
+#if UNITY_EDITOR || REBELLION_DEMO_BUILD
+        // 엔딩 오디오드라마와 Title 배경 전환이 모두 끝난 뒤에만 다음 시연 라운드 타이머를 초기화한다.
+        DemoSessionController.NotifyEndingTitleTransitionCompleted();
+#endif
 
         endingRoutine = null;
     }
