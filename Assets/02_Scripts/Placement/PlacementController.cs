@@ -74,7 +74,9 @@ private void Update()
             return;
         }
 
-        if (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame)
+        if (Mouse.current != null &&
+            FixedAspectRatioController.ContainsScreenPoint(Mouse.current.position.ReadValue()) &&
+            Mouse.current.rightButton.wasPressedThisFrame)
         {
             CancelPlacement();
             return;
@@ -149,6 +151,11 @@ public void BeginPlacement(InGameUnitStorageSlotUI slot)
     private void HandleMouseWheelRotation()
     {
         if (!IsPlacing || Mouse.current == null)
+        {
+            return;
+        }
+
+        if (!FixedAspectRatioController.ContainsScreenPoint(Mouse.current.position.ReadValue()))
         {
             return;
         }
@@ -383,6 +390,11 @@ public void HandleAllyPieceRightClick(PieceBase piece)
         Vector2 mouseScreen = Mouse.current != null
             ? Mouse.current.position.ReadValue()
             : (Vector2)Input.mousePosition;
+
+        if (!FixedAspectRatioController.ContainsScreenPoint(mouseScreen))
+        {
+            return;
+        }
 
         Ray ray = cam.ScreenPointToRay(mouseScreen);
         Plane gridPlane = new Plane(Vector3.up, new Vector3(0f, gridPlaneY, 0f));

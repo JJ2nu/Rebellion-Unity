@@ -101,9 +101,10 @@ public static class DemoSceneBuilder
         scaler.referenceResolution = new Vector2(1920f, 1080f);
         scaler.matchWidthOrHeight = 0.5f;
         canvasObject.AddComponent<GraphicRaycaster>();
+        RectTransform aspectContentRoot = CreateAspectContentRoot(canvasObject, scaler);
 
         GameObject timerObject = new("Timer", typeof(RectTransform));
-        timerObject.transform.SetParent(canvasObject.transform, false);
+        timerObject.transform.SetParent(aspectContentRoot, false);
         RectTransform timerTransform = timerObject.GetComponent<RectTransform>();
         timerTransform.anchorMin = new Vector2(0.5f, 1f);
         timerTransform.anchorMax = new Vector2(0.5f, 1f);
@@ -181,9 +182,10 @@ public static class DemoSceneBuilder
         scaler.referenceResolution = new Vector2(1920f, 1080f);
         scaler.matchWidthOrHeight = 0.5f;
         canvasObject.AddComponent<GraphicRaycaster>();
+        RectTransform aspectContentRoot = CreateAspectContentRoot(canvasObject, scaler);
 
         GameObject panelObject = new("PromotionPanel", typeof(RectTransform));
-        panelObject.transform.SetParent(canvasObject.transform, false);
+        panelObject.transform.SetParent(aspectContentRoot, false);
         RectTransform panelTransform = panelObject.GetComponent<RectTransform>();
         panelTransform.anchorMin = Vector2.zero;
         panelTransform.anchorMax = Vector2.one;
@@ -203,6 +205,30 @@ public static class DemoSceneBuilder
 
         Selection.activeGameObject = contentRoot;
         EditorSceneManager.SaveScene(scene, TimeOverScenePath);
+    }
+
+    private static RectTransform CreateAspectContentRoot(
+        GameObject canvasObject,
+        CanvasScaler canvasScaler)
+    {
+        // 재생성 메뉴를 실행해도 런타임 Prefab/Scene과 같은 명시적 16:9 UI 연결을 보존한다.
+        GameObject contentRootObject = new("AspectContentRoot", typeof(RectTransform));
+        contentRootObject.transform.SetParent(canvasObject.transform, false);
+
+        RectTransform contentRoot = contentRootObject.GetComponent<RectTransform>();
+        contentRoot.anchorMin = Vector2.zero;
+        contentRoot.anchorMax = Vector2.one;
+        contentRoot.offsetMin = Vector2.zero;
+        contentRoot.offsetMax = Vector2.zero;
+
+        FixedAspectRatioCanvas fixedAspect =
+            contentRootObject.AddComponent<FixedAspectRatioCanvas>();
+        SerializedObject fixedAspectObject = new(fixedAspect);
+        fixedAspectObject.FindProperty("canvasScaler").objectReferenceValue = canvasScaler;
+        fixedAspectObject.FindProperty("referenceResolution").vector2Value =
+            new Vector2(1920f, 1080f);
+        fixedAspectObject.ApplyModifiedPropertiesWithoutUndo();
+        return contentRoot;
     }
 
     private static void EnsureDemoScenesInEditorBuildSettings()
