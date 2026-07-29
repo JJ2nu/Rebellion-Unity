@@ -86,6 +86,14 @@ public class AttackHitbox : MonoBehaviour
         _hitPieces.Add(piece);
         var hitDirection = (Direction)(((int) _owner.FacingDirection + 3) % 4);
         StageManager.Instance?.PlayPieceHitSfx(piece);
+        SimulationController.Instance?.ReportHitConfirmed(
+            _owner,
+            piece,
+            hitPoint,
+            impactDirection,
+            attackType,
+            damage: 1,
+            isLethal: piece.CurrentHealth <= 1);
         piece.TakeDamage(1,hitDirection);
         StageManager.Instance?.PlayHitImpact(hitPoint, impactDirection, attackType);
     }

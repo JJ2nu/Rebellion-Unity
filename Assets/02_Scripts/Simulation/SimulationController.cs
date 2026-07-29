@@ -33,6 +33,14 @@ public class SimulationController : MonoBehaviour
     public event Action SimulationReset;
     public event Action<SimulationMissionFacts> MissionFactsChanged;
     public event Action<SimulationMissionFacts> MissionStartFactsFinalized;
+    public event Action<CombatSimulationContext> SimulationStarted;
+    public event Action<CombatPhaseContext> PhaseStarted;
+    public event Action<CombatPhaseContext> PhaseEnded;
+    public event Action<CombatAttackContext> AttackStarted;
+    public event Action<CombatHitContext> HitConfirmed;
+    public event Action<CombatProjectileSpawnedContext> ProjectileSpawned;
+    public event Action<CombatPieceDiedContext> PieceDied;
+    public event Action<CombatSimulationFinishedContext> CombatSimulationFinished;
 
     public List<int> _currentDeadCount;
     [SerializeField] private int _currentStageEnemyCount;
@@ -53,6 +61,7 @@ public class SimulationController : MonoBehaviour
 
     [SerializeField] public SimulationResult LastSimulationResult = SimulationResult.Lose; 
     private bool isExecutingSimulation;
+    private int combatPresentationRunId;
     private readonly HashSet<Skills> executedSkills = new();
     private readonly List<PieceBase> missionFactTrackedPieces = new();
 
@@ -84,6 +93,58 @@ public class SimulationController : MonoBehaviour
     {
         preSimulationPresentationController?.CancelCurrentSequence();
         StopMissionFactTracking();
+    }
+
+    /// <summary>
+    /// AttackHitbox가 기존 명중 처리 순서를 유지한 채 Presentation에만 충돌 정보를 전달한다.
+    /// </summary>
+    public void ReportHitConfirmed(
+        PieceBase attacker,
+        PieceBase victim,
+        Vector3 hitPoint,
+        Vector3 impactDirection,
+        HitImpactAttackType attackType,
+        int damage,
+        bool isLethal)
+    {
+        if (!isExecutingSimulation)
+        {
+            return;
+        }
+
+        InvokeSafely(
+            HitConfirmed,
+            new CombatHitContext(
+                combatPresentationRunId,
+                _currentPhase,
+                attacker,
+                victim,
+                hitPoint,
+                impactDirection,
+                attackType,
+                damage,
+                isLethal),
+            nameof(HitConfirmed));
+    }
+
+    /// <summary>
+    /// 실제 속도가 설정되어 비행을 시작한 총알만 Presentation 계층에 알린다.
+    /// </summary>
+    public void ReportProjectileSpawned(PieceBase shooter, BulletController projectile)
+    {
+        if (!isExecutingSimulation || projectile == null || !projectile.IsFlying)
+        {
+            return;
+        }
+
+        InvokeSafely(
+            ProjectileSpawned,
+            new CombatProjectileSpawnedContext(
+                combatPresentationRunId,
+                _currentPhase,
+                shooter,
+                projectile),
+            nameof(ProjectileSpawned));
     }
 
     public void SetStageEnemyPieceCounts(IReadOnlyList<int> enemyTypeCounts)
@@ -206,6 +267,7 @@ public class SimulationController : MonoBehaviour
     {
         SetRunning(true);
         isExecutingSimulation = true;
+        combatPresentationRunId++;
         // UI 중복 입력이 걸러지고 실제 실행 상태에 진입한 뒤에만 시연 시도 횟수를 증가시킨다.
         PlaytestLogger.RecordSimulationStarted();
         _currentPhase = 0;
@@ -217,6 +279,10 @@ public class SimulationController : MonoBehaviour
         GameManager.Instance.ClearAllTile();
         var allPieces = StageManager.Instance.GetAllActivePieces();
         StartMissionFactTracking(allPieces);
+        InvokeSafely(
+            SimulationStarted,
+            new CombatSimulationContext(combatPresentationRunId, allPieces),
+            nameof(SimulationStarted));
         foreach (PieceBase piece in allPieces)
         {
             piece?.GetComponent<OutlineEffect>()?.ClearPersistent();
@@ -284,6 +350,10 @@ public class SimulationController : MonoBehaviour
         isExecutingSimulation = false;
         Debug.Log($"[Simulation] Result: {result}");
         PlaytestLogger.RecordSimulationFinished(result.ToString());
+        InvokeSafely(
+            CombatSimulationFinished,
+            new CombatSimulationFinishedContext(combatPresentationRunId, result, finalPieces),
+            nameof(CombatSimulationFinished));
         SimulationFinished?.Invoke(result);
     }
 
@@ -370,9 +440,13 @@ public class SimulationController : MonoBehaviour
         missionFactTrackedPieces.Clear();
     }
 
-    private void HandleTrackedPieceDied(PieceBase _)
+    private void HandleTrackedPieceDied(PieceBase piece)
     {
         RefreshMissionFactsAndNotify();
+        InvokeSafely(
+            PieceDied,
+            new CombatPieceDiedContext(combatPresentationRunId, _currentPhase, piece),
+            nameof(PieceDied));
     }
 
     private void RefreshMissionFactsAndNotify()
@@ -395,9 +469,18 @@ public class SimulationController : MonoBehaviour
         if (active.Count == 0) yield break;
 
         _currentPhase = phaseIndex;
+        var phaseContext = new CombatPhaseContext(combatPresentationRunId, phaseIndex, active);
+        InvokeSafely(PhaseStarted, phaseContext, nameof(PhaseStarted));
 
         foreach (var piece in active)
+        {
+            PieceBase target = piece.GetCurrentActionTarget(allPieces);
+            InvokeSafely(
+                AttackStarted,
+                new CombatAttackContext(combatPresentationRunId, phaseIndex, piece, target),
+                nameof(AttackStarted));
             StartCoroutine(piece.ExecuteAction(allPieces, stepDuration));
+        }
 
         // 스탭 카운터: stepDuration마다 _currentStep 증가
         StartCoroutine(TickSteps());
@@ -408,6 +491,8 @@ public class SimulationController : MonoBehaviour
         {
             piece.EndAttackHitboxes();
         }
+
+        InvokeSafely(PhaseEnded, phaseContext, nameof(PhaseEnded));
     }
 
     private IEnumerator TickSteps()
@@ -435,6 +520,50 @@ public class SimulationController : MonoBehaviour
 
         _isRunning = isRunning;
         RunningStateChanged?.Invoke(_isRunning);
+    }
+
+    private void InvokeSafely(Action callbacks, string eventName)
+    {
+        if (callbacks == null)
+        {
+            return;
+        }
+
+        foreach (Delegate callback in callbacks.GetInvocationList())
+        {
+            try
+            {
+                ((Action)callback).Invoke();
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(
+                    new Exception($"[Simulation] Event subscriber failed: {eventName}", exception),
+                    this);
+            }
+        }
+    }
+
+    private void InvokeSafely<T>(Action<T> callbacks, T context, string eventName)
+    {
+        if (callbacks == null)
+        {
+            return;
+        }
+
+        foreach (Delegate callback in callbacks.GetInvocationList())
+        {
+            try
+            {
+                ((Action<T>)callback).Invoke(context);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(
+                    new Exception($"[Simulation] Event subscriber failed: {eventName}", exception),
+                    this);
+            }
+        }
     }
 
     private SimulationResult DetermineResult(IReadOnlyList<PieceBase> allPieces)

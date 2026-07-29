@@ -419,6 +419,7 @@ MonoBehaviour:
   previewHeight: 0.2
   defaultFacingDirection: 0
   rotateAction: {fileID: 72058764}
+  mouseWheelRotateThreshold: 0.01
 --- !u!225 &372993849
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -1868,26 +1869,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 851078646391461078, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
-      propertyPath: stepDuration
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 851078646391461078, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
-      propertyPath: _leftClickAction
-      value: 
-      objectReference: {fileID: 7490723811521843157, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-    - target: {fileID: 851078646391461078, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
-      propertyPath: _rightClickAction
-      value: 
-      objectReference: {fileID: 624618501342684686, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-    - target: {fileID: 851078646391461078, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
-      propertyPath: _skills.Array.size
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 851078646391461078, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
-      propertyPath: '_skills.Array.data[0]'
-      value: 
-      objectReference: {fileID: 11400000, guid: 6af0069b787e35d468c50a38383c36f4, type: 2}
     - target: {fileID: 5363687376482141591, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
       propertyPath: m_Name
       value: Simulator
@@ -1933,13 +1914,25 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8026042891643359905, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
-      propertyPath: presentations.Array.size
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8026042891643359905, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
       propertyPath: 'presentations.Array.data[0]'
       value: 
       objectReference: {fileID: 468629417}
+    - target: {fileID: 9079607396915526106, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
+      propertyPath: hitStopTimeScale
+      value: 0.03
+      objectReference: {fileID: 0}
+    - target: {fileID: 9079607396915526106, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
+      propertyPath: bluntHitStopDuration
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 9079607396915526106, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
+      propertyPath: slashHitStopDuration
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 9079607396915526106, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
+      propertyPath: allyProjectileHitStopDuration
+      value: 0.5
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

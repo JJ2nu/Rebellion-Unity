@@ -103,6 +103,7 @@ public class GunmanPiece : PieceBase
         }
 
         bulletController.Fire(fireDirection, _bulletSpeedMultiplier);
+        SimulationController.Instance?.ReportProjectileSpawned(this, bulletController);
         yield return new WaitUntil(() => bulletController == null || !bulletController.IsFlying);
 
         if (!IsDead)
