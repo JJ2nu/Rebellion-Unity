@@ -4,23 +4,32 @@ using UnityEngine;
 
 /// <summary>
 /// 전투 판정과 분리된 Presentation의 단일 구독 지점이다.
-/// 현재는 상태 보관과 CombatCameraPresentation으로의 카메라 이벤트 전달만 수행한다.
+/// 상태 보관, 카메라 이벤트 전달, 사망 반동에 필요한 명중 문맥 연결을 수행한다.
 /// </summary>
 [DisallowMultipleComponent]
-[RequireComponent(typeof(SimulationController), typeof(CombatCameraPresentation))]
+[RequireComponent(
+    typeof(SimulationController),
+    typeof(CombatCameraPresentation),
+    typeof(CombatDeathReactionPresentation))]
 public sealed class CombatPresentationDirector : MonoBehaviour
 {
+    [Header("Combat Presentation")]
+    [SerializeField] private bool enableCombatPresentation = true;
+
     [Header("Hit Stop")]
     [SerializeField] private bool enableHitStop = true;
     [SerializeField, Range(0.01f, 1f)] private float hitStopTimeScale = 0.1f;
-    [SerializeField, Min(0f)] private float bluntHitStopDuration = 0.055f;
-    [SerializeField, Min(0f)] private float slashHitStopDuration = 0.045f;
-    [SerializeField, Min(0f)] private float allyProjectileHitStopDuration = 0.045f;
-    [SerializeField, Min(1f)] private float lethalHitStopMultiplier = 1.25f;
+    [SerializeField, Min(0f)] private float bluntHitStopDuration = 0.069f;
+    [SerializeField, Min(0f)] private float slashHitStopDuration = 0.056f;
+    [SerializeField, Min(0f)] private float allyProjectileHitStopDuration = 0.056f;
 
     private SimulationController simulationController;
     private CombatCameraPresentation cameraPresentation;
+    private CombatDeathReactionPresentation deathReactionPresentation;
     private Coroutine hitStopCoroutine;
+    // PieceDied에는 공격 타입/방향이 없으므로 직전 명중 문맥을 피해자별로 보관했다가 사망 확정 시 소비한다.
+    // IsLethal에 의존하지 않아 현재의 한 방 규칙과 향후 체력 규칙 모두에서 동일하게 동작한다.
+    private readonly Dictionary<PieceBase, CombatHitContext> pendingHitContexts = new();
     private bool isHitStopActive;
     private float hitStopEndRealtime;
     private float previousTimeScale = 1f;
@@ -35,6 +44,7 @@ public sealed class CombatPresentationDirector : MonoBehaviour
     {
         TryGetComponent(out simulationController);
         TryGetComponent(out cameraPresentation);
+        TryGetComponent(out deathReactionPresentation);
     }
 
     private void OnEnable()
@@ -97,11 +107,17 @@ public sealed class CombatPresentationDirector : MonoBehaviour
 
     private void HandleSimulationStarted(CombatSimulationContext context)
     {
+        // 결과 화면에서 새 시뮬레이션을 바로 시작하는 경로도 안전하게 처리한다.
+        deathReactionPresentation?.RestoreImmediately();
+        pendingHitContexts.Clear();
         CurrentRunId = context.RunId;
         CurrentPhaseIndex = 0;
         IsRunActive = true;
         CurrentRunPieces = context.Pieces;
-        cameraPresentation?.BeginRun(context);
+        if (enableCombatPresentation)
+        {
+            cameraPresentation?.BeginRun(context);
+        }
     }
 
     private void HandlePhaseStarted(CombatPhaseContext context)
@@ -109,7 +125,10 @@ public sealed class CombatPresentationDirector : MonoBehaviour
         if (context.RunId == CurrentRunId)
         {
             CurrentPhaseIndex = context.PhaseIndex;
-            cameraPresentation?.BeginPhase(context);
+            if (enableCombatPresentation)
+            {
+                cameraPresentation?.BeginPhase(context);
+            }
         }
     }
 
@@ -125,7 +144,10 @@ public sealed class CombatPresentationDirector : MonoBehaviour
     {
         if (context.RunId == CurrentRunId)
         {
-            cameraPresentation?.IncludeAttack(context);
+            if (enableCombatPresentation)
+            {
+                cameraPresentation?.IncludeAttack(context);
+            }
         }
     }
 
@@ -133,8 +155,12 @@ public sealed class CombatPresentationDirector : MonoBehaviour
     {
         if (context.RunId == CurrentRunId)
         {
-            cameraPresentation?.PlayHitImpact(context);
-            PlayHitStop(context);
+            if (enableCombatPresentation)
+            {
+                cameraPresentation?.PlayHitImpact(context);
+                CacheHitContext(context);
+                PlayHitStop(context);
+            }
         }
     }
 
@@ -142,12 +168,26 @@ public sealed class CombatPresentationDirector : MonoBehaviour
     {
         if (context.RunId == CurrentRunId)
         {
-            cameraPresentation?.RegisterProjectile(context);
+            if (enableCombatPresentation)
+            {
+                cameraPresentation?.RegisterProjectile(context);
+            }
         }
     }
 
     private void HandlePieceDied(CombatPieceDiedContext context)
     {
+        PieceBase piece = context.Piece.Piece;
+        if (context.RunId != CurrentRunId || piece == null)
+        {
+            return;
+        }
+
+        if (pendingHitContexts.TryGetValue(piece, out CombatHitContext hitContext))
+        {
+            pendingHitContexts.Remove(piece);
+            deathReactionPresentation?.Play(piece, hitContext.ImpactDirection, hitContext.AttackType);
+        }
     }
 
     private void HandleSimulationFinished(CombatSimulationFinishedContext context)
@@ -161,13 +201,19 @@ public sealed class CombatPresentationDirector : MonoBehaviour
         IsRunActive = false;
         CurrentRunPieces = context.Pieces;
         RestoreTimeScale();
-        cameraPresentation?.ReturnToBaseline();
+        pendingHitContexts.Clear();
+        if (enableCombatPresentation)
+        {
+            cameraPresentation?.ReturnToBaseline();
+        }
     }
 
     private void ResetLocalState()
     {
         RestoreTimeScale();
         cameraPresentation?.RestoreImmediately();
+        deathReactionPresentation?.RestoreImmediately();
+        pendingHitContexts.Clear();
         CurrentRunId = 0;
         CurrentPhaseIndex = 0;
         IsRunActive = false;
@@ -179,6 +225,19 @@ public sealed class CombatPresentationDirector : MonoBehaviour
         if (simulationController == null)
         {
             TryGetComponent(out simulationController);
+        }
+
+        if (deathReactionPresentation == null)
+        {
+            TryGetComponent(out deathReactionPresentation);
+        }
+    }
+
+    private void CacheHitContext(CombatHitContext context)
+    {
+        if (context.Victim.Piece != null)
+        {
+            pendingHitContexts[context.Victim.Piece] = context;
         }
     }
 
@@ -258,11 +317,6 @@ public sealed class CombatPresentationDirector : MonoBehaviour
             _ => slashHitStopDuration,
         };
 
-        if (context.IsLethal)
-        {
-            duration *= lethalHitStopMultiplier;
-        }
-
         return duration;
     }
 
@@ -274,7 +328,8 @@ public sealed class CombatPresentationDirector : MonoBehaviour
         }
 
         return context.AttackType == HitImpactAttackType.Projectile
-            && context.Attacker.Faction == Faction.Ally;
+            && context.Attacker.Faction == Faction.Ally
+            && context.Victim.Faction == Faction.Enemy;
     }
 
 }

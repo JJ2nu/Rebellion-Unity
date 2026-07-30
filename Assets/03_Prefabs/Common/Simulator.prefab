@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 8026042891643359905}
   - component: {fileID: 4409555646253879751}
   - component: {fileID: 9079607396915526106}
+  - component: {fileID: 195237354039729720}
   m_Layer: 0
   m_Name: Simulator
   m_TagString: Untagged
@@ -122,9 +123,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 56d3820c47f236c4c97ece3dc9e31ac7, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::CombatPresentationDirector
+  enableCombatPresentation: 1
   enableHitStop: 1
-  hitStopTimeScale: 0.1
-  bluntHitStopDuration: 0.055
-  slashHitStopDuration: 0.045
-  allyProjectileHitStopDuration: 0.045
-  lethalHitStopMultiplier: 1.25
+  hitStopTimeScale: 0.14
+  bluntHitStopDuration: 0.5
+  slashHitStopDuration: 0.5
+  allyProjectileHitStopDuration: 0.3
+--- !u!114 &195237354039729720
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5363687376482141591}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f33942f49c47bc40ab21a66db9a2173, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::CombatDeathReactionPresentation
+  bluntDuration: 0.24
+  bluntPositionDistance: 0.25
+  bluntVerticalLift: 0.025
+  bluntRotationAngle: 12
+  slashDuration: 0.18
+  slashPositionDistance: 0.12
+  slashVerticalLift: 0.012
+  slashRotationAngle: 16
+  projectileDuration: 0.15
+  projectilePositionDistance: 0.1
+  projectileVerticalLift: 0.008
+  projectileRotationAngle: 8
