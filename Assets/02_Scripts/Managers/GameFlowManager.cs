@@ -31,6 +31,11 @@ public sealed class GameFlowManager : MonoBehaviour
     private const string GoodEndingAudioStageId = "GoodEnding";
     private const float IntroAudioDramaStartupDelay = 0.25f;
 
+    // 첫 Campaign 로딩은 실제로 관찰 가능한 Scene·Binder·Stage 준비 경계만 누적한다.
+    private const float CampaignLoadingSceneLoadWeight = 0.45f;
+    private const float CampaignLoadingSceneActivationAndBinderWeight = 0.15f;
+    private const float CampaignLoadingStagePreparationWeight = 0.40f;
+
     private static readonly CampaignStageStep[] CampaignStages =
     {
         new(Stage001, AudioDramaStage1),
@@ -91,7 +96,8 @@ public sealed class GameFlowManager : MonoBehaviour
         GameFlowManager manager = EnsureInstance();
         bool started = manager.TryBeginCampaignAtStage(
             stageId,
-            PlaytestLogger.DebugHotkeyEntrySource);
+            PlaytestLogger.DebugHotkeyEntrySource,
+            false);
         if (started)
         {
             Debug.Log($"[GameFlowManager] Debug campaign requested: {stageId}", manager);
@@ -145,10 +151,17 @@ public sealed class GameFlowManager : MonoBehaviour
 
     public void BeginCampaign()
     {
-        TryBeginCampaignAtStage(Stage001, PlaytestLogger.TitleCampaignEntrySource);
+        // Title의 Campaign 버튼만 첫 진입 준비 상태를 플레이어에게 보여 준다.
+        TryBeginCampaignAtStage(
+            Stage001,
+            PlaytestLogger.TitleCampaignEntrySource,
+            true);
     }
 
-    private bool TryBeginCampaignAtStage(string stageId, string entrySource)
+    private bool TryBeginCampaignAtStage(
+        string stageId,
+        string entrySource,
+        bool showCampaignLoading)
     {
         if (FindStageStep(stageId) == null)
         {
@@ -181,7 +194,7 @@ public sealed class GameFlowManager : MonoBehaviour
         nextStageAfterDialogue = null;
         pendingDialogueLevel = null;
 
-        LoadStageScene();
+        LoadStageScene(showCampaignLoading);
         return true;
     }
 
@@ -227,6 +240,9 @@ public sealed class GameFlowManager : MonoBehaviour
 
     private void StopActiveCampaignRoutines()
     {
+        // 최신 Campaign·F12 요청이 이전 범용 로딩 화면을 덮어쓰지 않게 먼저 정리한다.
+        SceneTransitionOverlay.Instance.HideLoading();
+
         if (stageSceneRoutine != null)
         {
             StopCoroutine(stageSceneRoutine);
@@ -386,7 +402,9 @@ public sealed class GameFlowManager : MonoBehaviour
         LoadStageScene();
     }
 
-    private IEnumerator PrepareStageSceneRoutine(StageSceneFlowBinder binder)
+    private IEnumerator PrepareStageSceneRoutine(
+        StageSceneFlowBinder binder,
+        bool showCampaignLoading = false)
     {
         CampaignStageStep step = FindStageStep(currentStageId);
         if (step == null)
@@ -409,13 +427,44 @@ public sealed class GameFlowManager : MonoBehaviour
         {
             PlaytestLogger.RecordStageEntered(currentStageId);
         }
+        else if (showCampaignLoading)
+        {
+            // Binder는 있었지만 동기 Stage 로드가 실패했으므로 검정 로딩 화면과 기존 경고를 유지한다.
+            Debug.LogWarning(
+                "[GameFlowManager] Initial Campaign Stage did not become ready. " +
+                "Keeping the loading overlay visible for diagnosis.",
+                this);
+            yield break;
+        }
 
         yield return overlay.WaitForSceneSettled();
+
+        if (showCampaignLoading)
+        {
+            // LoadStage 반환은 JSON·맵·피스 생성과 StageLoaded 구독자 실행이 끝난 실제 동기 경계다.
+            overlay.SetLoadingProgress(
+                CampaignLoadingSceneLoadWeight +
+                CampaignLoadingSceneActivationAndBinderWeight +
+                CampaignLoadingStagePreparationWeight);
+            // 완료 값이 실제로 한 프레임 그려진 뒤에만 Prefab의 연출 홀드를 시작한다.
+            yield return null;
+            yield return overlay.WaitForLoadingCompletedHold();
+            // 로딩 View가 살아 있는 동안에는 Stage 오디오드라마의 첫 프레임과 겹치지 않게 먼저 내린다.
+            overlay.HideLoading();
+        }
 
         if (hasIntroAudioDrama)
         {
             binder.PlayAudioDrama(step.IntroAudioDramaStageId);
-            yield return new WaitForSeconds(IntroAudioDramaStartupDelay);
+            if (showCampaignLoading)
+            {
+                // 첫 Stage는 완료 홀드 뒤에만 인트로를 시작하고, 패널이 준비된 다음 전환막을 걷는다.
+                yield return binder.WaitForAudioDramaToBecomeVisible();
+            }
+            else
+            {
+                yield return new WaitForSeconds(IntroAudioDramaStartupDelay);
+            }
         }
 
         yield return overlay.FadeIn();
@@ -443,9 +492,9 @@ public sealed class GameFlowManager : MonoBehaviour
         stageSceneRoutine = null;
     }
 
-    private void LoadStageScene()
+    private void LoadStageScene(bool showCampaignLoading = false)
     {
-        StartCampaignSceneRoutine(LoadStageSceneRoutine());
+        StartCampaignSceneRoutine(LoadStageSceneRoutine(showCampaignLoading));
     }
 
     private void LoadDialogueScene()
@@ -468,27 +517,60 @@ public sealed class GameFlowManager : MonoBehaviour
         campaignSceneRoutine = StartCoroutine(routine);
     }
 
-    private IEnumerator LoadStageSceneRoutine()
+    private IEnumerator LoadStageSceneRoutine(bool showCampaignLoading)
     {
         isLoadingCampaignScene = true;
         currentStageBinder = null;
 
         SceneTransitionOverlay overlay = SceneTransitionOverlay.Instance;
         yield return overlay.FadeOut();
-        yield return overlay.LoadSceneOnly(StageSceneName);
+        if (showCampaignLoading)
+        {
+            // FadeOut이 끝난 검정 화면을 잠시 유지한 뒤에만 0% Prefab을 표시해 전환 연출을 분리한다.
+            yield return overlay.WaitForLoadingFadeOutHold();
+            overlay.ShowLoading();
+            yield return overlay.LoadSceneOnly(
+                StageSceneName,
+                normalizedProgress => overlay.SetLoadingProgress(
+                    normalizedProgress * CampaignLoadingSceneLoadWeight));
+        }
+        else
+        {
+            yield return overlay.LoadSceneOnly(StageSceneName);
+        }
+
         yield return overlay.WaitForSceneSettled();
         yield return WaitForStageBinder();
 
         if (currentStageBinder != null)
         {
-            yield return PrepareStageSceneRoutine(currentStageBinder);
+            if (showCampaignLoading)
+            {
+                // Scene 활성화와 Binder 등록이 확인된 뒤에만 다음 이정표로 진행한다.
+                overlay.SetLoadingProgress(
+                    CampaignLoadingSceneLoadWeight +
+                    CampaignLoadingSceneActivationAndBinderWeight);
+            }
+
+            yield return PrepareStageSceneRoutine(currentStageBinder, showCampaignLoading);
         }
-        else
+        else if (!showCampaignLoading)
         {
             yield return overlay.FadeIn();
         }
+        else
+        {
+            // Binder 미등록은 이전 경고와 함께 검정 로딩 화면을 남겨 실패를 관찰할 수 있게 한다.
+            Debug.LogWarning(
+                "[GameFlowManager] Initial Campaign loading stopped before StageSceneFlowBinder registration. " +
+                "Keeping the loading overlay visible for diagnosis.",
+                this);
+        }
 
-        isLoadingCampaignScene = false;
+        if (currentStageBinder != null || !showCampaignLoading)
+        {
+            isLoadingCampaignScene = false;
+        }
         campaignSceneRoutine = null;
     }
 
