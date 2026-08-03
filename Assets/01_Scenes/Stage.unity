@@ -1628,7 +1628,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 105ed1940bc9dd24caa18f8afc29fe94, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FixedAspectRatioCanvas
   canvasScaler: {fileID: 372993844}
   referenceResolution: {x: 1920, y: 1080}
@@ -1920,6 +1920,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 4409555646253879751, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
+      propertyPath: returnTransitionDuration
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5363687376482141591, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
       propertyPath: m_Name
       value: Simulator

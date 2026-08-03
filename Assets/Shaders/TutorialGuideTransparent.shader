@@ -4,6 +4,7 @@ Shader "Custom/TutorialGuideTransparent"
     {
         _BaseMap ("Base Map", 2D) = "white" {}
         _BaseColor ("Base Color", Color) = (0.82, 0.82, 0.82, 0.3)
+        [HDR] _EmissionColor ("Emission Color", Color) = (0, 0, 0, 1)
     }
 
     SubShader
@@ -37,6 +38,7 @@ Shader "Custom/TutorialGuideTransparent"
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseMap_ST;
                 float4 _BaseColor;
+                float4 _EmissionColor;
             CBUFFER_END
 
             struct Attributes
@@ -75,7 +77,7 @@ Shader "Custom/TutorialGuideTransparent"
                 half direct = saturate(dot(normalWS, mainLight.direction)) * mainLight.distanceAttenuation;
                 half3 ambient = max(SampleSH(normalWS), half3(0.12, 0.12, 0.12));
                 half3 lighting = ambient * 0.6 + mainLight.color * direct * 0.5 + 0.16;
-                half3 color = saturate(baseSample.rgb * _BaseColor.rgb * lighting);
+                half3 color = baseSample.rgb * _BaseColor.rgb * lighting + baseSample.rgb * _EmissionColor.rgb;
                 return half4(color, baseSample.a * _BaseColor.a);
             }
             ENDHLSL

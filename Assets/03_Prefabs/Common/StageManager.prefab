@@ -184,7 +184,6 @@ MonoBehaviour:
   - {fileID: 8771929361919017144, guid: 517e7d6fd77c81b48a7e41948f63af17, type: 3}
   - {fileID: 3921962521532312310, guid: df69ea977506e8f4baa72d743bba394a, type: 3}
   - {fileID: 3328458296932663347, guid: 85404163ba5f5b748ba003133767ec36, type: 3}
-  tutorialGhostOutlineMaterial: {fileID: 2100000, guid: 04edf99b7cd12da4b989c8515b19422e, type: 2}
   enemyPiecePrefabs:
   - {fileID: 5570943943485575194, guid: c135df083d556ca4a99429a38bee7547, type: 3}
   - {fileID: 0}

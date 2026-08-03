@@ -43,7 +43,6 @@ GameObject:
   - component: {fileID: 4353409523824200858}
   - component: {fileID: 8437302535092953272}
   - component: {fileID: 3631397594381306197}
-  - component: {fileID: -6168653462863902690}
   - component: {fileID: 5128764070223129699}
   m_Layer: 0
   m_Name: TutorialGuide_Gunman
@@ -119,19 +118,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.5, y: 2.12, z: 0.43}
   m_Center: {x: 0, y: 1.06, z: 0}
---- !u!114 &-6168653462863902690
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3328458296932663347}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 85f88137e6f7d6a4a84c2cadc6c4fa29, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::OutlineEffect
-  outlineMaterial: {fileID: 2100000, guid: fa53e17525caf054caa089214dbbc35f, type: 2}
 --- !u!95 &5128764070223129699
 Animator:
   serializedVersion: 7
