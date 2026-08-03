@@ -71,6 +71,12 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
     /// <summary>현재 기물 목록 기준으로 즉시 공격 가능 여부를 반환한다 (호버 표시용).</summary>
     public bool CheckCanActNow(IReadOnlyList<PieceBase> allPieces) => FindTarget(allPieces) != null;
 
+    /// <summary>현재 규칙에 따라 이 기물이 행동할 때 선택할 표적을 읽기 전용으로 조회한다.</summary>
+    public PieceBase GetCurrentActionTarget(IReadOnlyList<PieceBase> allPieces)
+    {
+        return allPieces == null ? null : FindTarget(allPieces);
+    }
+
     // ─── Events ─────────────────────────────────────────────────────
     public event Action<PieceBase> OnDied;
     public event Action<PieceBase, int> OnDamageTaken;

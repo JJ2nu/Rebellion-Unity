@@ -11,6 +11,9 @@ GameObject:
   - component: {fileID: 6741203802058999015}
   - component: {fileID: 851078646391461078}
   - component: {fileID: 8026042891643359905}
+  - component: {fileID: 4409555646253879751}
+  - component: {fileID: 9079607396915526106}
+  - component: {fileID: 195237354039729720}
   m_Layer: 0
   m_Name: Simulator
   m_TagString: Untagged
@@ -46,6 +49,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Rebellion.SimulationController
   stepDuration: 1
+  orbitingCamera: {fileID: 0}
   _isRunning: 0
   _currentPhase: 0
   _currentStep: 0
@@ -55,6 +59,10 @@ MonoBehaviour:
   _skills:
   - {fileID: 11400000, guid: 6af0069b787e35d468c50a38383c36f4, type: 2}
   preSimulationPresentationController: {fileID: 8026042891643359905}
+  _currentDeadCount:
+  _currentStageEnemyCount: 0
+  _currentStageEnemyTypeCounts:
+  LastSimulationResult: 5
 --- !u!114 &8026042891643359905
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -67,4 +75,81 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8206b725fb96bb4badcae09dde31dc2, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::PreSimulationSkillPresentationController
-  presentations: []
+  presentations:
+  - {fileID: 0}
+--- !u!114 &4409555646253879751
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5363687376482141591}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9a0aa4d1cb236a418ad9e66bd7f403a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::CombatCameraPresentation
+  focusPositionWeight: 0.5
+  maxFocusOffset: 10
+  focusLookHeight: 0.2
+  focusTransitionDuration: 0.04
+  returnTransitionDuration: 2
+  zoomMultiplier: 0.666
+  projectileFocusPositionWeight: 0.55
+  projectileMaxFocusOffset: 10
+  projectileFocusTransitionDuration: 0.1
+  bluntShakeDuration: 0.1
+  bluntPositionAmplitude: 0.025
+  bluntRotationAmplitude: 0.3
+  slashShakeDuration: 0.07
+  slashPositionAmplitude: 0.015
+  slashRotationAmplitude: 0.2
+  projectileShakeDuration: 0.05
+  projectilePositionAmplitude: 0.005
+  projectileRotationAmplitude: 0.08
+  projectileLensPunch: 0
+  maxShakePositionOffset: 0.04
+  maxShakeRotationOffset: 0.35
+  maxLensPunch: 0
+--- !u!114 &9079607396915526106
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5363687376482141591}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56d3820c47f236c4c97ece3dc9e31ac7, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::CombatPresentationDirector
+  enableCombatPresentation: 1
+  enableHitStop: 1
+  hitStopTimeScale: 0.14
+  bluntHitStopDuration: 0.5
+  slashHitStopDuration: 0.5
+  allyProjectileHitStopDuration: 0.3
+--- !u!114 &195237354039729720
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5363687376482141591}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f33942f49c47bc40ab21a66db9a2173, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::CombatDeathReactionPresentation
+  bluntDuration: 0.24
+  bluntPositionDistance: 0.25
+  bluntVerticalLift: 0.025
+  bluntRotationAngle: 12
+  slashDuration: 0.18
+  slashPositionDistance: 0.12
+  slashVerticalLift: 0.012
+  slashRotationAngle: 16
+  projectileDuration: 0.15
+  projectilePositionDistance: 0.1
+  projectileVerticalLift: 0.008
+  projectileRotationAngle: 8

@@ -1628,7 +1628,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 105ed1940bc9dd24caa18f8afc29fe94, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FixedAspectRatioCanvas
   canvasScaler: {fileID: 372993844}
   referenceResolution: {x: 1920, y: 1080}
@@ -1920,26 +1920,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 851078646391461078, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
-      propertyPath: stepDuration
+    - target: {fileID: 4409555646253879751, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
+      propertyPath: returnTransitionDuration
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 851078646391461078, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
-      propertyPath: _leftClickAction
-      value: 
-      objectReference: {fileID: 7490723811521843157, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-    - target: {fileID: 851078646391461078, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
-      propertyPath: _rightClickAction
-      value: 
-      objectReference: {fileID: 624618501342684686, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-    - target: {fileID: 851078646391461078, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
-      propertyPath: _skills.Array.size
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 851078646391461078, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
-      propertyPath: '_skills.Array.data[0]'
-      value: 
-      objectReference: {fileID: 11400000, guid: 6af0069b787e35d468c50a38383c36f4, type: 2}
     - target: {fileID: 5363687376482141591, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
       propertyPath: m_Name
       value: Simulator
@@ -1983,10 +1967,6 @@ PrefabInstance:
     - target: {fileID: 6741203802058999015, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8026042891643359905, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
-      propertyPath: presentations.Array.size
-      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8026042891643359905, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
       propertyPath: 'presentations.Array.data[0]'

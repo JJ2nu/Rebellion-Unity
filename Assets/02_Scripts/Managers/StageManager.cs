@@ -8,8 +8,6 @@ public class StageManager : MonoBehaviour
 {
     private const string ObjectGroupTag = "ObjectGroup";
     private const float RetryRewindDuration = 0.45f;
-    private const float TutorialGhostOutlineWidth = 0.012f;
-    private static readonly Color TutorialGhostOutlineColor = new Color(0f, 1f, 0.1f, 1f);
 
     public static StageManager Instance { get; private set; }
     public static event System.Action<StageData> StageLoaded;
@@ -24,7 +22,6 @@ public class StageManager : MonoBehaviour
     [SerializeField] private GameObject[] allyPiecePrefabs;
     [Header("Tutorial")]
     [SerializeField] private GameObject[] tutorialGhostPrefabs = Array.Empty<GameObject>();
-    [SerializeField] private Material tutorialGhostOutlineMaterial;
     [SerializeField] private GameObject[] enemyPiecePrefabs;
     [SerializeField] private GameObject[] civilianPiecePrefabs;
     [SerializeField] private GameObject[] mapPrefabs;
@@ -1174,24 +1171,6 @@ public class StageManager : MonoBehaviour
 
         ConfigureTutorialGhostHud(ghost);
         ConfigureTutorialGhostAnimator(ghost);
-
-        OutlineEffect outline = ghost.GetComponent<OutlineEffect>();
-        if (outline == null)
-        {
-            outline = ghost.AddComponent<OutlineEffect>();
-        }
-
-        if (tutorialGhostOutlineMaterial != null)
-        {
-            outline.SetOutlineMaterial(tutorialGhostOutlineMaterial);
-        }
-
-        outline.SetExcludedRoots(
-            ghost.transform.Find("HUD"),
-            FindChildByName(ghost.transform, "DirectionIndicator"));
-        outline.SetUseDuplicatedRenderers(true);
-        outline.SetOutlineWidth(TutorialGhostOutlineWidth);
-        outline.ShowPersistent(TutorialGhostOutlineColor);
     }
 
     private static void ConfigureTutorialGhostHud(GameObject ghost)
@@ -1210,19 +1189,6 @@ public class StageManager : MonoBehaviour
         {
             hudUi.InitializeGuide();
         }
-    }
-
-    private static Transform FindChildByName(Transform root, string childName)
-    {
-        foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
-        {
-            if (child.name == childName)
-            {
-                return child;
-            }
-        }
-
-        return null;
     }
 
     private static void ConfigureTutorialGhostAnimator(GameObject ghost)

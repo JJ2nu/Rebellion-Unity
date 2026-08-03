@@ -4,7 +4,7 @@ using UnityEngine;
 
 /// <summary>
 /// 건맨(총) 기물. 페이즈 3에서 행동.
-/// "Attack" 트리거 → _aimDelay 후 FlarePoint에서 bullet 생성 → _fireDelay마다 1칸 이동.
+/// Shoot2 준비 모션 후 FlarePoint에서 bullet 생성.
 /// 총알은 코드 이동이므로 첫 번째 충돌 기물에 TakeDamage.
 /// </summary>
 public class GunmanPiece : PieceBase
@@ -16,8 +16,7 @@ public class GunmanPiece : PieceBase
 
     [SerializeField] private GameObject _bullet;
 
-    private float _shoot1RecoilTime = 0.2f;
-    private float _shoot2RecoilTime = 1.3f;
+    [SerializeField, Min(0f)] private float _sideAimFireDelay = 1.3f;
     [SerializeField] private float _sideAimYawOffset = -75f;
 
     private void Awake()
@@ -45,27 +44,18 @@ public class GunmanPiece : PieceBase
     /// <summary>외부(스킬 등)에서도 직접 발사 가능.</summary>
     public IEnumerator Fire(IReadOnlyList<PieceBase> allPieces, float stepDuration)
     {
-        bool useSideAim = Random.value < 0.5f;
         Quaternion originalRotation = transform.rotation;
-        float syncedFireDelay = Mathf.Max(_shoot1RecoilTime, _shoot2RecoilTime);
 
         StageManager.Instance?.PlayGunReadySfx();
-        if (useSideAim)
+        transform.rotation = originalRotation * Quaternion.Euler(0f, _sideAimYawOffset, 0f);
+        _animator?.SetTrigger("Shoot2");
+
+        if (_sideAimFireDelay > 0f)
         {
-            transform.rotation = originalRotation * Quaternion.Euler(0f, _sideAimYawOffset, 0f);
-            _animator?.SetTrigger("Shoot2");
-        }
-        else
-        {
-            yield return new WaitForSeconds(Mathf.Max(0f, syncedFireDelay - _shoot1RecoilTime));
-            _animator?.SetTrigger("Shoot1");
+            yield return new WaitForSeconds(_sideAimFireDelay);
         }
 
-        float remainingFireDelay = useSideAim
-            ? syncedFireDelay
-            : _shoot1RecoilTime;
-        yield return new WaitForSeconds(remainingFireDelay);
-        Transform selectedFlarePoint = useSideAim && _flarePoint2 != null
+        Transform selectedFlarePoint = _flarePoint2 != null
             ? _flarePoint2
             : _flarePoint;
 
@@ -103,6 +93,7 @@ public class GunmanPiece : PieceBase
         }
 
         bulletController.Fire(fireDirection, _bulletSpeedMultiplier);
+        SimulationController.Instance?.ReportProjectileSpawned(this, bulletController);
         yield return new WaitUntil(() => bulletController == null || !bulletController.IsFlying);
 
         if (!IsDead)
@@ -111,6 +102,7 @@ public class GunmanPiece : PieceBase
             transform.rotation = originalRotation;
             SetAnimatorRootMotion(false);
         }
+
         FinishAction();
     }
 
