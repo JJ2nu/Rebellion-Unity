@@ -139,7 +139,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 372993846}
+    m_TransformParent: {fileID: 2064618781}
     m_Modifications:
     - target: {fileID: 2533409162287649403, guid: 4d45cf272786ea84b84bb83ddc5143ac, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
@@ -372,15 +372,7 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 188949896}
-  - {fileID: 1210686283}
-  - {fileID: 1801220759}
-  - {fileID: 584075550}
-  - {fileID: 1632412137}
-  - {fileID: 529355088}
-  - {fileID: 926636273}
-  - {fileID: 1674918531}
-  - {fileID: 2098841001}
+  - {fileID: 2064618781}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -546,7 +538,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 372993846}
+  m_Father: {fileID: 2064618781}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -684,7 +676,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 372993846}
+  m_Father: {fileID: 2064618781}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -775,7 +767,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 372993846}
+    m_TransformParent: {fileID: 2064618781}
     m_Modifications:
     - target: {fileID: 6764500875131166545, guid: 93d73afeb5e39cf4099a473c610195aa, type: 3}
       propertyPath: m_Pivot.x
@@ -1045,7 +1037,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 372993846}
+    m_TransformParent: {fileID: 2064618781}
     m_Modifications:
     - target: {fileID: 588745772544068453, guid: 6f6d04f0de814e84abc172415791e21a, type: 3}
       propertyPath: m_Pivot.x
@@ -1230,7 +1222,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 372993846}
+  m_Father: {fileID: 2064618781}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -1278,7 +1270,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 372993846}
+    m_TransformParent: {fileID: 2064618781}
     m_Modifications:
     - target: {fileID: 3350390475171923605, guid: 0d27b963e6d11fb4eac07c955c47b62d, type: 3}
       propertyPath: stageSceneFlowBinder
@@ -1403,7 +1395,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 372993846}
+    m_TransformParent: {fileID: 2064618781}
     m_Modifications:
     - target: {fileID: 1955055097769391704, guid: 834b924183d3c5b4494fe37d1f12f314, type: 3}
       propertyPath: m_Pivot.x
@@ -1581,6 +1573,65 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2064618780
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2064618781}
+  - component: {fileID: 2064618782}
+  m_Layer: 5
+  m_Name: AspectContentRoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2064618781
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2064618780}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 188949896}
+  - {fileID: 1210686283}
+  - {fileID: 1801220759}
+  - {fileID: 584075550}
+  - {fileID: 1632412137}
+  - {fileID: 529355088}
+  - {fileID: 926636273}
+  - {fileID: 1674918531}
+  - {fileID: 2098841001}
+  m_Father: {fileID: 372993846}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &2064618782
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2064618780}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 105ed1940bc9dd24caa18f8afc29fe94, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::FixedAspectRatioCanvas
+  canvasScaler: {fileID: 372993844}
+  referenceResolution: {x: 1920, y: 1080}
 --- !u!1 &2098841000
 GameObject:
   m_ObjectHideFlags: 0
@@ -1611,7 +1662,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 372993846}
+  m_Father: {fileID: 2064618781}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}

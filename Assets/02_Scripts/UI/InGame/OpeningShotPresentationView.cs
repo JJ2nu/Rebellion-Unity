@@ -10,6 +10,9 @@ using UnityEngine.UI;
 /// </summary>
 public sealed class OpeningShotPresentationView : MonoBehaviour
 {
+    private const float ReferenceCanvasWidth = 1920f;
+    private const float ReferenceCanvasHeight = 1080f;
+
     [Header("Scene References")]
     [SerializeField] private Camera cinematicCamera;
     [SerializeField] private Camera gameplayCamera;
@@ -322,16 +325,21 @@ public sealed class OpeningShotPresentationView : MonoBehaviour
         cinematicCamera.fieldOfView = gameplayCamera.fieldOfView;
         cinematicCamera.nearClipPlane = gameplayCamera.nearClipPlane;
         cinematicCamera.farClipPlane = gameplayCamera.farClipPlane;
+        cinematicCamera.rect = FixedAspectRatioController.GetViewportRect(
+            Screen.width,
+            Screen.height);
     }
 
     private void FitScopeToViewport()
     {
-        Canvas canvas = scopeOverlay.canvas;
-        float viewportWidth = canvas != null ? canvas.pixelRect.width : Screen.width;
-        float viewportHeight = canvas != null ? canvas.pixelRect.height : Screen.height;
-        float canvasScaleFactor = canvas != null
-            ? Mathf.Max(0.01f, canvas.scaleFactor)
-            : 1f;
+        Rect viewportRect = FixedAspectRatioController.GetCurrentPixelRect();
+        float viewportWidth = viewportRect.width;
+        float viewportHeight = viewportRect.height;
+        float canvasScaleFactor = Mathf.Max(
+            0.01f,
+            Mathf.Min(
+                viewportWidth / ReferenceCanvasWidth,
+                viewportHeight / ReferenceCanvasHeight));
         float desiredDiameter =
             Mathf.Min(viewportWidth, viewportHeight) * Mathf.Clamp01(scopeViewportSize);
         float graphicRatio = Mathf.Max(0.01f, scopeGraphicDiameterRatio);

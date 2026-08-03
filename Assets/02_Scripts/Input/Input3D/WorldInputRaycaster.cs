@@ -57,6 +57,12 @@ public class WorldInputRaycaster : MonoBehaviour
         }
 
         Vector2 pointerPosition = pointerPositionAction.action.ReadValue<Vector2>();
+        if (!FixedAspectRatioController.ContainsScreenPoint(pointerPosition))
+        {
+            ClearHover();
+            return;
+        }
+
         Ray ray = raycastCamera.ScreenPointToRay(pointerPosition);
 
         Debug.DrawRay(ray.origin, ray.direction * maxDistance, Color.red);
@@ -111,7 +117,13 @@ public class WorldInputRaycaster : MonoBehaviour
 
     private void OnLeftClick(InputAction.CallbackContext context)
     {
-        if (!isInputBlocked && currentTarget != null)
+        if (!CanDispatchPointerClick())
+        {
+            ClearHover();
+            return;
+        }
+
+        if (currentTarget != null)
         {
             currentTarget.OnWorldLeftClick(currentEventData);
         }
@@ -119,10 +131,27 @@ public class WorldInputRaycaster : MonoBehaviour
 
     private void OnRightClick(InputAction.CallbackContext context)
     {
-        if (!isInputBlocked && currentTarget != null)
+        if (!CanDispatchPointerClick())
+        {
+            ClearHover();
+            return;
+        }
+
+        if (currentTarget != null)
         {
             currentTarget.OnWorldRightClick(currentEventData);
         }
+    }
+
+    private bool CanDispatchPointerClick()
+    {
+        if (isInputBlocked || raycastCamera == null || pointerPositionAction?.action == null)
+        {
+            return false;
+        }
+
+        Vector2 pointerPosition = pointerPositionAction.action.ReadValue<Vector2>();
+        return FixedAspectRatioController.ContainsScreenPoint(pointerPosition);
     }
 
     public void SetInputBlocked(bool blocked)
@@ -145,10 +174,11 @@ public class WorldInputRaycaster : MonoBehaviour
 
         currentTarget.OnWorldUnHover(currentEventData);
         currentTarget = null;
+        currentEventData = default;
     }
     public GameObject GetCurrentHoveredObject()
     {
 
-        return currentEventData.TargetObject;
+        return currentTarget != null ? currentEventData.TargetObject : null;
     }
 }

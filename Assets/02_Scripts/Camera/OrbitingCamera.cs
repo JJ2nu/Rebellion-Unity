@@ -204,6 +204,13 @@ public class OrbitingCamera : MonoBehaviour
 
     private bool CanContinueMouseDragOrbit()
     {
+        Mouse mouse = Mouse.current;
+        if (mouse == null ||
+            !FixedAspectRatioController.ContainsScreenPoint(mouse.position.ReadValue()))
+        {
+            return false;
+        }
+
         if (SimulationController.Instance?._isRunning == true)
         {
             return false;
