@@ -131,13 +131,6 @@ public sealed class OpeningShotScopePreview : MonoBehaviour
             return;
         }
 
-        if (WasRightMousePressedThisFrame())
-        {
-            HideScope();
-            CancelRequested?.Invoke();
-            return;
-        }
-
         if (sourceCamera == null)
         {
             sourceCamera = Camera.main;
@@ -149,6 +142,18 @@ public sealed class OpeningShotScopePreview : MonoBehaviour
         }
 
         Vector2 pointerPosition = ReadPointerPosition();
+        if (!FixedAspectRatioController.ContainsScreenPoint(pointerPosition))
+        {
+            return;
+        }
+
+        if (WasRightMousePressedThisFrame())
+        {
+            HideScope();
+            CancelRequested?.Invoke();
+            return;
+        }
+
         UpdateScopeUiPosition(pointerPosition);
         UpdateScopeCamera(pointerPosition);
     }
@@ -344,7 +349,7 @@ public sealed class OpeningShotScopePreview : MonoBehaviour
             return;
         }
 
-        RectTransform canvasRect = targetCanvas.transform as RectTransform;
+        RectTransform canvasRect = scopeRoot.parent as RectTransform;
 
         if (canvasRect == null)
         {
@@ -366,6 +371,8 @@ public sealed class OpeningShotScopePreview : MonoBehaviour
         scopeCamera.CopyFrom(sourceCamera);
         scopeCamera.enabled = true;
         scopeCamera.targetTexture = scopeTexture;
+        // 화면용 sourceCamera의 레터박스 viewport를 RenderTexture에 복사하지 않는다.
+        scopeCamera.rect = new Rect(0f, 0f, 1f, 1f);
         scopeCamera.fieldOfView = Mathf.Max(1f, sourceCamera.fieldOfView / magnification);
         scopeCamera.transform.SetPositionAndRotation(sourceCamera.transform.position,
                                                      Quaternion.LookRotation(sourceCamera.ScreenPointToRay(pointerPosition).direction,

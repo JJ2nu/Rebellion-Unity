@@ -12,6 +12,8 @@ public sealed class UIButtonSfx : MonoBehaviour, IPointerEnterHandler, IPointerD
     [SerializeField] private AudioClip hoverClip;
     [SerializeField] private AudioClip clickClip;
     [SerializeField] private AudioClip additionalClickClip;
+    // Campaign처럼 클릭음은 영속 출력으로 끝까지 유지하면서, 별도 Scene BGM만 즉시 멈춰야 하는 경우에만 연결한다.
+    [SerializeField] private AudioSource audioSourceToStopOnClick;
 
     private AudioSource audioSource;
     private Button button;
@@ -48,6 +50,19 @@ public sealed class UIButtonSfx : MonoBehaviour, IPointerEnterHandler, IPointerD
         {
             PlayClip(additionalClickClip);
         }
+
+        StopConfiguredAudioSource();
+    }
+
+    private void StopConfiguredAudioSource()
+    {
+        // 재생 출력과 같은 AudioSource를 잘못 연결해도 방금 시작한 클릭음을 끊지 않는다.
+        if (audioSourceToStopOnClick == null || audioSourceToStopOnClick == audioSource)
+        {
+            return;
+        }
+
+        audioSourceToStopOnClick.Stop();
     }
 
     private void PlayClip(AudioClip clip)

@@ -27,6 +27,15 @@ public sealed class SceneLoadButton : MonoBehaviour
     private void OnEnable()
     {
         button ??= GetComponent<Button>();
+
+#if UNITY_EDITOR || REBELLION_DEMO_BUILD
+        // 이번 시연에서 비활성화한 Challenge는 Bootstrap 설정만으로 Title 버튼 입력도 함께 막는다.
+        if (!DemoSessionController.IsSceneSelectionAllowed(sceneName))
+        {
+            button.interactable = false;
+        }
+#endif
+
         button.onClick.AddListener(Load);
     }
 
@@ -54,6 +63,13 @@ public sealed class SceneLoadButton : MonoBehaviour
             Debug.LogWarning("SceneLoadButton scene name is empty.", this);
             return;
         }
+
+#if UNITY_EDITOR || REBELLION_DEMO_BUILD
+        if (!DemoSessionController.IsSceneSelectionAllowed(sceneName))
+        {
+            return;
+        }
+#endif
 
         GameSceneManager.Instance.LoadScene(sceneName);
     }

@@ -48,7 +48,17 @@ public sealed class FixedAspectRatioController : MonoBehaviour
         SceneManager.sceneLoaded -= HandleSceneLoaded;
     }
 
+    private void Update()
+    {
+        ApplyAspectRatioIfNeeded();
+    }
+
     private void LateUpdate()
+    {
+        ApplyAspectRatioIfNeeded();
+    }
+
+    private void ApplyAspectRatioIfNeeded()
     {
         if (lastScreenWidth == Screen.width &&
             lastScreenHeight == Screen.height &&
@@ -97,8 +107,7 @@ public sealed class FixedAspectRatioController : MonoBehaviour
 
         EnsureClearCamera();
 
-        float currentAspect = (float)lastScreenWidth / lastScreenHeight;
-        Rect rect = CalculateViewportRect(currentAspect);
+        Rect rect = GetViewportRect(lastScreenWidth, lastScreenHeight);
 
         foreach (Camera camera in Camera.allCameras)
         {
@@ -111,8 +120,18 @@ public sealed class FixedAspectRatioController : MonoBehaviour
         }
     }
 
-    private static Rect CalculateViewportRect(float currentAspect)
+    /// <summary>
+    /// 현재 출력 크기 안에서 16:9 콘텐츠가 차지할 정규화 viewport를 반환한다.
+    /// Camera, 화면 UI와 입력이 같은 계산을 공유해 검정 여백 경계가 어긋나지 않게 한다.
+    /// </summary>
+    public static Rect GetViewportRect(int screenWidth, int screenHeight)
     {
+        if (screenWidth <= 0 || screenHeight <= 0)
+        {
+            return new Rect(0f, 0f, 1f, 1f);
+        }
+
+        float currentAspect = (float)screenWidth / screenHeight;
         if (Mathf.Approximately(currentAspect, TargetAspect))
         {
             return new Rect(0f, 0f, 1f, 1f);
@@ -126,5 +145,26 @@ public sealed class FixedAspectRatioController : MonoBehaviour
 
         float height = currentAspect / TargetAspect;
         return new Rect(0f, (1f - height) * 0.5f, 1f, height);
+    }
+
+    /// <summary>
+    /// 현재 화면에서 실제 플레이 콘텐츠가 렌더링되는 픽셀 영역을 반환한다.
+    /// </summary>
+    public static Rect GetCurrentPixelRect()
+    {
+        Rect viewportRect = GetViewportRect(Screen.width, Screen.height);
+        return new Rect(
+            viewportRect.x * Screen.width,
+            viewportRect.y * Screen.height,
+            viewportRect.width * Screen.width,
+            viewportRect.height * Screen.height);
+    }
+
+    /// <summary>
+    /// 포인터가 검정 여백이 아닌 16:9 플레이 영역 안에 있는지 확인한다.
+    /// </summary>
+    public static bool ContainsScreenPoint(Vector2 screenPoint)
+    {
+        return GetCurrentPixelRect().Contains(screenPoint);
     }
 }

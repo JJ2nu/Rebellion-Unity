@@ -19,6 +19,7 @@ public sealed class SceneTransitionOverlay : MonoBehaviour
 
     private CanvasGroup canvasGroup;
     private Coroutine transitionRoutine;
+    private LoadingScreenView loadingScreenView;
 
     public static SceneTransitionOverlay Instance
     {
@@ -57,11 +58,14 @@ public sealed class SceneTransitionOverlay : MonoBehaviour
 
     public void LoadScene(string sceneName)
     {
+        // 일반 전환은 범용 로딩 화면을 자동 표시하지 않으며, 남은 표시만 정리한다.
+        HideLoading();
         LoadScene(sceneName, null);
     }
 
     public void LoadScene(string sceneName, Action beforeLoad)
     {
+        HideLoading();
         StartTransition(LoadSceneWithFade(sceneName, beforeLoad));
     }
 
@@ -88,6 +92,7 @@ public sealed class SceneTransitionOverlay : MonoBehaviour
 
     public IEnumerator LoadSceneWithFade(string sceneName, Action beforeLoad)
     {
+        HideLoading();
         yield return FadeOut();
         beforeLoad?.Invoke();
         yield return LoadSceneOnly(sceneName);
@@ -96,6 +101,14 @@ public sealed class SceneTransitionOverlay : MonoBehaviour
     }
 
     public IEnumerator LoadSceneOnly(string sceneName)
+    {
+        yield return LoadSceneOnly(sceneName, null);
+    }
+
+    /// <summary>
+    /// 기존 Scene 로드 호출을 유지하면서, 필요한 흐름만 활성화 전 정규화한 비동기 진행률을 받을 수 있게 한다.
+    /// </summary>
+    public IEnumerator LoadSceneOnly(string sceneName, Action<float> onProgress)
     {
         if (string.IsNullOrWhiteSpace(sceneName))
         {
@@ -110,21 +123,29 @@ public sealed class SceneTransitionOverlay : MonoBehaviour
             yield break;
         }
 
+        onProgress?.Invoke(0f);
         operation.allowSceneActivation = false;
         while (operation.progress < 0.9f)
         {
+            // Unity는 Scene 활성화 전 progress를 0.9에서 멈추므로 이 구간만 0~1로 정규화한다.
+            onProgress?.Invoke(Mathf.Clamp01(operation.progress / 0.9f));
             yield return null;
         }
 
+        // 0.9 도달은 Scene 데이터 준비 완료일 뿐, 활성화와 Stage 준비 완료는 이후 흐름이 별도로 판단한다.
+        onProgress?.Invoke(1f);
         operation.allowSceneActivation = true;
         while (!operation.isDone)
         {
             yield return null;
         }
+
+        onProgress?.Invoke(1f);
     }
 
     public IEnumerator RunCovered(Action coveredAction)
     {
+        HideLoading();
         yield return FadeOut();
         coveredAction?.Invoke();
         yield return WaitForSceneSettled();
@@ -142,8 +163,87 @@ public sealed class SceneTransitionOverlay : MonoBehaviour
     {
         BuildOverlay();
         yield return FadeTo(0f);
+        HideLoading();
         canvasGroup.blocksRaycasts = false;
         canvasGroup.interactable = false;
+    }
+
+    /// <summary>
+    /// 호출자가 필요한 전환에서만 로딩 화면을 표시한다. Prefab이 누락돼도 기존 검정 Fade 흐름은 계속된다.
+    /// </summary>
+    public bool ShowLoading()
+    {
+        BuildOverlay();
+        canvasGroup.blocksRaycasts = true;
+        canvasGroup.interactable = true;
+
+        if (loadingScreenView == null)
+        {
+            Debug.LogWarning(
+                "[SceneTransitionOverlay] LoadingScreenView is not registered. Continuing with the fade overlay.",
+                this);
+            return false;
+        }
+
+        loadingScreenView.Show();
+        return true;
+    }
+
+    public void SetLoadingProgress(float normalizedProgress)
+    {
+        loadingScreenView?.SetProgress(normalizedProgress);
+    }
+
+    public void HideLoading()
+    {
+        loadingScreenView?.Hide();
+    }
+
+    /// <summary>
+    /// Prefab Inspector 값으로 조정하는 FadeOut 뒤의 검정 홀드다. Time.timeScale 영향 없이 연출 순서만 보장한다.
+    /// </summary>
+    public IEnumerator WaitForLoadingFadeOutHold()
+    {
+        yield return WaitForRealtimeSeconds(
+            loadingScreenView != null ? loadingScreenView.FadeOutHoldSeconds : 0f);
+    }
+
+    /// <summary>
+    /// 100%가 한 프레임 이상 표시된 뒤 다음 콘텐츠를 시작하기 전에 사용하는 완료 홀드다.
+    /// </summary>
+    public IEnumerator WaitForLoadingCompletedHold()
+    {
+        yield return WaitForRealtimeSeconds(
+            loadingScreenView != null ? loadingScreenView.CompletedHoldSeconds : 0f);
+    }
+
+    /// <summary>
+    /// Title의 Prefab은 Awake에서 자신을 등록한다. 기존 영속 View가 있으면 새 Scene 인스턴스는 스스로 파괴한다.
+    /// </summary>
+    public bool RegisterLoadingScreen(LoadingScreenView view)
+    {
+        if (view == null)
+        {
+            return false;
+        }
+
+        if (loadingScreenView != null && loadingScreenView != view)
+        {
+            return false;
+        }
+
+        loadingScreenView = view;
+        view.transform.SetParent(transform, false);
+        view.transform.SetAsLastSibling();
+        return true;
+    }
+
+    public void UnregisterLoadingScreen(LoadingScreenView view)
+    {
+        if (loadingScreenView == view)
+        {
+            loadingScreenView = null;
+        }
     }
 
     public IEnumerator WaitForSceneSettled(int frameCount = DefaultSettleFrameCount)
@@ -244,6 +344,15 @@ public sealed class SceneTransitionOverlay : MonoBehaviour
         Image image = panelObject.AddComponent<Image>();
         image.color = overlayColor;
         image.raycastTarget = true;
+
+    }
+
+    private static IEnumerator WaitForRealtimeSeconds(float seconds)
+    {
+        if (seconds > 0f)
+        {
+            yield return new WaitForSecondsRealtime(seconds);
+        }
     }
 
     private static float SmoothStep(float value)
