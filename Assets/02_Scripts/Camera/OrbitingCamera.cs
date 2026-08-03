@@ -18,6 +18,8 @@ public class OrbitingCamera : MonoBehaviour
     [SerializeField] private float maxOrbitAngle = 30f;
     private bool isDraggingMap;
 
+    public bool IsResettingToDefaultOrbit => isActiveAndEnabled && resetCoroutine != null;
+
     private void OnEnable()
     {
         if (orbitAction?.action == null)
@@ -32,6 +34,7 @@ public class OrbitingCamera : MonoBehaviour
     private void OnDisable()
     {
         isDraggingMap = false;
+        StopReset();
 
         if (orbitAction?.action == null)
         {
@@ -81,6 +84,7 @@ public class OrbitingCamera : MonoBehaviour
         if (Mathf.Approximately(currentOrbitAngle, 0f))
         {
             currentOrbitAngle = 0f;
+            resetCoroutine = null;
             return;
         }
 

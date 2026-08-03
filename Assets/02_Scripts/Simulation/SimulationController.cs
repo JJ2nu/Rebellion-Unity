@@ -34,6 +34,8 @@ public class SimulationController : MonoBehaviour
     public event Action<SimulationMissionFacts> MissionFactsChanged;
     public event Action<SimulationMissionFacts> MissionStartFactsFinalized;
     public event Action<CombatSimulationContext> SimulationStarted;
+    // 선처리 스킬 연출이 끝나고 전투 카메라를 시작해도 안전한 시점을 알린다.
+    public event Action<CombatSimulationContext> CombatPresentationReady;
     public event Action<CombatPhaseContext> PhaseStarted;
     public event Action<CombatPhaseContext> PhaseEnded;
     public event Action<CombatAttackContext> AttackStarted;
@@ -194,14 +196,19 @@ public class SimulationController : MonoBehaviour
 
     private void ResetMapViewRotation()
     {
-        if (orbitingCamera == null)
-        {
-            orbitingCamera = FindFirstObjectByType<OrbitingCamera>();
-        }
+        EnsureOrbitingCamera();
 
         if (orbitingCamera != null)
         {
             orbitingCamera.StartResetToDefaultOrbit();
+        }
+    }
+
+    private void EnsureOrbitingCamera()
+    {
+        if (orbitingCamera == null)
+        {
+            orbitingCamera = FindFirstObjectByType<OrbitingCamera>();
         }
     }
 
@@ -267,6 +274,10 @@ public class SimulationController : MonoBehaviour
     {
         SetRunning(true);
         isExecutingSimulation = true;
+
+        // OpeningShot이 회전 중인 gameplay camera를 복사하지 않도록 기본 구도 복귀를 먼저 완료한다.
+        yield return WaitForMapViewRotationReset();
+
         combatPresentationRunId++;
         // UI 중복 입력이 걸러지고 실제 실행 상태에 진입한 뒤에만 시연 시도 횟수를 증가시킨다.
         PlaytestLogger.RecordSimulationStarted();
@@ -302,10 +313,16 @@ public class SimulationController : MonoBehaviour
             ExecutePreSimulationSkillsImmediately(allPieces);
         }
 
+        // 선처리 스킬의 View 복구까지 끝난 뒤 현재 활성 기물을 다시 수집해 전투 Presentation을 시작한다.
+        allPieces = StageManager.Instance.GetAllActivePieces();
+        InvokeSafely(
+            CombatPresentationReady,
+            new CombatSimulationContext(combatPresentationRunId, allPieces),
+            nameof(CombatPresentationReady));
+
         // 선처리 스킬이 모두 실행된 뒤 시작 판정 미션이 사용할 사실을 한 번 확정한다.
         CurrentMissionFacts = BuildMissionFacts(StageManager.Instance.GetAllPieces());
         MissionStartFactsFinalized?.Invoke(CurrentMissionFacts);
-        allPieces = StageManager.Instance.GetAllActivePieces();
 
         foreach (var piece in allPieces)
         {
@@ -355,6 +372,15 @@ public class SimulationController : MonoBehaviour
             new CombatSimulationFinishedContext(combatPresentationRunId, result, finalPieces),
             nameof(CombatSimulationFinished));
         SimulationFinished?.Invoke(result);
+    }
+
+    private IEnumerator WaitForMapViewRotationReset()
+    {
+        EnsureOrbitingCamera();
+        while (orbitingCamera != null && orbitingCamera.IsResettingToDefaultOrbit)
+        {
+            yield return null;
+        }
     }
 
     private IReadOnlyList<PieceBase> GetActivePiecesForPreSimulation()

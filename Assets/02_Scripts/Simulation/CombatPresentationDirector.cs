@@ -69,6 +69,8 @@ public sealed class CombatPresentationDirector : MonoBehaviour
 
         simulationController.SimulationStarted -= HandleSimulationStarted;
         simulationController.SimulationStarted += HandleSimulationStarted;
+        simulationController.CombatPresentationReady -= HandleCombatPresentationReady;
+        simulationController.CombatPresentationReady += HandleCombatPresentationReady;
         simulationController.PhaseStarted -= HandlePhaseStarted;
         simulationController.PhaseStarted += HandlePhaseStarted;
         simulationController.PhaseEnded -= HandlePhaseEnded;
@@ -95,6 +97,7 @@ public sealed class CombatPresentationDirector : MonoBehaviour
         }
 
         simulationController.SimulationStarted -= HandleSimulationStarted;
+        simulationController.CombatPresentationReady -= HandleCombatPresentationReady;
         simulationController.PhaseStarted -= HandlePhaseStarted;
         simulationController.PhaseEnded -= HandlePhaseEnded;
         simulationController.AttackStarted -= HandleAttackStarted;
@@ -113,6 +116,16 @@ public sealed class CombatPresentationDirector : MonoBehaviour
         CurrentRunId = context.RunId;
         CurrentPhaseIndex = 0;
         IsRunActive = true;
+        CurrentRunPieces = context.Pieces;
+    }
+
+    private void HandleCombatPresentationReady(CombatSimulationContext context)
+    {
+        if (context.RunId != CurrentRunId || !IsRunActive)
+        {
+            return;
+        }
+
         CurrentRunPieces = context.Pieces;
         if (enableCombatPresentation)
         {
