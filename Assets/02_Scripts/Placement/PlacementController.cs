@@ -69,7 +69,7 @@ private void Update()
     {
         EnsureMainCamera();
 
-        if (!IsPlacing)
+        if (StageInputModalGate.IsBlocked || !IsPlacing)
         {
             return;
         }
@@ -140,7 +140,7 @@ public void BeginPlacement(InGameUnitStorageSlotUI slot)
 
     private void OnRotatePerformed(InputAction.CallbackContext context)
     {
-        if (!IsPlacing)
+        if (StageInputModalGate.IsBlocked || !IsPlacing)
         {
             return;
         }

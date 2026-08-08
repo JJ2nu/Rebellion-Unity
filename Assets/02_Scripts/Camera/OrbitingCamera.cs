@@ -47,11 +47,23 @@ public class OrbitingCamera : MonoBehaviour
 
     private void Update()
     {
+        if (StageInputModalGate.IsBlocked)
+        {
+            isDraggingMap = false;
+            StopOrbit();
+            return;
+        }
+
         HandleMouseDragOrbit();
     }
 
     private void OnOrbitStarted(InputAction.CallbackContext ctx)
     {
+        if (StageInputModalGate.IsBlocked)
+        {
+            return;
+        }
+
         float orbitDirection = orbitAction.action.ReadValue<float>();
         StartOrbit(orbitDirection);
 
@@ -70,7 +82,7 @@ public class OrbitingCamera : MonoBehaviour
 
     private IEnumerator OrbitRoutine(float direction)
     {
-        while (true)
+        while (!StageInputModalGate.IsBlocked)
         {
             float delta = direction * orbitSpeed * Time.deltaTime;
             ApplyOrbitDelta(delta);
@@ -204,6 +216,11 @@ public class OrbitingCamera : MonoBehaviour
 
     private bool CanContinueMouseDragOrbit()
     {
+        if (StageInputModalGate.IsBlocked)
+        {
+            return false;
+        }
+
         Mouse mouse = Mouse.current;
         if (mouse == null ||
             !FixedAspectRatioController.ContainsScreenPoint(mouse.position.ReadValue()))

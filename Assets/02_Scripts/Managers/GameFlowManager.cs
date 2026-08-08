@@ -229,13 +229,30 @@ public sealed class GameFlowManager : MonoBehaviour
         currentDialogueBinder = null;
         BindStageScene(binder);
         PlaytestLogger.RecordStageEntered(stageId);
+        stageSceneRoutine = StartCoroutine(CompleteLoadedStageStartRoutine(stageId, binder));
+
+        Debug.Log($"[GameFlowManager] Campaign flow started from loaded Stage: {stageId}", this);
+        return true;
+    }
+
+    private IEnumerator CompleteLoadedStageStartRoutine(string stageId, StageSceneFlowBinder binder)
+    {
+        // Stage Scene 단독 실행은 맵 오디오가 이미 재생 중이므로 다시 시작하지 않고 Stage 1만 튜토리얼을 기다린다.
+        if (stageId == Stage001)
+        {
+            yield return binder.PlayStageTutorialAndWait();
+        }
+
+        if (binder != currentStageBinder || stageId != currentStageId)
+        {
+            yield break;
+        }
+
         PlaytestLogger.RecordStageReady();
 #if UNITY_EDITOR || REBELLION_DEMO_BUILD
         DemoSessionController.NotifyCampaignContentVisible();
 #endif
-
-        Debug.Log($"[GameFlowManager] Campaign flow started from loaded Stage: {stageId}", this);
-        return true;
+        stageSceneRoutine = null;
     }
 
     private void StopActiveCampaignRoutines()
@@ -469,10 +486,10 @@ public sealed class GameFlowManager : MonoBehaviour
 
         yield return overlay.FadeIn();
 
-        if (stageLoaded)
+        if (stageLoaded && currentStageId != Stage001)
         {
 #if UNITY_EDITOR || REBELLION_DEMO_BUILD
-            // 첫 Stage가 화면에 보이는 순간부터 시간을 계산해 Scene·데이터 로딩 시간을 체험 시간에서 제외한다.
+            // 튜토리얼이 없는 Stage는 기존처럼 화면이 보이는 순간부터 Demo 시간을 계산한다.
             DemoSessionController.NotifyCampaignContentVisible();
 #endif
         }
@@ -482,6 +499,21 @@ public sealed class GameFlowManager : MonoBehaviour
             // 오디오드라마가 끝나거나 스킵된 뒤에만 맵 BGM과 앰비언트를 시작한다.
             yield return binder.WaitForAudioDramaToFinish();
             binder.PlayCurrentMapAudio();
+        }
+
+        if (stageLoaded && currentStageId == Stage001)
+        {
+            // Stage 1은 맵 오디오를 먼저 시작한 뒤 튜토리얼이 닫힐 때까지 플레이 준비를 보류한다.
+            yield return binder.PlayStageTutorialAndWait();
+
+            if (binder != currentStageBinder || currentStageId != Stage001)
+            {
+                yield break;
+            }
+
+#if UNITY_EDITOR || REBELLION_DEMO_BUILD
+            DemoSessionController.NotifyCampaignContentVisible();
+#endif
         }
 
         if (stageLoaded)

@@ -29,6 +29,8 @@ public class GameManager : MonoBehaviour
 
     // 어디서든 접근할 수 있도록 유지하는 싱글톤 인스턴스
     public static GameManager Instance { get; private set; }
+    // Binder가 초기 Stage 로드 이벤트를 놓친 경우에도 단독 실행 보완 여부를 같은 Inspector 설정으로 판단한다.
+    public bool AutoStartCampaignFlow => autoStartCampaignFlow;
 
     // 자동 Stage 로드가 끝난 뒤 Binder가 실제 Stage ID로 캠페인 상태를 준비할 수 있게 알린다.
     public event Action<string> InitialStageCampaignStartRequested;

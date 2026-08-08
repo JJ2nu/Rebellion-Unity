@@ -11,6 +11,7 @@ public sealed class StageSceneFlowBinder : MonoBehaviour
     [SerializeField] private GameManager gameManager;
     [SerializeField] private SimulationController simulationController;
     [SerializeField] private AudioDramaPlayer audioDramaPlayer;
+    [SerializeField] private StageTutorialController stageTutorialController;
 
     private GameFlowManager flowManager;
     private bool isBound;
@@ -29,6 +30,7 @@ public sealed class StageSceneFlowBinder : MonoBehaviour
         SubscribeInitialStageCampaignStart();
         SubscribeSimulationResult();
         TryRegisterWithFlowManager();
+        TryStartFromAlreadyLoadedStage();
     }
 
     private void Start()
@@ -101,6 +103,18 @@ public sealed class StageSceneFlowBinder : MonoBehaviour
     {
         EnsureBindings();
         gameManager?.PlayCurrentMapAudio();
+    }
+
+    public IEnumerator PlayStageTutorialAndWait()
+    {
+        if (stageTutorialController == null)
+        {
+            Debug.LogWarning("[StageSceneFlowBinder] StageTutorialController is not assigned.", this);
+            yield break;
+        }
+
+        // GameFlowManager는 이 대기가 끝난 뒤에만 StageReady와 Demo 타이머 시작을 기록한다.
+        yield return stageTutorialController.ShowAndWait();
     }
 
     public void EndLoadedStage()
@@ -288,6 +302,21 @@ public sealed class StageSceneFlowBinder : MonoBehaviour
         }
 
         GameFlowManager.TryStartFromLoadedStage(stageId, this);
+    }
+
+    private void TryStartFromAlreadyLoadedStage()
+    {
+        if (GameFlowManager.HasActiveCampaign || gameManager?.AutoStartCampaignFlow != true)
+        {
+            return;
+        }
+
+        // Script 실행 순서상 GameManager.Start가 먼저 끝났다면 초기 이벤트를 놓칠 수 있으므로 현재 로드 결과로 보완한다.
+        string loadedStageId = StageManager.Instance?.CurrentStageId;
+        if (!string.IsNullOrWhiteSpace(loadedStageId))
+        {
+            GameFlowManager.TryStartFromLoadedStage(loadedStageId, this);
+        }
     }
 
     private void TryRegisterWithFlowManager()
