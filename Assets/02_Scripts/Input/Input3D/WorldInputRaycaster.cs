@@ -33,6 +33,7 @@ public class WorldInputRaycaster : MonoBehaviour
 
     private void OnEnable()
     {
+        StageInputModalGate.BlockedStateChanged += HandleModalBlockedStateChanged;
         EnableAction(pointerPositionAction);
         EnableAction(leftClickAction);
         EnableAction(rightClickAction);
@@ -40,6 +41,15 @@ public class WorldInputRaycaster : MonoBehaviour
         if (leftClickAction != null) leftClickAction.action.performed += OnLeftClick;
         if (rightClickAction != null) rightClickAction.action.performed += OnRightClick;
 
+    }
+
+    private void OnDisable()
+    {
+        StageInputModalGate.BlockedStateChanged -= HandleModalBlockedStateChanged;
+
+        if (leftClickAction != null) leftClickAction.action.performed -= OnLeftClick;
+        if (rightClickAction != null) rightClickAction.action.performed -= OnRightClick;
+        ClearHover();
     }
 
     private void Update()
@@ -50,7 +60,7 @@ public class WorldInputRaycaster : MonoBehaviour
 
     private void UpdateHoverTarget()
     {
-        if (isInputBlocked || raycastCamera == null || pointerPositionAction == null)
+        if (isInputBlocked || StageInputModalGate.IsBlocked || raycastCamera == null || pointerPositionAction == null)
         {
             ClearHover();
             return;
@@ -145,7 +155,7 @@ public class WorldInputRaycaster : MonoBehaviour
 
     private bool CanDispatchPointerClick()
     {
-        if (isInputBlocked || raycastCamera == null || pointerPositionAction?.action == null)
+        if (isInputBlocked || StageInputModalGate.IsBlocked || raycastCamera == null || pointerPositionAction?.action == null)
         {
             return false;
         }
@@ -161,6 +171,15 @@ public class WorldInputRaycaster : MonoBehaviour
         if (blocked)
         {
             // 모달 UI가 열릴 때 기존 3D 호버 표시도 같은 프레임에 정리한다.
+            ClearHover();
+        }
+    }
+
+    private void HandleModalBlockedStateChanged(bool blocked)
+    {
+        if (blocked)
+        {
+            // 모달 Lease를 얻는 즉시 기존 hover를 지워 뒤쪽 월드 강조가 남지 않게 한다.
             ClearHover();
         }
     }
