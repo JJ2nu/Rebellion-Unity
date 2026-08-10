@@ -29,6 +29,8 @@ public sealed class SceneTransitionOverlay : MonoBehaviour
         }
     }
     public bool IsFullyOpaque => canvasGroup != null && canvasGroup.alpha >= 0.99f;
+    // 로딩 View가 화면에 남아 있는지 노출한다. Binder 늦은 등록 재개처럼 호출자가 로딩 연출을 이어갈지 판단할 때 사용한다.
+    public bool IsLoadingVisible => loadingScreenView != null && loadingScreenView.IsVisible;
 
     public static SceneTransitionOverlay GetOrCreateInstance()
     {

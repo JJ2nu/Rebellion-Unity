@@ -300,7 +300,17 @@ public sealed class GameFlowManager : MonoBehaviour
 
         if (isLoadingCampaignScene)
         {
-            return;
+            if (campaignSceneRoutine != null)
+            {
+                // 로딩 코루틴이 실행 중이면 WaitForStageBinder가 이 바인딩을 직접 이어받는다.
+                return;
+            }
+
+            // 로딩 코루틴이 Binder 대기 시간 초과로 이미 끝난 늦은 등록이므로, 여기서 남은 준비 흐름을 재개한다.
+            Debug.Log(
+                "[GameFlowManager] StageSceneFlowBinder registered after the loading routine ended. Resuming stage preparation.",
+                this);
+            isLoadingCampaignScene = false;
         }
 
         if (stageSceneRoutine != null)
@@ -308,7 +318,10 @@ public sealed class GameFlowManager : MonoBehaviour
             StopCoroutine(stageSceneRoutine);
         }
 
-        stageSceneRoutine = StartCoroutine(PrepareStageSceneRoutine(currentStageBinder));
+        // 첫 Campaign 로딩 View가 아직 떠 있으면(진단 상태 재개) 같은 로딩 연출로 완료까지 이어간다.
+        stageSceneRoutine = StartCoroutine(PrepareStageSceneRoutine(
+            currentStageBinder,
+            SceneTransitionOverlay.Instance.IsLoadingVisible));
     }
 
     private void BindStageScene(StageSceneFlowBinder binder)
