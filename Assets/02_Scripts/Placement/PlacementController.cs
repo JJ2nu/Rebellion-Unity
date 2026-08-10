@@ -350,7 +350,21 @@ public void HandleAllyPieceRightClick(PieceBase piece)
             return false;
         }
 
-        return !stageManager.IsCellOccupied(cell.CellIndex);
+        if (stageManager.IsCellOccupied(cell.CellIndex))
+        {
+            return false;
+        }
+
+        // 튜토리얼 가이드 셀에는 가이드가 요구하는 종류만 배치할 수 있다.
+        // 다른 종류로 hover하면 기존 배치 불가 셀과 같은 시각 피드백이 표시되고, 좌클릭해도 배치되지 않는다.
+        if (pendingSlot != null &&
+            stageManager.TryGetTutorialGhostRequiredType(cell.CellIndex, out PieceType requiredType) &&
+            pendingSlot.UnitType != requiredType)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private void CreatePreview(PieceType pieceType)

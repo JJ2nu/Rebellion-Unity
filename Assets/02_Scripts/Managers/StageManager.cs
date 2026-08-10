@@ -61,6 +61,8 @@ public class StageManager : MonoBehaviour
     private readonly List<(int detailType, PieceBase piece)> spawnedCivilianPieces = new();
     private readonly List<(int detailType, GameObject obj)> spawnedObjects = new();
     private readonly List<(int cellIndex, GameObject obj)> tutorialGhostPieces = new();
+    // 튜토리얼 가이드 셀별로 배치를 허용할 아군 기물 종류. 가이드 Prefab의 PieceBase에서 읽어 채운다.
+    private readonly Dictionary<int, PieceType> tutorialGhostRequiredTypes = new();
     private bool tutorialGhostPiecesVisible = true;
     [SerializeField] private int currentStageEnemyCount;
     [SerializeField] private List<int> currentStageEnemyTypeCounts = new();
@@ -444,6 +446,15 @@ public class StageManager : MonoBehaviour
         return false;
     }
 
+    /// <summary>
+    /// 튜토리얼 가이드 기물이 있는 셀이면 true를 돌려주고, 그 셀에 배치를 허용하는 아군 기물 종류를 함께 전달한다.
+    /// 가이드가 화면에서 숨겨진 동안(같은 셀에 아군이 배치된 상태)에도 셀-종류 대응은 유지된다.
+    /// </summary>
+    public bool TryGetTutorialGhostRequiredType(int cellIndex, out PieceType requiredType)
+    {
+        return tutorialGhostRequiredTypes.TryGetValue(cellIndex, out requiredType);
+    }
+
     public void SetTutorialGhostPiecesActive(bool isActive)
     {
         tutorialGhostPiecesVisible = isActive;
@@ -503,6 +514,13 @@ public class StageManager : MonoBehaviour
     public bool TrySpawnAllyPiece(PieceType pieceType, int cellIndex, Direction facingDirection)
     {
         if (IsCellOccupied(cellIndex))
+        {
+            return false;
+        }
+
+        // 튜토리얼 가이드 셀은 가이드가 요구하는 종류만 배치를 허용한다.
+        // 미리보기 판정(PlacementController.CanPlaceOn)과 별개로 실제 생성 지점에서도 막아 규칙을 한 곳에서 보장한다.
+        if (tutorialGhostRequiredTypes.TryGetValue(cellIndex, out PieceType requiredType) && requiredType != pieceType)
         {
             return false;
         }
@@ -1139,6 +1157,18 @@ public class StageManager : MonoBehaviour
             ghost.name = $"{prefab.name}_TutorialGhost";
             ConfigureTutorialGhostPiece(ghost);
             tutorialGhostPieces.Add((ghostData.cellIndex, ghost));
+
+            // 가이드 셀에는 가이드와 같은 종류만 배치할 수 있도록, 가이드 Prefab의 PieceBase에서 요구 종류를 기록한다.
+            // PieceBase가 없으면 종류를 알 수 없으므로 해당 셀은 제한 없이 기존 배치 규칙을 따른다.
+            PieceBase ghostPiece = ghost.GetComponent<PieceBase>();
+            if (ghostPiece != null)
+            {
+                tutorialGhostRequiredTypes[ghostData.cellIndex] = ghostPiece.PieceType;
+            }
+            else
+            {
+                Debug.LogWarning($"Tutorial ghost has no PieceBase, placement type restriction skipped: {ghost.name}", this);
+            }
         }
 
         tutorialGhostPiecesVisible = true;
@@ -1247,6 +1277,7 @@ public class StageManager : MonoBehaviour
         }
 
         tutorialGhostPieces.Clear();
+        tutorialGhostRequiredTypes.Clear();
         tutorialGhostPiecesVisible = true;
     }
     private void PoolEnemies()
