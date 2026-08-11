@@ -396,6 +396,40 @@ public void HandleAllyPieceRightClick(PieceBase piece)
         {
             piece.enabled = false;
         }
+
+        ShowPreviewRotateIcon();
+    }
+
+    /// <summary>
+    /// 미리보기 기물 머리 위에 회전 안내 아이콘(UI_Rotate_03)을 켠다.
+    /// 미리보기는 PieceBase를 꺼 두므로 PieceBase.Start()의 HUD 활성화와
+    /// Update()의 상태 갱신이 일어나지 않아, 여기서 HUD를 직접 켜고 상태를 고정한다.
+    /// </summary>
+    private void ShowPreviewRotateIcon()
+    {
+        if (previewObject == null)
+        {
+            return;
+        }
+
+        // 기물 Prefab의 HUD 자식은 기본 비활성이고 PieceBase.Start()가 켜는 구조라 직접 켠다.
+        Transform hudTransform = previewObject.transform.Find("HUD");
+        if (hudTransform == null)
+        {
+            Debug.LogWarning("PlacementController: preview piece has no HUD child for the rotate icon.", this);
+            return;
+        }
+
+        hudTransform.gameObject.SetActive(true);
+
+        InGameHUDUI hudUi = hudTransform.GetComponent<InGameHUDUI>();
+        if (hudUi == null)
+        {
+            Debug.LogWarning("PlacementController: preview HUD has no InGameHUDUI component.", this);
+            return;
+        }
+
+        hudUi.InitializeRotate();
     }
 
 
