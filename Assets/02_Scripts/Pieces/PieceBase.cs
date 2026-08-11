@@ -250,6 +250,11 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
         _DirectionIndicator?.SetActive(true);
     }
 
+    // 배치 시점에 기록된 그리드 좌표다. 시뮬레이션 이동·사망·되감기 진행과 무관하게 "배치된 셀"을 나타내므로,
+    // 튜토리얼 가이드 셀 점유 판정처럼 배치 상태 기준이 필요한 곳에서 사용한다.
+    public int SpawnGridX => _hasSpawnState ? _spawnGridX : GridX;
+    public int SpawnGridY => _hasSpawnState ? _spawnGridY : GridY;
+
     public void CaptureSpawnState()
     {
         _hasSpawnState = true;

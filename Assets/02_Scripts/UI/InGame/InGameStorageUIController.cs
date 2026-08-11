@@ -13,6 +13,8 @@ public sealed class InGameStorageUIController : MonoBehaviour
 
     private readonly List<InGameUnitStorageSlotUI> subscribedSlots = new();
     private InGameStorageView view;
+    // 가이드 표시 이벤트를 구독한 StageManager 인스턴스다. Scene 전환으로 인스턴스가 바뀌면 다시 구독한다.
+    private StageManager subscribedStageManager;
 
     private void Awake()
     {
@@ -22,18 +24,23 @@ public sealed class InGameStorageUIController : MonoBehaviour
     private void OnEnable()
     {
         SubscribeSimulationState();
+        SubscribeTutorialGhostState();
         ApplyInteractionState();
+        ApplyGuideHighlights();
     }
 
     private void Start()
     {
         SubscribeSimulationState();
+        SubscribeTutorialGhostState();
         ApplyInteractionState();
+        ApplyGuideHighlights();
     }
 
     private void OnDisable()
     {
         UnsubscribeSimulationState();
+        UnsubscribeTutorialGhostState();
         view?.SetInteractionLocked(false);
     }
 
@@ -42,6 +49,7 @@ public sealed class InGameStorageUIController : MonoBehaviour
         ReleasePlacementReferences();
         UnsubscribeSlotEvents();
         UnsubscribeSimulationState();
+        UnsubscribeTutorialGhostState();
     }
 
     public void Bind(StageData data)
@@ -92,6 +100,10 @@ public sealed class InGameStorageUIController : MonoBehaviour
         }
 
         ApplyInteractionState();
+
+        // Bind 시점에는 StageManager가 이미 존재할 수 있으므로 구독을 보충하고 현재 가이드 상태를 즉시 반영한다.
+        SubscribeTutorialGhostState();
+        ApplyGuideHighlights();
     }
 
     private void ReleasePlacementReferences()
@@ -163,5 +175,52 @@ public sealed class InGameStorageUIController : MonoBehaviour
     {
         bool isLocked = simulationController != null && simulationController._isRunning;
         view?.SetInteractionLocked(isLocked);
+    }
+
+    private void SubscribeTutorialGhostState()
+    {
+        StageManager stageManager = StageManager.Instance;
+        if (stageManager == null || stageManager == subscribedStageManager)
+        {
+            return;
+        }
+
+        UnsubscribeTutorialGhostState();
+        subscribedStageManager = stageManager;
+        stageManager.TutorialGhostPiecesChanged += HandleTutorialGhostPiecesChanged;
+    }
+
+    private void UnsubscribeTutorialGhostState()
+    {
+        if (subscribedStageManager != null)
+        {
+            subscribedStageManager.TutorialGhostPiecesChanged -= HandleTutorialGhostPiecesChanged;
+            subscribedStageManager = null;
+        }
+    }
+
+    private void HandleTutorialGhostPiecesChanged()
+    {
+        ApplyGuideHighlights();
+    }
+
+    /// <summary>
+    /// 화면에 표시 중인 가이드 기물 종류와 일치하는 슬롯에만 가이드 하이라이트를 켠다.
+    /// </summary>
+    private void ApplyGuideHighlights()
+    {
+        StageManager stageManager = StageManager.Instance != null ? StageManager.Instance : subscribedStageManager;
+
+        for (int index = 0; index < subscribedSlots.Count; index++)
+        {
+            InGameUnitStorageSlotUI slot = subscribedSlots[index];
+            if (slot == null)
+            {
+                continue;
+            }
+
+            bool shouldHighlight = stageManager != null && stageManager.HasVisibleTutorialGhostOfType(slot.UnitType);
+            slot.SetGuideHighlight(shouldHighlight);
+        }
     }
 }
