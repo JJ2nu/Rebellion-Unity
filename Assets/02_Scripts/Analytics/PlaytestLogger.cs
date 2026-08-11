@@ -7,6 +7,9 @@ using UnityEngine;
 /// <summary>
 /// 시연 캠페인의 Stage 진입, 시도, 결과, 이탈과 엔딩을 세션별 JSON Lines 파일로 즉시 저장한다.
 /// Scene 전환과 무관하게 같은 세션을 유지하고, 다음 실행에서는 남아 있는 상태 파일로 비정상 종료 지점을 복구한다.
+/// Editor, Development(Debug) 빌드, 시연용 Demo 빌드(REBELLION_DEMO_BUILD)에서만 인스턴스가 생성되고,
+/// 배포용 Release 빌드에서는 생성 진입점이 컴파일에서 제외되어 PlayLogs 폴더와 로그 파일이 만들어지지 않는다.
+/// 기록 API는 Instance가 없으면 아무 동작도 하지 않으므로 호출부는 빌드 종류와 무관하게 그대로 동작한다.
 /// </summary>
 public sealed class PlaytestLogger : MonoBehaviour
 {
@@ -88,11 +91,17 @@ public sealed class PlaytestLogger : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void CreateBeforeFirstScene()
     {
+        // 배포용 Release 빌드에서는 로거를 만들지 않아 PlayLogs 기록 자체가 발생하지 않는다.
+        // Demo 빌드는 빌드 메뉴가 주입하는 REBELLION_DEMO_BUILD define으로 기존 기록 동작을 유지한다.
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REBELLION_DEMO_BUILD
         EnsureInstance();
+#endif
     }
 
     public static void PrepareCampaign(string entrySource)
     {
+        // EnsureInstance를 호출하는 생성 진입점이므로 Release 빌드에서는 본문을 제외한다.
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REBELLION_DEMO_BUILD
         PlaytestLogger logger = EnsureInstance();
         if (logger.sessionState.isActive)
         {
@@ -102,11 +111,16 @@ public sealed class PlaytestLogger : MonoBehaviour
         logger.pendingEntrySource = string.IsNullOrWhiteSpace(entrySource)
             ? StandaloneStageEntrySource
             : entrySource;
+#endif
     }
 
     public static void RecordStageEntered(string stageId)
     {
+        // EnsureInstance를 호출하는 생성 진입점이므로 Release 빌드에서는 본문을 제외한다.
+        // 나머지 Record 계열은 Instance?. 접근이라 Instance가 없으면 스스로 no-op이 된다.
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REBELLION_DEMO_BUILD
         EnsureInstance().RecordStageEnteredInternal(stageId);
+#endif
     }
 
     public static void RecordStageReady()
