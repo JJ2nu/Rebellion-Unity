@@ -35,6 +35,7 @@ public sealed class PlacementController : MonoBehaviour
 
     private void OnDestroy()
     {
+        StageInputModalGate.BlockedStateChanged -= HandleModalBlockedStateChanged;
         PieceBase.AllyRightClicked -= HandleAllyPieceRightClick;
         PieceBase.AllyLeftClicked  -= HandleAllyPieceLeftClick;
 
@@ -51,6 +52,8 @@ private void Awake()
         ResolveDependencies();
         EnsureMainCamera();
 
+        // 모달 잠금이 시작되는 순간 진행 중인 배치를 취소해, 미리보기가 모달 뒤에 남거나 슬롯 소모가 유지되지 않게 한다.
+        StageInputModalGate.BlockedStateChanged += HandleModalBlockedStateChanged;
         PieceBase.AllyRightClicked += HandleAllyPieceRightClick;
         PieceBase.AllyLeftClicked  += HandleAllyPieceLeftClick;
 
@@ -136,6 +139,15 @@ public void BeginPlacement(InGameUnitStorageSlotUI slot)
         isCellHovered = false;
         ClearPreview();
         NotifyPlacementStateChanged(wasPlacing);
+    }
+
+    private void HandleModalBlockedStateChanged(bool blocked)
+    {
+        // 잠금 해제 시에는 아무것도 하지 않는다. 취소된 배치는 플레이어가 슬롯 클릭으로 다시 시작한다.
+        if (blocked && IsPlacing)
+        {
+            CancelPlacement();
+        }
     }
 
     private void OnRotatePerformed(InputAction.CallbackContext context)
@@ -338,7 +350,21 @@ public void HandleAllyPieceRightClick(PieceBase piece)
             return false;
         }
 
-        return !stageManager.IsCellOccupied(cell.CellIndex);
+        if (stageManager.IsCellOccupied(cell.CellIndex))
+        {
+            return false;
+        }
+
+        // 튜토리얼 가이드 셀에는 가이드가 요구하는 종류만 배치할 수 있다.
+        // 다른 종류로 hover하면 기존 배치 불가 셀과 같은 시각 피드백이 표시되고, 좌클릭해도 배치되지 않는다.
+        if (pendingSlot != null &&
+            stageManager.TryGetTutorialGhostRequiredType(cell.CellIndex, out PieceType requiredType) &&
+            pendingSlot.UnitType != requiredType)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private void CreatePreview(PieceType pieceType)

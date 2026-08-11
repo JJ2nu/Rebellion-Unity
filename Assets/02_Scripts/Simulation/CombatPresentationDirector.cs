@@ -31,6 +31,8 @@ public sealed class CombatPresentationDirector : MonoBehaviour
     // IsLethal에 의존하지 않아 현재의 한 방 규칙과 향후 체력 규칙 모두에서 동일하게 동작한다.
     private readonly Dictionary<PieceBase, CombatHitContext> pendingHitContexts = new();
     private bool isHitStopActive;
+    private bool isHitStopSuppressed;
+    private bool isCombatCameraSuppressed;
     private float hitStopEndRealtime;
     private float previousTimeScale = 1f;
     private float previousFixedDeltaTime = 0.02f;
@@ -127,7 +129,7 @@ public sealed class CombatPresentationDirector : MonoBehaviour
         }
 
         CurrentRunPieces = context.Pieces;
-        if (enableCombatPresentation)
+        if (enableCombatPresentation && !isCombatCameraSuppressed)
         {
             cameraPresentation?.BeginRun(context);
         }
@@ -138,7 +140,7 @@ public sealed class CombatPresentationDirector : MonoBehaviour
         if (context.RunId == CurrentRunId)
         {
             CurrentPhaseIndex = context.PhaseIndex;
-            if (enableCombatPresentation)
+            if (enableCombatPresentation && !isCombatCameraSuppressed)
             {
                 cameraPresentation?.BeginPhase(context);
             }
@@ -157,7 +159,7 @@ public sealed class CombatPresentationDirector : MonoBehaviour
     {
         if (context.RunId == CurrentRunId)
         {
-            if (enableCombatPresentation)
+            if (enableCombatPresentation && !isCombatCameraSuppressed)
             {
                 cameraPresentation?.IncludeAttack(context);
             }
@@ -170,7 +172,12 @@ public sealed class CombatPresentationDirector : MonoBehaviour
         {
             if (enableCombatPresentation)
             {
-                cameraPresentation?.PlayHitImpact(context);
+                // 스킵 중에도 사망 반동에 필요한 명중 문맥은 유지하고, 카메라 임펄스만 차단한다.
+                if (!isCombatCameraSuppressed)
+                {
+                    cameraPresentation?.PlayHitImpact(context);
+                }
+
                 CacheHitContext(context);
                 PlayHitStop(context);
             }
@@ -181,7 +188,7 @@ public sealed class CombatPresentationDirector : MonoBehaviour
     {
         if (context.RunId == CurrentRunId)
         {
-            if (enableCombatPresentation)
+            if (enableCombatPresentation && !isCombatCameraSuppressed)
             {
                 cameraPresentation?.RegisterProjectile(context);
             }
@@ -215,6 +222,7 @@ public sealed class CombatPresentationDirector : MonoBehaviour
         CurrentRunPieces = context.Pieces;
         RestoreTimeScale();
         pendingHitContexts.Clear();
+        // 종료 줌아웃은 스킵 여부와 관계없이 유지한다. 스킵 중이면 이미 복귀가 진행 중이므로 목표만 재확인된다.
         if (enableCombatPresentation)
         {
             cameraPresentation?.ReturnToBaseline();
@@ -254,9 +262,39 @@ public sealed class CombatPresentationDirector : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 연출 스킵의 고속 진행 동안 히트스톱이 timeScale을 덮어쓰지 않도록 억제한다.
+    /// 활성 히트스톱은 즉시 종료해, 히트스톱이 보관한 timeScale 복원과 스킵 배속이 충돌하지 않게 한다.
+    /// </summary>
+    public void SetHitStopSuppressed(bool suppressed)
+    {
+        isHitStopSuppressed = suppressed;
+
+        if (suppressed)
+        {
+            RestoreTimeScale();
+        }
+    }
+
+    /// <summary>
+    /// 연출 스킵의 고속 진행 동안 전투 카메라 연출이 배속으로 재생되어 어지럽지 않도록 차단한다.
+    /// 차단 시작 시 기존 종료 연출(ReturnToBaseline)로 부드러운 줌아웃을 시작해
+    /// 기물들이 고속으로 움직이는 동안 카메라는 기본 구도로 복귀만 하고, 해제 전까지 새 연출을 시작하지 않는다.
+    /// 줌아웃 easing은 unscaled 시간이라 배속의 영향을 받지 않는다.
+    /// </summary>
+    public void SetCombatCameraSuppressed(bool suppressed)
+    {
+        isCombatCameraSuppressed = suppressed;
+
+        if (suppressed)
+        {
+            cameraPresentation?.ReturnToBaseline();
+        }
+    }
+
     private void PlayHitStop(CombatHitContext context)
     {
-        if (!enableHitStop || !CanPlayHitStop(context))
+        if (!enableHitStop || isHitStopSuppressed || !CanPlayHitStop(context))
         {
             return;
         }

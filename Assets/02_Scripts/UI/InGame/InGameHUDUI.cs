@@ -9,6 +9,9 @@ public class InGameHUDUI : MonoBehaviour
     [SerializeField] private GameObject _rotateUI;
     [SerializeField] private GameObject _deadUI;
     [SerializeField] private GameObject _targetUI;
+    // 튜토리얼 가이드 기물 전용 표식이다. 가이드 Prefab(TutorialGuide_*)의 HUD에만 연결하고,
+    // 실제 기물 HUD에서는 비워 둔다. 비어 있으면 Guide 상태는 기존처럼 비활성 아이콘으로 표시된다.
+    [SerializeField] private GameObject _guideUI;
     private bool keepGuideStateOnStart;
 
 
@@ -66,7 +69,8 @@ public class InGameHUDUI : MonoBehaviour
         _inactiveUI.SetActive(false);
         _rotateUI.SetActive(false);
         _deadUI.SetActive(false);
-        _targetUI.SetActive(false); 
+        _targetUI.SetActive(false);
+        SetGuideActive(false);
     }
 
     public void InitializeGuide()
@@ -77,7 +81,19 @@ public class InGameHUDUI : MonoBehaviour
 
     private void Guide()
     {
-        // 가이드 기물은 공격 가능 여부를 판정하지 않으므로 비활성 색상의 종류 아이콘만 고정 표시한다.
+        // 가이드 전용 표식이 연결된 HUD(가이드 Prefab)는 실제 기물과 구분되는 표식만 표시한다.
+        // 표식이 없는 기존 HUD는 이전과 같이 비활성 색상의 종류 아이콘으로 대체한다.
+        if (_guideUI != null)
+        {
+            _activeUI.SetActive(false);
+            _inactiveUI.SetActive(false);
+            _rotateUI.SetActive(false);
+            _deadUI.SetActive(false);
+            _targetUI.SetActive(false);
+            _guideUI.SetActive(true);
+            return;
+        }
+
         Inactive();
     }
     public void Inactive()
@@ -86,7 +102,8 @@ public class InGameHUDUI : MonoBehaviour
         _inactiveUI.SetActive(true);
         _rotateUI.SetActive(false);
         _deadUI.SetActive(false);
-        _targetUI.SetActive(false); 
+        _targetUI.SetActive(false);
+        SetGuideActive(false);
     }
     public void Rotate()
     {
@@ -94,7 +111,8 @@ public class InGameHUDUI : MonoBehaviour
         _inactiveUI.SetActive(false);
         _rotateUI.SetActive(true);
         _deadUI.SetActive(false);
-        _targetUI.SetActive(false); 
+        _targetUI.SetActive(false);
+        SetGuideActive(false);
     }
     public void Dead()
     {
@@ -102,7 +120,8 @@ public class InGameHUDUI : MonoBehaviour
         _inactiveUI.SetActive(false);
         _rotateUI.SetActive(false);
         _deadUI.SetActive(true);
-        _targetUI.SetActive(false); 
+        _targetUI.SetActive(false);
+        SetGuideActive(false);
     }
     public void Target()
     {
@@ -110,7 +129,8 @@ public class InGameHUDUI : MonoBehaviour
         _inactiveUI.SetActive(false);
         _rotateUI.SetActive(false);
         _deadUI.SetActive(false);
-        _targetUI.SetActive(true); 
+        _targetUI.SetActive(true);
+        SetGuideActive(false);
     }
     public void Clear()
     {
@@ -118,6 +138,16 @@ public class InGameHUDUI : MonoBehaviour
         _inactiveUI.SetActive(false);
         _rotateUI.SetActive(false);
         _deadUI.SetActive(false);
-        _targetUI.SetActive(false); 
+        _targetUI.SetActive(false);
+        SetGuideActive(false);
+    }
+
+    private void SetGuideActive(bool isActive)
+    {
+        // 가이드 표식은 선택 연결이므로 없는 HUD에서는 아무 것도 하지 않는다.
+        if (_guideUI != null)
+        {
+            _guideUI.SetActive(isActive);
+        }
     }
 }

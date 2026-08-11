@@ -44,12 +44,6 @@ public sealed class StageSimulationControls : MonoBehaviour
             simulationController.SimulationFinished += HandleSimulationFinished;
         }
 
-        if (StageManager.Instance != null)
-        {
-            StageManager.Instance.RetryResetStateChanged -= HandleRetryResetStateChanged;
-            StageManager.Instance.RetryResetStateChanged += HandleRetryResetStateChanged;
-        }
-
         SubscribeViewEvents();
         ApplyState();
     }
@@ -60,11 +54,6 @@ public sealed class StageSimulationControls : MonoBehaviour
         {
             simulationController.RunningStateChanged -= HandleRunningStateChanged;
             simulationController.SimulationFinished -= HandleSimulationFinished;
-        }
-
-        if (StageManager.Instance != null)
-        {
-            StageManager.Instance.RetryResetStateChanged -= HandleRetryResetStateChanged;
         }
 
         UnsubscribeViewEvents();
@@ -152,25 +141,21 @@ public sealed class StageSimulationControls : MonoBehaviour
         ApplyState();
     }
 
-    private void HandleRetryResetStateChanged(bool _)
-    {
-        ApplyState();
-    }
-
     private void ApplyState()
     {
         EnsureBindings();
 
-        // 실행 중에는 Play를 비활성 스프라이트로 남기고, 결과가 생긴 뒤에만 Retry/Confirm으로 교체한다.
+        // 실행 중에는 Play를 숨겨 연출 스킵 버튼이 같은 우상단 영역을 사용하고, 결과가 생긴 뒤 Retry/Confirm으로 교체한다.
+        // Retry 되감기 중에도 Play는 즉시 활성 상태다. SpriteSwap disabled 자동 표시 때문에
+        // 비상호작용으로 두면 되감기 0.45초 동안 Deact가 보이고, 클릭은 CompleteRetryResetImmediately가 안전하게 처리한다.
         bool isSimulationMode = simulationController != null && simulationController._isRunning;
-        bool isRetryResetting = StageManager.Instance != null && StageManager.Instance.IsRetryResetting;
         bool hasSimulationResult = stageSceneFlowBinder != null && stageSceneFlowBinder.HasPendingSimulationResult;
 
         // ViewState에는 게임 상태가 아니라 View가 그대로 적용할 최종 표시 값만 담는다.
         StageSimulationControlsViewState state = new(
-            isPlayVisible: !hasSimulationResult,
-            isPlayInteractable: !isSimulationMode && !isRetryResetting && !hasSimulationResult,
-            useInactivePlaySprite: isSimulationMode || isRetryResetting,
+            isPlayVisible: !hasSimulationResult && !isSimulationMode,
+            isPlayInteractable: !isSimulationMode && !hasSimulationResult,
+            useInactivePlaySprite: isSimulationMode,
             areResultActionsVisible: hasSimulationResult);
         view?.Apply(state);
     }
@@ -186,10 +171,11 @@ public sealed class StageSimulationControls : MonoBehaviour
 
     private bool IsSimulationRunningOrPendingResult()
     {
+        // 되감기 중 시작 요청은 막지 않는다. SimulationController.StartSimulation이
+        // CompleteRetryResetImmediately로 되감기를 즉시 완료한 뒤 시작한다.
         bool isSimulationMode = simulationController != null && simulationController._isRunning;
-        bool isRetryResetting = StageManager.Instance != null && StageManager.Instance.IsRetryResetting;
         bool hasSimulationResult = stageSceneFlowBinder != null && stageSceneFlowBinder.HasPendingSimulationResult;
-        return isSimulationMode || isRetryResetting || hasSimulationResult;
+        return isSimulationMode || hasSimulationResult;
     }
 
     private void SubscribeViewEvents()
