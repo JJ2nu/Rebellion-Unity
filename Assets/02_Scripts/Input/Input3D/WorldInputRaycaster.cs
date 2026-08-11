@@ -191,6 +191,15 @@ public class WorldInputRaycaster : MonoBehaviour
             return;
         }
 
+        // 인터페이스 참조는 Unity의 파괴 감지(== null 오버로드)를 우회하므로,
+        // Stage 정리로 파괴된 대상은 UnHover 콜백 없이 참조만 비워 MissingReferenceException 반복을 막는다.
+        if (currentTarget is MonoBehaviour targetBehaviour && targetBehaviour == null)
+        {
+            currentTarget = null;
+            currentEventData = default;
+            return;
+        }
+
         currentTarget.OnWorldUnHover(currentEventData);
         currentTarget = null;
         currentEventData = default;

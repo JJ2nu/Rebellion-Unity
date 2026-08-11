@@ -15,6 +15,8 @@ public sealed class GameFlowManager : MonoBehaviour
 #endif
     private const string StagePathPrefix = "Stages/";
     private const string StagePathSuffix = ".json";
+    // 인게임 타이틀 복귀 버튼의 플레이로그 세션 종료 트리거 이름.
+    private const string ReturnToTitleButtonEndTrigger = "returnToTitleButton";
     private const string Stage001 = "stage_001";
     private const string Stage002 = "stage_002";
     private const string Stage003 = "stage_003";
@@ -123,6 +125,13 @@ public sealed class GameFlowManager : MonoBehaviour
         manager.BeginForcedSceneReturn(DemoTimeOverSceneName, "demoTimeExpired");
     }
 #endif
+
+    // Stage 씬 좌하단 타이틀 복귀 버튼 전용 진입점. F12 디버그 경로와 달리 Release 빌드에도 포함된다.
+    public static void ReturnToTitleFromInGameButton()
+    {
+        GameFlowManager manager = EnsureInstance();
+        manager.BeginForcedSceneReturn(TitleSceneName, ReturnToTitleButtonEndTrigger);
+    }
 
     public static bool TryStartFromLoadedStage(string stageId, StageSceneFlowBinder binder)
     {
@@ -279,7 +288,7 @@ public sealed class GameFlowManager : MonoBehaviour
         }
     }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD || REBELLION_DEMO_BUILD
+    // 인게임 복귀 버튼이 Release 빌드에서도 사용하므로 디버그 전용 조건부 컴파일에 두지 않는다.
     private void BeginForcedSceneReturn(string destinationSceneName, string endTrigger)
     {
         // TimeOver 전환의 FadeIn 중 F12/0초 자동 복귀가 들어와도 최신 목적지 요청을 우선한다.
@@ -287,7 +296,6 @@ public sealed class GameFlowManager : MonoBehaviour
         campaignSceneRoutine = StartCoroutine(
             ReturnFromCampaignRoutine(destinationSceneName, endTrigger));
     }
-#endif
 
     public void RegisterStageScene(StageSceneFlowBinder binder)
     {
@@ -657,7 +665,7 @@ public sealed class GameFlowManager : MonoBehaviour
         campaignSceneRoutine = null;
     }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD || REBELLION_DEMO_BUILD
+    // 버튼·F12·Demo TimeOver가 공유하는 강제 복귀 루틴. PlaytestLogger는 Release 빌드에서 스스로 no-op이 된다.
     private IEnumerator ReturnFromCampaignRoutine(
         string destinationSceneName,
         string endTrigger)
@@ -693,7 +701,6 @@ public sealed class GameFlowManager : MonoBehaviour
         yield return overlay.FadeIn();
         campaignSceneRoutine = null;
     }
-#endif
 
     private IEnumerator WaitForStageBinder()
     {
