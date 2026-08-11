@@ -7,10 +7,10 @@ using System.Linq;
 
 public sealed class RebellionPlayerSettingsBuildProcessor : IPreprocessBuildWithReport
 {
-    private const string IconPath = "Assets/04_Images/Cursor/UI_Cursor_Basic.png";
+    private const string IconPath = "Assets/04_Images/UI/icon.png";
     private const string DefaultBuildVersion = "1.0.1";
     private const string BuildRoot = "Builds";
-    private const string ExecutableName = "Rebellion.exe";
+    private const string ExecutableName = "ReBellion.exe";
     private const string DebugBuildFolderSuffix = "-Debug";
     private const string DemoBuildFolderSuffix = "-Demo";
     private const string DemoBuildDefine = "REBELLION_DEMO_BUILD";
