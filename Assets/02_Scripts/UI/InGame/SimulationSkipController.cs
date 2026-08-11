@@ -135,6 +135,8 @@ public sealed class SimulationSkipController : MonoBehaviour
         // 히트스톱이 활성 상태에서 저장해 둔 timeScale을 나중에 복원하며 배속을 덮어쓰지 않도록,
         // 억제(활성 히트스톱 즉시 종료 포함)를 먼저 적용한 뒤 현재 값을 보관하고 배속을 건다.
         presentationDirector?.SetHitStopSuppressed(true);
+        // 배속 재생되는 카메라 무빙이 어지럽지 않게 기본 구도로 즉시 복귀시키고 스킵 동안 카메라 연출을 차단한다.
+        presentationDirector?.SetCombatCameraSuppressed(true);
         previousTimeScale = Time.timeScale;
         previousMaximumDeltaTime = Time.maximumDeltaTime;
         Time.timeScale = skipTimeScale;
@@ -157,6 +159,7 @@ public sealed class SimulationSkipController : MonoBehaviour
         Time.timeScale = previousTimeScale;
         Time.maximumDeltaTime = previousMaximumDeltaTime;
         presentationDirector?.SetHitStopSuppressed(false);
+        presentationDirector?.SetCombatCameraSuppressed(false);
     }
 
     private void EnsureBindings()
