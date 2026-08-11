@@ -161,14 +161,15 @@ public sealed class StageSimulationControls : MonoBehaviour
     {
         EnsureBindings();
 
-        // 실행 중에는 Play를 비활성 스프라이트로 남기고, 결과가 생긴 뒤에만 Retry/Confirm으로 교체한다.
+        // 실행 중에는 Play를 숨겨 연출 스킵 버튼이 같은 우상단 영역을 사용하고, 결과가 생긴 뒤 Retry/Confirm으로 교체한다.
+        // Retry 되감기 중에는 기존처럼 비활성 스프라이트의 Play를 남긴다.
         bool isSimulationMode = simulationController != null && simulationController._isRunning;
         bool isRetryResetting = StageManager.Instance != null && StageManager.Instance.IsRetryResetting;
         bool hasSimulationResult = stageSceneFlowBinder != null && stageSceneFlowBinder.HasPendingSimulationResult;
 
         // ViewState에는 게임 상태가 아니라 View가 그대로 적용할 최종 표시 값만 담는다.
         StageSimulationControlsViewState state = new(
-            isPlayVisible: !hasSimulationResult,
+            isPlayVisible: !hasSimulationResult && !isSimulationMode,
             isPlayInteractable: !isSimulationMode && !isRetryResetting && !hasSimulationResult,
             useInactivePlaySprite: isSimulationMode || isRetryResetting,
             areResultActionsVisible: hasSimulationResult);

@@ -31,6 +31,7 @@ public sealed class CombatPresentationDirector : MonoBehaviour
     // IsLethal에 의존하지 않아 현재의 한 방 규칙과 향후 체력 규칙 모두에서 동일하게 동작한다.
     private readonly Dictionary<PieceBase, CombatHitContext> pendingHitContexts = new();
     private bool isHitStopActive;
+    private bool isHitStopSuppressed;
     private float hitStopEndRealtime;
     private float previousTimeScale = 1f;
     private float previousFixedDeltaTime = 0.02f;
@@ -254,9 +255,23 @@ public sealed class CombatPresentationDirector : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 연출 스킵의 고속 진행 동안 히트스톱이 timeScale을 덮어쓰지 않도록 억제한다.
+    /// 활성 히트스톱은 즉시 종료해, 히트스톱이 보관한 timeScale 복원과 스킵 배속이 충돌하지 않게 한다.
+    /// </summary>
+    public void SetHitStopSuppressed(bool suppressed)
+    {
+        isHitStopSuppressed = suppressed;
+
+        if (suppressed)
+        {
+            RestoreTimeScale();
+        }
+    }
+
     private void PlayHitStop(CombatHitContext context)
     {
-        if (!enableHitStop || !CanPlayHitStop(context))
+        if (!enableHitStop || isHitStopSuppressed || !CanPlayHitStop(context))
         {
             return;
         }
