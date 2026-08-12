@@ -3907,7 +3907,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7671826031346529262, guid: 0334cd302c3852147b59912b9aeae5d7, type: 3}
       propertyPath: opacity
-      value: 0.5
+      value: 0.75
       objectReference: {fileID: 0}
     - target: {fileID: 7671826031346529262, guid: 0334cd302c3852147b59912b9aeae5d7, type: 3}
       propertyPath: center.y

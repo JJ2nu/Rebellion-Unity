@@ -168,14 +168,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e167efffda73c5244981ac234d6eecff, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::HumanoidRagdollController
-  transitionNormalizedTime: 0.35
-  transitionPoseVariation: 0.07
-  fallVariantPoseSpacing: 0.1
+  transitionNormalizedTime: 0.22
+  transitionPoseVariation: 0.04
+  fallVariantPoseSpacing: 0.06
   transitionFallbackSeconds: 1.15
   inheritedAnimationVelocity: 0.18
-  bluntImpulse: 1.8
-  slashImpulse: 1
-  projectileImpulse: 1.5
+  bluntImpulse: 2.4
+  slashImpulse: 1.35
+  projectileImpulse: 2
+  directionalPushMultiplier: 1.4
   upwardImpulse: 0.08
   poseVariationTorque: 0.55
   poseVariationYawTorque: 0.22

@@ -157,6 +157,18 @@ public class AttackHitbox : MonoBehaviour
                 : Vector3.forward;
         }
 
+        // 주먹은 휘두르는 손의 접선 방향을 쓰면 공격 진행 방향 기준 좌우로 크게 샐 수 있다.
+        // 둔기는 공격자 중심에서 피해자 중심으로 향하는 수평 방향을 사용해 뒤로 밀리게 한다.
+        if (_owner is BrawlerPiece && hitPiece != null)
+        {
+            Vector3 ownerToTarget = hitPiece.transform.position - _owner.transform.position;
+            ownerToTarget.y = 0f;
+            if (ownerToTarget.sqrMagnitude > 0.0001f)
+            {
+                return ownerToTarget.normalized;
+            }
+        }
+
         Vector3 collisionVector = hitPoint - transform.position;
         if (collisionVector.sqrMagnitude > 0.0001f)
         {

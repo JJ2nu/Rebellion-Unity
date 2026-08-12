@@ -27,7 +27,7 @@ Material:
     m_Floats:
     - _SoftVignetteAspectRatio: 1.86
     - _SoftVignetteFeather: 2
-    - _SoftVignetteOpacity: 0.5
+    - _SoftVignetteOpacity: 0.75
     - _SoftVignetteRoundness: 1
     - _SoftVignetteSize: 2
     m_Colors:

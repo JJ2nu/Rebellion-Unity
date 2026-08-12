@@ -11,16 +11,17 @@ using UnityEngine;
 public sealed class HumanoidRagdollController : MonoBehaviour
 {
     [Header("Animation To Physics")]
-    [SerializeField, Range(0.1f, 0.8f)] private float transitionNormalizedTime = 0.35f;
-    [SerializeField, Range(0f, 0.15f)] private float transitionPoseVariation = 0.07f;
-    [SerializeField, Range(0f, 0.15f)] private float fallVariantPoseSpacing = 0.1f;
+    [SerializeField, Range(0.1f, 0.8f)] private float transitionNormalizedTime = 0.22f;
+    [SerializeField, Range(0f, 0.15f)] private float transitionPoseVariation = 0.04f;
+    [SerializeField, Range(0f, 0.15f)] private float fallVariantPoseSpacing = 0.06f;
     [SerializeField, Min(0.1f)] private float transitionFallbackSeconds = 1.15f;
     [SerializeField, Range(0f, 1f)] private float inheritedAnimationVelocity = 0.18f;
 
     [Header("Impact")]
-    [SerializeField, Min(0f)] private float bluntImpulse = 1.8f;
-    [SerializeField, Min(0f)] private float slashImpulse = 1f;
-    [SerializeField, Min(0f)] private float projectileImpulse = 1.5f;
+    [SerializeField, Min(0f)] private float bluntImpulse = 2.4f;
+    [SerializeField, Min(0f)] private float slashImpulse = 1.35f;
+    [SerializeField, Min(0f)] private float projectileImpulse = 2f;
+    [SerializeField, Min(0f)] private float directionalPushMultiplier = 1.4f;
     [SerializeField, Min(0f)] private float upwardImpulse = 0.08f;
     [SerializeField, Min(0f)] private float poseVariationTorque = 0.55f;
     [SerializeField, Min(0f)] private float poseVariationYawTorque = 0.22f;
@@ -103,10 +104,14 @@ public sealed class HumanoidRagdollController : MonoBehaviour
         }
 
         SelectFallVariant();
+        bool useDirectionalBluntFall = hasPendingImpact
+            && pendingAttackType == HitImpactAttackType.Blunt;
         float subtleVariation = Mathf.Sin(GetInstanceID() * 12.9898f)
             * transitionPoseVariation
             * 0.25f;
-        float variantPoseOffset = (activeFallVariant - 1) * fallVariantPoseSpacing;
+        float variantPoseOffset = useDirectionalBluntFall
+            ? 0f
+            : (activeFallVariant - 1) * fallVariantPoseSpacing;
         activeTransitionNormalizedTime = Mathf.Clamp(
             transitionNormalizedTime + variantPoseOffset + subtleVariation,
             0.1f,
@@ -321,6 +326,10 @@ public sealed class HumanoidRagdollController : MonoBehaviour
                 ? hipsPart ?? closest
                 : chestPart ?? closest;
         }
+        else if (pendingAttackType == HitImpactAttackType.Blunt)
+        {
+            impactPart = chestPart ?? closest;
+        }
 
         float impulse = pendingAttackType switch
         {
@@ -329,11 +338,14 @@ public sealed class HumanoidRagdollController : MonoBehaviour
             _ => slashImpulse,
         };
 
-        Vector3 direction = pendingImpactDirection + Vector3.up * upwardImpulse;
+        Vector3 direction = (pendingImpactDirection + Vector3.up * upwardImpulse).normalized;
+        Vector3 horizontalImpulse = Vector3.ProjectOnPlane(direction, Vector3.up)
+            * (impulse * directionalPushMultiplier);
+        Vector3 verticalImpulse = Vector3.up * (direction.y * impulse);
 
         // 가벼운 팔·다리나 먼 피격점에 힘을 가하면 과한 회전력 때문에 몸이 날아간다.
-        // 중심부 질량에 병진 충격만 주어 무게감은 유지하고 공격 방향만 전달한다.
-        impactPart.Body.AddForce(direction.normalized * impulse, ForceMode.Impulse);
+        // 중심부 질량의 수평 밀림만 별도 배율로 키우고 수직 충격은 기존 값을 유지한다.
+        impactPart.Body.AddForce(horizontalImpulse + verticalImpulse, ForceMode.Impulse);
 
         Vector3 horizontalDirection = Vector3.ProjectOnPlane(pendingImpactDirection, Vector3.up);
         if (horizontalDirection.sqrMagnitude > 0.0001f && poseVariationTorque > 0f)
@@ -343,6 +355,17 @@ public sealed class HumanoidRagdollController : MonoBehaviour
             float hitSide = Vector3.Dot(pendingHitPoint - impactPart.Body.worldCenterOfMass, rollAxis);
             float fallbackSide = Mathf.Sin((GetInstanceID() + 17) * 7.173f) >= 0f ? 1f : -1f;
             float sideSign = Mathf.Abs(hitSide) > 0.03f ? Mathf.Sign(hitSide) : fallbackSide;
+
+            RagdollPart torquePart = chestPart ?? impactPart;
+            if (pendingAttackType == HitImpactAttackType.Blunt)
+            {
+                // 주먹은 좌우 변형보다 타격 진행 방향을 우선한다.
+                // rollAxis의 양의 회전은 상체를 수평 충격 벡터 쪽으로 눕힌다.
+                torquePart.Body.AddTorque(
+                    rollAxis * (poseVariationTorque * 0.65f),
+                    ForceMode.Impulse);
+                return;
+            }
 
             // 0은 피격점에 따른 기본 낙상, 1/2는 서로 반대 방향으로 몸통이 접히는 변형이다.
             // 팔다리에 직접 힘을 주지 않아 안정화 이후 파닥임은 다시 만들지 않는다.
@@ -361,7 +384,6 @@ public sealed class HumanoidRagdollController : MonoBehaviour
                 yawSign = -1f;
             }
 
-            RagdollPart torquePart = chestPart ?? impactPart;
             torquePart.Body.AddTorque(
                 rollAxis * (poseVariationTorque * rollScale * sideSign),
                 ForceMode.Impulse);
