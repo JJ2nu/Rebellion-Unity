@@ -25,13 +25,13 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _SoftVignetteAspectRatio: 1
-    - _SoftVignetteFeather: 1.1
-    - _SoftVignetteOpacity: 0.65
-    - _SoftVignetteRoundness: 0.75
-    - _SoftVignetteSize: 1.35
+    - _SoftVignetteAspectRatio: 1.7
+    - _SoftVignetteFeather: 1.189
+    - _SoftVignetteOpacity: 1
+    - _SoftVignetteRoundness: 1
+    - _SoftVignetteSize: 1.89
     m_Colors:
-    - _SoftVignetteCenter: {r: 0.5, g: 0.5, b: 0, a: 0}
+    - _SoftVignetteCenter: {r: 0.5, g: 0.53, b: 0, a: 0}
     - _SoftVignetteColor: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

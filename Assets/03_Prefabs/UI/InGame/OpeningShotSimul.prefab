@@ -43,8 +43,8 @@ Camera:
   m_GameObject: {fileID: 2254527392180671714}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 0.105, g: 0.095, b: 0.085, a: 1}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -371,7 +371,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 105ed1940bc9dd24caa18f8afc29fe94, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FixedAspectRatioCanvas
   canvasScaler: {fileID: 7796304602592705241}
   referenceResolution: {x: 1920, y: 1080}
@@ -420,7 +420,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dbdc27af5c79afa47bebee51397fe936, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::OpeningShotPresentationView
   cinematicCamera: {fileID: 5610311678135513058}
   gameplayCamera: {fileID: 0}
@@ -440,7 +440,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 144898818dcbcce4b8da2d5c882f0df8, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::OpeningShotPresentationController
   view: {fileID: 4677745997740246874}
   entryDuration: 0.5

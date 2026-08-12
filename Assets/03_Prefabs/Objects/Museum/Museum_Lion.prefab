@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 4802124255957159231}
   - component: {fileID: 3128232197296424403}
   - component: {fileID: 1737598364451222088}
+  - component: {fileID: 8333837944706358}
   m_Layer: 0
   m_Name: Museum_Lion
   m_TagString: Untagged
@@ -90,3 +91,26 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!136 &8333837944706358
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6188696670075150820}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.4875
+  m_Height: 1.525
+  m_Direction: 1
+  m_Center: {x: 0, y: 0.8125, z: 0}

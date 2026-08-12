@@ -2417,6 +2417,26 @@ PrefabInstance:
       propertyPath: m_Name
       value: CameraOrbitPoint
       objectReference: {fileID: 0}
+    - target: {fileID: 7671826031346529262, guid: 0334cd302c3852147b59912b9aeae5d7, type: 3}
+      propertyPath: size
+      value: 1.89
+      objectReference: {fileID: 0}
+    - target: {fileID: 7671826031346529262, guid: 0334cd302c3852147b59912b9aeae5d7, type: 3}
+      propertyPath: feather
+      value: 1.189
+      objectReference: {fileID: 0}
+    - target: {fileID: 7671826031346529262, guid: 0334cd302c3852147b59912b9aeae5d7, type: 3}
+      propertyPath: opacity
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7671826031346529262, guid: 0334cd302c3852147b59912b9aeae5d7, type: 3}
+      propertyPath: roundness
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7671826031346529262, guid: 0334cd302c3852147b59912b9aeae5d7, type: 3}
+      propertyPath: aspectRatio
+      value: 1.7
+      objectReference: {fileID: 0}
     - target: {fileID: 8386485110916463597, guid: 0334cd302c3852147b59912b9aeae5d7, type: 3}
       propertyPath: m_TagString
       value: MainCamera

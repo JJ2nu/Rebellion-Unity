@@ -45,25 +45,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fb619a735c001804e86e1e4b75b432c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::OrbitingCamera
-  orbitLeftAction:
-    m_Name: Orbit Left
-    m_Type: 0
-    m_ExpectedControlType: 
-    m_Id: 9d77068c-0564-498f-972c-347d2b1c258c
-    m_Processors: 
-    m_Interactions: 
-    m_SingletonActionBindings: []
-    m_Flags: 0
-  orbitRightAction:
-    m_Name: Orbit Right
-    m_Type: 0
-    m_ExpectedControlType: 
-    m_Id: 70ae3594-463d-459d-82a2-511f8e0c871f
-    m_Processors: 
-    m_Interactions: 
-    m_SingletonActionBindings: []
-    m_Flags: 0
+  orbitAction: {fileID: 0}
+  placementController: {fileID: 0}
   orbitSpeed: 20
+  dragOrbitSpeed: 0.18
+  resetDuration: 0.35
+  minOrbitAngle: -30
+  maxOrbitAngle: 30
 --- !u!1 &8386485110916463597
 GameObject:
   m_ObjectHideFlags: 0
@@ -108,8 +96,8 @@ Camera:
   m_GameObject: {fileID: 8386485110916463597}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 0.105, g: 0.095, b: 0.085, a: 1}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -272,14 +260,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b1c35d38a1110244b3958f151cc50d7, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SoftVignetteController
   vignetteMaterial: {fileID: 2100000, guid: 6c0e32e337dddb6448c2a1191e20643b, type: 2}
   effectEnabled: 1
-  opacity: 0.65
+  opacity: 0.72
   roundness: 0.75
   feather: 1.1
-  size: 1.35
-  center: {x: 0.5, y: 0.5}
+  size: 1.3
+  center: {x: 0.5, y: 0.53}
   aspectRatio: 1
   color: {r: 0, g: 0, b: 0, a: 1}
