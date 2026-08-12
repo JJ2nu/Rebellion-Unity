@@ -84,7 +84,7 @@ public class AttackHitbox : MonoBehaviour
         HitImpactAttackType attackType = GetAttackType();
 
         _hitPieces.Add(piece);
-        var hitDirection = (Direction)(((int) _owner.FacingDirection + 3) % 4);
+        Direction hitDirection = GetIncomingDirection(impactDirection);
         StageManager.Instance?.PlayPieceHitSfx(piece);
         SimulationController.Instance?.ReportHitConfirmed(
             _owner,
@@ -96,6 +96,26 @@ public class AttackHitbox : MonoBehaviour
             isLethal: piece.CurrentHealth <= 1);
         piece.TakeDamage(1,hitDirection);
         StageManager.Instance?.PlayHitImpact(hitPoint, impactDirection, attackType);
+    }
+
+    private Direction GetIncomingDirection(Vector3 impactDirection)
+    {
+        // impactDirection은 공격자에서 피해자 쪽으로 향한다.
+        // 사망 모션은 공격이 들어온 쪽을 바라보도록 반대 벡터를 사용한다.
+        Vector3 incomingDirection = -impactDirection;
+        incomingDirection.y = 0f;
+        if (incomingDirection.sqrMagnitude <= 0.0001f && _owner != null)
+        {
+            incomingDirection = _owner.transform.position - transform.position;
+            incomingDirection.y = 0f;
+        }
+
+        if (Mathf.Abs(incomingDirection.x) > Mathf.Abs(incomingDirection.z))
+        {
+            return incomingDirection.x >= 0f ? Direction.East : Direction.West;
+        }
+
+        return incomingDirection.z >= 0f ? Direction.North : Direction.South;
     }
 
     private void SetBladeTrailsActive(bool isActive)

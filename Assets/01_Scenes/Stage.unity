@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 0.7
   m_AmbientMode: 1
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
+  m_SkyboxMaterial: {fileID: 2100000, guid: 4668a944b77781d47a3041dc98d1d8a6, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -2355,19 +2355,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1717871216010249088, guid: 0334cd302c3852147b59912b9aeae5d7, type: 3}
       propertyPath: m_BackGroundColor.a
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1717871216010249088, guid: 0334cd302c3852147b59912b9aeae5d7, type: 3}
       propertyPath: m_BackGroundColor.b
-      value: 0.475
+      value: 0.124
       objectReference: {fileID: 0}
     - target: {fileID: 1717871216010249088, guid: 0334cd302c3852147b59912b9aeae5d7, type: 3}
       propertyPath: m_BackGroundColor.g
-      value: 0.302
+      value: 0.156
       objectReference: {fileID: 0}
     - target: {fileID: 1717871216010249088, guid: 0334cd302c3852147b59912b9aeae5d7, type: 3}
       propertyPath: m_BackGroundColor.r
-      value: 0.192
+      value: 0.195
       objectReference: {fileID: 0}
     - target: {fileID: 3790640510673727304, guid: 0334cd302c3852147b59912b9aeae5d7, type: 3}
       propertyPath: m_LocalPosition.y
@@ -2419,15 +2419,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7671826031346529262, guid: 0334cd302c3852147b59912b9aeae5d7, type: 3}
       propertyPath: size
-      value: 1.89
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 7671826031346529262, guid: 0334cd302c3852147b59912b9aeae5d7, type: 3}
       propertyPath: feather
-      value: 1.189
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 7671826031346529262, guid: 0334cd302c3852147b59912b9aeae5d7, type: 3}
       propertyPath: opacity
-      value: 1
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7671826031346529262, guid: 0334cd302c3852147b59912b9aeae5d7, type: 3}
+      propertyPath: center.y
+      value: 0.38
       objectReference: {fileID: 0}
     - target: {fileID: 7671826031346529262, guid: 0334cd302c3852147b59912b9aeae5d7, type: 3}
       propertyPath: roundness
@@ -2435,7 +2439,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7671826031346529262, guid: 0334cd302c3852147b59912b9aeae5d7, type: 3}
       propertyPath: aspectRatio
-      value: 1.7
+      value: 1.86
       objectReference: {fileID: 0}
     - target: {fileID: 8386485110916463597, guid: 0334cd302c3852147b59912b9aeae5d7, type: 3}
       propertyPath: m_TagString

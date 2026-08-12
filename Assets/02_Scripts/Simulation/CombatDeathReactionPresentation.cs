@@ -32,11 +32,21 @@ public sealed class CombatDeathReactionPresentation : MonoBehaviour
     /// PieceDied 직후 호출한다. 최대 반동을 즉시 적용하고, Time.deltaTime 기준으로 감쇠하므로
     /// 히트스톱 중에는 해당 자세가 거의 유지된다.
     /// </summary>
-    public void Play(PieceBase victim, Vector3 impactDirection, HitImpactAttackType attackType)
+    public void Play(
+        PieceBase victim,
+        Vector3 hitPoint,
+        Vector3 impactDirection,
+        HitImpactAttackType attackType)
     {
         if (victim == null)
         {
             return;
+        }
+
+        HumanoidRagdollController ragdoll = victim.GetComponent<HumanoidRagdollController>();
+        if (ragdoll != null)
+        {
+            ragdoll.SetPendingImpact(hitPoint, impactDirection, attackType);
         }
 
         Restore(victim);

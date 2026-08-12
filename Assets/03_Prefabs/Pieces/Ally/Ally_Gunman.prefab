@@ -45,6 +45,7 @@ GameObject:
   - component: {fileID: 3631397594381306197}
   - component: {fileID: -6168653462863902690}
   - component: {fileID: 5128764070223129699}
+  - component: {fileID: 1459725092182862195}
   m_Layer: 0
   m_Name: Ally_Gunman
   m_TagString: AllyBody
@@ -97,6 +98,7 @@ MonoBehaviour:
   _flarePoint2: {fileID: 7094644083971129367}
   _bulletSpeedMultiplier: 10
   _bullet: {fileID: 8928382629762728089, guid: fa43c05b015c9bd498cff2ee74030960, type: 3}
+  _sideAimFireDelay: 1.3
   _sideAimYawOffset: -75
 --- !u!65 &3631397594381306197
 BoxCollider:
@@ -154,6 +156,39 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &1459725092182862195
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3328458296932663347}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e167efffda73c5244981ac234d6eecff, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::HumanoidRagdollController
+  transitionNormalizedTime: 0.35
+  transitionPoseVariation: 0.07
+  fallVariantPoseSpacing: 0.1
+  transitionFallbackSeconds: 1.15
+  inheritedAnimationVelocity: 0.18
+  bluntImpulse: 1.8
+  slashImpulse: 1
+  projectileImpulse: 1.5
+  upwardImpulse: 0.08
+  poseVariationTorque: 0.55
+  poseVariationYawTorque: 0.22
+  linearDrag: 0.35
+  angularDrag: 1.1
+  maxAngularVelocity: 10
+  settlingDelay: 0.65
+  settlingLinearDrag: 1.2
+  settlingAngularDrag: 3
+  sleepLinearSpeed: 0.12
+  sleepAngularSpeed: 0.6
+  stableTimeBeforeSleep: 0.18
+  forceSleepAfter: 2.2
 --- !u!1 &7109435178090740797
 GameObject:
   m_ObjectHideFlags: 0

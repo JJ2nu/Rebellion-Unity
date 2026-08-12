@@ -107,6 +107,7 @@ GameObject:
   - component: {fileID: 8088070753523492055}
   - component: {fileID: 1103049438649092164}
   - component: {fileID: 990357991309891761}
+  - component: {fileID: 6786807689825861735}
   m_Layer: 0
   m_Name: Enemy_Brawler
   m_TagString: EnemyBody
@@ -169,10 +170,15 @@ MonoBehaviour:
   _pieceType: 0
   _maxHealth: 1
   _attackRange: 1
+  _deathCrossFadeDuration: 0.12
   _isTargeted: 0
   _isInRange: 0
   IsDead: 0
   CanAct: 0
+  _attackStepDistance: 0.65
+  _advanceEndNormalizedTime: 0.52
+  _retreatStartNormalizedTime: 0.62
+  _retreatEndNormalizedTime: 0.95
 --- !u!114 &1103049438649092164
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -208,6 +214,39 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &6786807689825861735
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5570943943485575194}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e167efffda73c5244981ac234d6eecff, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::HumanoidRagdollController
+  transitionNormalizedTime: 0.35
+  transitionPoseVariation: 0.07
+  fallVariantPoseSpacing: 0.1
+  transitionFallbackSeconds: 1.15
+  inheritedAnimationVelocity: 0.18
+  bluntImpulse: 1.8
+  slashImpulse: 1
+  projectileImpulse: 1.5
+  upwardImpulse: 0.08
+  poseVariationTorque: 0.55
+  poseVariationYawTorque: 0.22
+  linearDrag: 0.35
+  angularDrag: 1.1
+  maxAngularVelocity: 10
+  settlingDelay: 0.65
+  settlingLinearDrag: 1.2
+  settlingAngularDrag: 3
+  sleepLinearSpeed: 0.12
+  sleepAngularSpeed: 0.6
+  stableTimeBeforeSleep: 0.18
+  forceSleepAfter: 2.2
 --- !u!1001 &2128346269418042492
 PrefabInstance:
   m_ObjectHideFlags: 0

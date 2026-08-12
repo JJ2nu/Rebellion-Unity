@@ -206,7 +206,11 @@ public sealed class CombatPresentationDirector : MonoBehaviour
         if (pendingHitContexts.TryGetValue(piece, out CombatHitContext hitContext))
         {
             pendingHitContexts.Remove(piece);
-            deathReactionPresentation?.Play(piece, hitContext.ImpactDirection, hitContext.AttackType);
+            deathReactionPresentation?.Play(
+                piece,
+                hitContext.HitPoint,
+                hitContext.ImpactDirection,
+                hitContext.AttackType);
         }
     }
 
