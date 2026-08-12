@@ -4,7 +4,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 /// <summary>
-/// 튜토리얼 진행 버튼의 왼쪽 PointerDown만 Passive View에 전달한다.
+/// 튜토리얼 페이지 이동 버튼(다음·닫기·이전)의 왼쪽 PointerDown만 Passive View에 전달한다.
 /// Button 자체는 SpriteSwap pressed/hover 표현을 계속 담당한다.
 /// </summary>
 [DisallowMultipleComponent]

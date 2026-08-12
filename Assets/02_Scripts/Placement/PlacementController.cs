@@ -39,6 +39,8 @@ public sealed class PlacementController : MonoBehaviour
 
     private void OnDestroy()
     {
+        // Stage 종료 중 영속 WorldInputRaycaster에 배치 우선순위가 남지 않게 먼저 해제한다.
+        WorldInputRaycaster.Instance?.SetPlacementGridPriorityActive(false);
         StageInputModalGate.BlockedStateChanged -= HandleModalBlockedStateChanged;
         PieceBase.AllyRightClicked -= HandleAllyPieceRightClick;
         PieceBase.AllyLeftClicked  -= HandleAllyPieceLeftClick;
@@ -55,6 +57,7 @@ private void Awake()
     {
         ResolveDependencies();
         EnsureMainCamera();
+        WorldInputRaycaster.Instance?.SetPlacementGridPriorityActive(IsPlacing);
 
         // 모달 잠금이 시작되는 순간 진행 중인 배치를 취소해, 미리보기가 모달 뒤에 남거나 슬롯 소모가 유지되지 않게 한다.
         StageInputModalGate.BlockedStateChanged += HandleModalBlockedStateChanged;
@@ -565,6 +568,7 @@ public void HandleAllyPieceRightClick(PieceBase piece)
         }
 
         // 상태 변경을 모두 마친 뒤 알리므로 구독자는 같은 프레임에 완성된 배치 상태를 읽을 수 있다.
+        WorldInputRaycaster.Instance?.SetPlacementGridPriorityActive(currentState);
         PlacementStateChanged?.Invoke(currentState);
     }
 
