@@ -84,7 +84,7 @@ public class AttackHitbox : MonoBehaviour
         HitImpactAttackType attackType = GetAttackType();
 
         _hitPieces.Add(piece);
-        var hitDirection = (Direction)(((int) _owner.FacingDirection + 3) % 4);
+        Direction hitDirection = GetIncomingDirection(impactDirection);
         StageManager.Instance?.PlayPieceHitSfx(piece);
         SimulationController.Instance?.ReportHitConfirmed(
             _owner,
@@ -96,6 +96,26 @@ public class AttackHitbox : MonoBehaviour
             isLethal: piece.CurrentHealth <= 1);
         piece.TakeDamage(1,hitDirection);
         StageManager.Instance?.PlayHitImpact(hitPoint, impactDirection, attackType);
+    }
+
+    private Direction GetIncomingDirection(Vector3 impactDirection)
+    {
+        // impactDirection은 공격자에서 피해자 쪽으로 향한다.
+        // 사망 모션은 공격이 들어온 쪽을 바라보도록 반대 벡터를 사용한다.
+        Vector3 incomingDirection = -impactDirection;
+        incomingDirection.y = 0f;
+        if (incomingDirection.sqrMagnitude <= 0.0001f && _owner != null)
+        {
+            incomingDirection = _owner.transform.position - transform.position;
+            incomingDirection.y = 0f;
+        }
+
+        if (Mathf.Abs(incomingDirection.x) > Mathf.Abs(incomingDirection.z))
+        {
+            return incomingDirection.x >= 0f ? Direction.East : Direction.West;
+        }
+
+        return incomingDirection.z >= 0f ? Direction.North : Direction.South;
     }
 
     private void SetBladeTrailsActive(bool isActive)
@@ -135,6 +155,18 @@ public class AttackHitbox : MonoBehaviour
             return transform.forward.sqrMagnitude > 0.0001f
                 ? transform.forward.normalized
                 : Vector3.forward;
+        }
+
+        // 주먹은 휘두르는 손의 접선 방향을 쓰면 공격 진행 방향 기준 좌우로 크게 샐 수 있다.
+        // 둔기는 공격자 중심에서 피해자 중심으로 향하는 수평 방향을 사용해 뒤로 밀리게 한다.
+        if (_owner is BrawlerPiece && hitPiece != null)
+        {
+            Vector3 ownerToTarget = hitPiece.transform.position - _owner.transform.position;
+            ownerToTarget.y = 0f;
+            if (ownerToTarget.sqrMagnitude > 0.0001f)
+            {
+                return ownerToTarget.normalized;
+            }
         }
 
         Vector3 collisionVector = hitPoint - transform.position;

@@ -22,6 +22,7 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
     public GameObject _HUD{get; set; }
     public GameObject _DirectionIndicator { get; set; }
     protected Animator _animator;
+    private HumanoidRagdollController _ragdollController;
 
     public bool _isTargeted = false;
     public bool _isInRange = false;
@@ -87,6 +88,7 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
     protected void Awake()
     {
         _animator = GetComponentInChildren<Animator>();
+        _ragdollController = GetComponent<HumanoidRagdollController>();
         OnDied += piece =>
         {
             if (SimulationController.Instance != null)
@@ -144,6 +146,7 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
         IsActionFinished = false;
         CanAct = false;
         PhaseOffset = 0;
+        _ragdollController?.ResetToAnimationPose();
         ResetAnimatorState(false);
         ResetColliderState();
     }
@@ -197,10 +200,16 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
                 continue;
             }
 
+            if (_ragdollController != null && _ragdollController.OwnsCollider(col))
+            {
+                continue;
+            }
+
             col.enabled = false;
         }
 
         PlayDeathAnimation();
+        _ragdollController?.BeginDeathTransition();
         _pendingDamageDirection = null;
         OnDied?.Invoke(this);
     }
@@ -218,7 +227,17 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
             transform.rotation = DirectionToRotation(_pendingDamageDirection.Value);
         }
 
-        SetAnimatorRootMotion(true, true);
+        if (_ragdollController != null)
+        {
+            // 래그돌 전환 전 사망 모션의 수평 루트 이동까지 더해지면
+            // 물리 충격과 중첩되어 몸이 가볍게 날아가는 인상이 난다.
+            // 자세와 수직 변화만 유지하고 수평 이동은 래그돌 충격에 맡긴다.
+            SetAnimatorRootMotionOverride(transform.forward, 0f, true);
+        }
+        else
+        {
+            SetAnimatorRootMotion(true, true);
+        }
 
         int hitStateHash = Animator.StringToHash("Hit");
         if (animator.HasState(0, hitStateHash))
@@ -245,6 +264,7 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
             _hasRotationBeforeDeath = false;
         }
 
+        _ragdollController?.ResetToAnimationPose();
         ResetAnimatorState(true);
         ResetColliderState();
         _DirectionIndicator?.SetActive(true);
@@ -691,8 +711,15 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
                 continue;
             }
 
+            if (_ragdollController != null && _ragdollController.OwnsCollider(col))
+            {
+                continue;
+            }
+
             col.enabled = true;
         }
+
+        _ragdollController?.EnsureAnimationCollisionState();
     }
 
     public void EndAttackHitboxes()

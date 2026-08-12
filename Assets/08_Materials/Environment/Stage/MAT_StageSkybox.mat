@@ -7,12 +7,13 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: SoftVignette
-  m_Shader: {fileID: 4800000, guid: 9d50015ba0b595949aee84dab52adb50, type: 3}
+  m_Name: MAT_StageSkybox
+  m_Shader: {fileID: 4800000, guid: 76153d508dc41ec4787e073017c44926, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
-  m_InvalidKeywords: []
+  m_InvalidKeywords:
+  - _SUNDISK_HIGH_QUALITY
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -25,13 +26,14 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _SoftVignetteAspectRatio: 1.86
-    - _SoftVignetteFeather: 2
-    - _SoftVignetteOpacity: 0.75
-    - _SoftVignetteRoundness: 1
-    - _SoftVignetteSize: 2
+    - _AtmosphereThickness: 0
+    - _Exposure: 0.72
+    - _SunDisk: 2
+    - _SunSize: 0.04
+    - _SunSizeConvergence: 5
     m_Colors:
-    - _SoftVignetteCenter: {r: 0.5, g: 0.38, b: 0, a: 0}
-    - _SoftVignetteColor: {r: 0, g: 0, b: 0, a: 1}
+    - _Color: {r: 0.195, g: 0.156, b: 0.124, a: 1}
+    - _GroundColor: {r: 0.195, g: 0.156, b: 0.124, a: 1}
+    - _SkyTint: {r: 0.195, g: 0.156, b: 0.124, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
