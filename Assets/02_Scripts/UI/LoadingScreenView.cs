@@ -1,16 +1,18 @@
-﻿using TMPro;
-using UnityEngine;
+﻿using UnityEngine;
 
 /// <summary>
 /// 재사용 가능한 로딩 화면의 표현만 담당하는 Passive View다.
-/// Prefab의 아트는 교체할 수 있지만 게이지와 정수 퍼센트는 동일한 단조 증가 진행률을 유지한다.
+/// Task 55에서 게이지·퍼센트 텍스트를 삭제하고 동전 연출(회전 루프 → 감속 정지)로 교체했다.
+/// 진행률은 화면에 숫자로 표시하지 않지만, 단조 증가 추적과 완료(1.0) 판정은 유지해 동전 정지 시점을 결정한다.
 /// </summary>
 public sealed class LoadingScreenView : MonoBehaviour
 {
+    // 부동소수 합산 오차가 있어도 완료로 인정하는 진행률 경계다.
+    private const float CompletedProgressThreshold = 0.999f;
+
     [Header("Presentation")]
     [SerializeField] private GameObject presentationRoot;
-    [SerializeField] private RectTransform progressFill;
-    [SerializeField] private TMP_Text percentageText;
+    [SerializeField] private LoadingCoinSpinner coinSpinner;
 
     [Header("Transition Timing")]
     [SerializeField, Min(0f)] private float fadeOutHoldSeconds = 0.25f;
@@ -22,6 +24,12 @@ public sealed class LoadingScreenView : MonoBehaviour
     public float FadeOutHoldSeconds => fadeOutHoldSeconds;
     public float CompletedHoldSeconds => completedHoldSeconds;
     public bool IsVisible => presentationRoot != null && presentationRoot.activeSelf;
+
+    /// <summary>
+    /// 로딩 완료 뒤 동전 정지 연출까지 끝나 로딩 화면을 걷어도 되는지 여부다.
+    /// 동전이 없으면 기다릴 연출이 없으므로 즉시 끝난 것으로 본다.
+    /// </summary>
+    public bool IsCompletionPresentationFinished => coinSpinner == null || coinSpinner.IsStopFinished;
 
     private void Awake()
     {
@@ -57,6 +65,12 @@ public sealed class LoadingScreenView : MonoBehaviour
         {
             presentationRoot.SetActive(true);
         }
+
+        // 이미 활성 상태로 재표시될 수도 있으므로 OnEnable에만 의존하지 않고 회전 루프를 명시적으로 되돌린다.
+        if (coinSpinner != null)
+        {
+            coinSpinner.RestartSpin();
+        }
     }
 
     public void Hide()
@@ -68,35 +82,21 @@ public sealed class LoadingScreenView : MonoBehaviour
     }
 
     /// <summary>
-    /// 공급자가 역행 값을 전달해도 플레이어에게 이미 보인 게이지와 같은 정수 퍼센트는 뒤로 가지 않는다.
+    /// 공급자가 역행 값을 전달해도 이미 도달한 진행률은 뒤로 가지 않는다.
+    /// 진행률이 완료 경계에 도달하면 동전 회전을 감속 정지 시퀀스로 전환한다.
     /// </summary>
     public void SetProgress(float normalizedProgress)
     {
         displayedProgress = Mathf.Max(displayedProgress, Mathf.Clamp01(normalizedProgress));
 
-        if (progressFill != null)
+        if (displayedProgress >= CompletedProgressThreshold && coinSpinner != null)
         {
-            progressFill.anchorMax = new Vector2(displayedProgress, 1f);
-        }
-
-        if (percentageText != null)
-        {
-            percentageText.text = $"{Mathf.RoundToInt(displayedProgress * 100f)}%";
+            coinSpinner.BeginStop();
         }
     }
 
     private void ResetProgress()
     {
         displayedProgress = 0f;
-
-        if (progressFill != null)
-        {
-            progressFill.anchorMax = new Vector2(0f, 1f);
-        }
-
-        if (percentageText != null)
-        {
-            percentageText.text = "0%";
-        }
     }
 }

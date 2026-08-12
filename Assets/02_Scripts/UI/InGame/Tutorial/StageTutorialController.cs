@@ -18,7 +18,7 @@ public sealed class StageTutorialController : MonoBehaviour
     private InputAction spaceAdvanceAction;
     private IDisposable inputBlockLease;
     private int currentPageIndex;
-    private int lastAdvanceFrame = -1;
+    private int lastNavigationFrame = -1;
 
     public bool IsShowing { get; private set; }
 
@@ -36,6 +36,7 @@ public sealed class StageTutorialController : MonoBehaviour
         if (view != null)
         {
             view.AdvanceRequested += Advance;
+            view.PreviousRequested += Previous;
         }
 
         spaceAdvanceAction.performed += HandleSpaceAdvance;
@@ -47,6 +48,7 @@ public sealed class StageTutorialController : MonoBehaviour
         if (view != null)
         {
             view.AdvanceRequested -= Advance;
+            view.PreviousRequested -= Previous;
             view.SetVisible(false);
         }
 
@@ -84,7 +86,7 @@ public sealed class StageTutorialController : MonoBehaviour
         }
 
         currentPageIndex = 0;
-        lastAdvanceFrame = -1;
+        lastNavigationFrame = -1;
         IsShowing = true;
         inputBlockLease = StageInputModalGate.Acquire();
         ShowCurrentPage();
@@ -97,12 +99,11 @@ public sealed class StageTutorialController : MonoBehaviour
 
     private void Advance()
     {
-        if (!IsShowing || lastAdvanceFrame == Time.frameCount)
+        if (!TryBeginNavigation())
         {
             return;
         }
 
-        lastAdvanceFrame = Time.frameCount;
         PlayAdvanceSfx();
 
         if (currentPageIndex + 1 < view.PageCount)
@@ -113,6 +114,29 @@ public sealed class StageTutorialController : MonoBehaviour
         }
 
         Close();
+    }
+
+    private void Previous()
+    {
+        if (currentPageIndex <= 0 || !TryBeginNavigation())
+        {
+            return;
+        }
+
+        PlayAdvanceSfx();
+        currentPageIndex--;
+        ShowCurrentPage();
+    }
+
+    private bool TryBeginNavigation()
+    {
+        if (!IsShowing || lastNavigationFrame == Time.frameCount)
+        {
+            return false;
+        }
+
+        lastNavigationFrame = Time.frameCount;
+        return true;
     }
 
     private void ShowCurrentPage()

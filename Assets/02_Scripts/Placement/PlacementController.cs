@@ -19,10 +19,14 @@ public sealed class PlacementController : MonoBehaviour
 
     private InGameUnitStorageSlotUI pendingSlot;
     private GameObject previewObject;
+    // 미리보기 기물의 PieceBase 캐시. 컴포넌트는 비활성이지만 범위 계산 메서드 호출에 사용한다.
+    private PieceBase previewPiece;
     private Direction currentFacingDirection;
     private readonly Dictionary<PieceType, InGameUnitStorageSlotUI> slotMap = new();
 
     private bool isCellHovered;
+    // 현재 미리보기가 스냅된 셀. 회전 시 같은 셀 기준으로 범위 표시를 갱신하기 위해 저장한다.
+    private GridCell hoveredCell;
     private float gridPlaneY;
     private Camera mainCamera;
 
@@ -35,6 +39,8 @@ public sealed class PlacementController : MonoBehaviour
 
     private void OnDestroy()
     {
+        // Stage 종료 중 영속 WorldInputRaycaster에 배치 우선순위가 남지 않게 먼저 해제한다.
+        WorldInputRaycaster.Instance?.SetPlacementGridPriorityActive(false);
         StageInputModalGate.BlockedStateChanged -= HandleModalBlockedStateChanged;
         PieceBase.AllyRightClicked -= HandleAllyPieceRightClick;
         PieceBase.AllyLeftClicked  -= HandleAllyPieceLeftClick;
@@ -51,6 +57,7 @@ private void Awake()
     {
         ResolveDependencies();
         EnsureMainCamera();
+        WorldInputRaycaster.Instance?.SetPlacementGridPriorityActive(IsPlacing);
 
         // 모달 잠금이 시작되는 순간 진행 중인 배치를 취소해, 미리보기가 모달 뒤에 남거나 슬롯 소모가 유지되지 않게 한다.
         StageInputModalGate.BlockedStateChanged += HandleModalBlockedStateChanged;
@@ -137,6 +144,9 @@ public void BeginPlacement(InGameUnitStorageSlotUI slot)
 
         pendingSlot = null;
         isCellHovered = false;
+        hoveredCell = null;
+        // 취소 시점에 셀 위였다면 범위·해골 표시가 화면에 남지 않게 지운다.
+        ClearPreviewAttackRange();
         ClearPreview();
         NotifyPlacementStateChanged(wasPlacing);
     }
@@ -197,6 +207,12 @@ public void BeginPlacement(InGameUnitStorageSlotUI slot)
 
         currentFacingDirection = (Direction)nextDirection;
         ApplyPreviewRotation();
+
+        // 셀 위에서 회전하면 새 방향 기준으로 공격 범위·해골 표시를 즉시 갱신한다.
+        if (isCellHovered && hoveredCell != null)
+        {
+            UpdatePreviewAttackRange(hoveredCell);
+        }
     }
 
     private void ApplyPreviewRotation()
@@ -216,9 +232,8 @@ public void HandleCellHover(GridCell cell)
         }
 
         isCellHovered = true;
+        hoveredCell = cell;
         gridPlaneY = cell.transform.position.y;
-
-        cell.ShowPlacementAvailability(CanPlaceOn(cell));
 
         if (previewObject != null)
         {
@@ -226,6 +241,10 @@ public void HandleCellHover(GridCell cell)
                 cell.transform.position + Vector3.up * previewHeight,
                 Quaternion.Euler(0f, (int)currentFacingDirection * 90f, 0f));
         }
+
+        // 배치 확정 전에도 이 셀에 놓았을 때의 공격 범위·해골 표시를 미리 보여준다.
+        // 스냅 셀의 배치 가능/불가 표시(ShowPlacementAvailability)는 범위 정리 후 이 안에서 적용한다.
+        UpdatePreviewAttackRange(cell);
     }
 
     public void HandleCellUnhover(GridCell cell)
@@ -236,7 +255,14 @@ public void HandleCellHover(GridCell cell)
         }
 
         isCellHovered = false;
+        hoveredCell = null;
         cell.ResetVisual();
+
+        // 배치 중이 아닐 때는 기물 호버가 쓰는 범위 표시를 건드리지 않도록 배치 중에만 지운다.
+        if (IsPlacing)
+        {
+            ClearPreviewAttackRange();
+        }
     }
 
 public void HandleCellLeftClick(GridCell cell)
@@ -264,7 +290,10 @@ public void HandleCellLeftClick(GridCell cell)
 
         bool wasPlacing = IsPlacing;
         pendingSlot = null;
+        hoveredCell = null;
         cell.ResetVisual();
+        // 확정 직후에는 미리보기용 범위 표시를 지운다. 이후 표시는 배치된 실제 기물 호버가 담당한다.
+        ClearPreviewAttackRange();
         ClearPreview();
         NotifyPlacementStateChanged(wasPlacing);
     }
@@ -396,6 +425,43 @@ public void HandleAllyPieceRightClick(PieceBase piece)
         {
             piece.enabled = false;
         }
+
+        // 범위 계산에 재사용할 수 있게 비활성 상태 그대로 캐시한다.
+        previewPiece = piece;
+
+        ShowPreviewRotateIcon();
+    }
+
+    /// <summary>
+    /// 미리보기 기물 머리 위에 회전 안내 아이콘(UI_Rotate_03)을 켠다.
+    /// 미리보기는 PieceBase를 꺼 두므로 PieceBase.Start()의 HUD 활성화와
+    /// Update()의 상태 갱신이 일어나지 않아, 여기서 HUD를 직접 켜고 상태를 고정한다.
+    /// </summary>
+    private void ShowPreviewRotateIcon()
+    {
+        if (previewObject == null)
+        {
+            return;
+        }
+
+        // 기물 Prefab의 HUD 자식은 기본 비활성이고 PieceBase.Start()가 켜는 구조라 직접 켠다.
+        Transform hudTransform = previewObject.transform.Find("HUD");
+        if (hudTransform == null)
+        {
+            Debug.LogWarning("PlacementController: preview piece has no HUD child for the rotate icon.", this);
+            return;
+        }
+
+        hudTransform.gameObject.SetActive(true);
+
+        InGameHUDUI hudUi = hudTransform.GetComponent<InGameHUDUI>();
+        if (hudUi == null)
+        {
+            Debug.LogWarning("PlacementController: preview HUD has no InGameHUDUI component.", this);
+            return;
+        }
+
+        hudUi.InitializeRotate();
     }
 
 
@@ -441,6 +507,56 @@ public void HandleAllyPieceRightClick(PieceBase piece)
             Destroy(previewObject);
             previewObject = null;
         }
+
+        previewPiece = null;
+    }
+
+    /// <summary>
+    /// 미리보기 기물이 스냅된 셀 기준으로 공격 범위 셀 하이라이트와 범위 안 기물의 해골 HUD를 갱신한다.
+    /// 배치된 기물 호버와 동일한 PieceBase.ShowAttackRangeCells 경로를 재사용해
+    /// 종류별 범위 규칙(Brawler/Gunman 직선 사거리, Slasher 이동 경로)을 그대로 따른다.
+    /// </summary>
+    private void UpdatePreviewAttackRange(GridCell cell)
+    {
+        if (cell == null)
+        {
+            return;
+        }
+
+        ResolveDependencies();
+
+        // 셀 이동·회전 시 이전 위치 기준 표시가 남지 않게 항상 먼저 지운다.
+        ClearPreviewAttackRange();
+
+        bool canPlace = CanPlaceOn(cell);
+
+        // 배치 불가 셀(점유·튜토리얼 종류 불일치)에서는 범위를 표시하지 않는다 (Task 57 범위 밖).
+        if (previewPiece != null && stageManager != null && canPlace)
+        {
+            // 미리보기는 PieceBase가 비활성이라 좌표·방향이 갱신되지 않으므로 스냅된 셀 기준으로 직접 설정한다.
+            Vector2Int gridCoord = StageGridIndexUtility.ToGridCoord(cell.BoardSize, cell.CellIndex);
+            previewPiece.GridX = gridCoord.x;
+            previewPiece.GridY = gridCoord.y;
+            previewPiece.FacingDirection = currentFacingDirection;
+
+            // 미리보기는 StageManager 목록에 없으므로 배치된 기물들만 대상으로 공격 가능 여부를 판정한다.
+            previewPiece.CheckCanAct(stageManager.GetAllActivePieces());
+            previewPiece.ShowAttackRangeCells();
+        }
+
+        // ClearAllRangeHighlights가 모든 셀을 Default로 되돌리므로,
+        // 스냅된 셀의 배치 가능/불가 표시는 범위 표시 뒤에 다시 적용해야 남는다.
+        cell.ShowPlacementAvailability(canPlace);
+    }
+
+    /// <summary>
+    /// 미리보기용 범위 표시(셀 하이라이트 + 범위 안 기물의 _isInRange 해골 HUD)를 해제한다.
+    /// 배치된 기물 호버 해제(PieceBase.OnWorldUnHover)와 같은 정리 경로를 사용한다.
+    /// </summary>
+    private void ClearPreviewAttackRange()
+    {
+        StageManager.Instance?.ClearAttackRange();
+        GameManager.Instance?.ClearAllRangeHighlights();
     }
 
     private void NotifyPlacementStateChanged(bool previousState)
@@ -452,6 +568,7 @@ public void HandleAllyPieceRightClick(PieceBase piece)
         }
 
         // 상태 변경을 모두 마친 뒤 알리므로 구독자는 같은 프레임에 완성된 배치 상태를 읽을 수 있다.
+        WorldInputRaycaster.Instance?.SetPlacementGridPriorityActive(currentState);
         PlacementStateChanged?.Invoke(currentState);
     }
 

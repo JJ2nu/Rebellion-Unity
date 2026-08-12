@@ -13,6 +13,9 @@ public class InGameHUDUI : MonoBehaviour
     // 실제 기물 HUD에서는 비워 둔다. 비어 있으면 Guide 상태는 기존처럼 비활성 아이콘으로 표시된다.
     [SerializeField] private GameObject _guideUI;
     private bool keepGuideStateOnStart;
+    // 배치 미리보기 전용 플래그다. Start()의 Clear()가 InitializeRotate()로 켠 회전 아이콘을
+    // 같은 프레임에 끄지 않도록 초기 상태를 Rotate로 유지한다.
+    private bool keepRotateStateOnStart;
 
 
     private void OnEnable()
@@ -26,6 +29,10 @@ public class InGameHUDUI : MonoBehaviour
         if (keepGuideStateOnStart)
         {
             Guide();
+        }
+        else if (keepRotateStateOnStart)
+        {
+            Rotate();
         }
         else
         {
@@ -77,6 +84,17 @@ public class InGameHUDUI : MonoBehaviour
     {
         keepGuideStateOnStart = true;
         Guide();
+    }
+
+    /// <summary>
+    /// 배치 미리보기 기물의 HUD를 회전 안내 아이콘(UI_Rotate_03) 상태로 초기화한다.
+    /// 미리보기는 PieceBase가 꺼져 있어 HUD 상태를 매 프레임 갱신하는 경로가 없으므로,
+    /// PlacementController가 미리보기 생성 직후 이 메서드를 호출해 상태를 고정한다.
+    /// </summary>
+    public void InitializeRotate()
+    {
+        keepRotateStateOnStart = true;
+        Rotate();
     }
 
     private void Guide()

@@ -89,6 +89,13 @@ public sealed class DemoSessionController : MonoBehaviour
         return true;
     }
 
+    // 인게임 타이틀 복귀 버튼이 씬 전환 전에 호출해 Title 로드 완료 시 세션 타이머가 초기화되게 한다.
+    // 실제 씬 전환은 호출자(GameFlowManager.ReturnToTitleFromInGameButton)가 수행한다.
+    public static void NotifyPlayerReturnToTitleRequested()
+    {
+        instance?.MarkReturningToTitle();
+    }
+
     private bool IsRuntimeEnabled
     {
         get
@@ -303,16 +310,28 @@ public sealed class DemoSessionController : MonoBehaviour
 
     private void RequestOperatorReset()
     {
-        if (state == DemoSessionState.ReturningToTitle)
+        // 이미 복귀 중이면 중복 씬 전환 요청을 만들지 않는다.
+        if (!MarkReturningToTitle())
         {
             return;
+        }
+
+        GameFlowManager.ReturnToTitleForDebug();
+    }
+
+    // 복귀 상태 표시와 타이머 정리만 수행하는 공용 경로. F12 오퍼레이터 리셋과 인게임 복귀 버튼이 공유한다.
+    private bool MarkReturningToTitle()
+    {
+        if (state == DemoSessionState.ReturningToTitle)
+        {
+            return false;
         }
 
         state = DemoSessionState.ReturningToTitle;
         resetWhenTitleLoads = true;
         timerView?.SetVisible(false);
         UnsubscribeCancelAction();
-        GameFlowManager.ReturnToTitleForDebug();
+        return true;
     }
 
     private void ReturnToTitleFromTimeOver()
