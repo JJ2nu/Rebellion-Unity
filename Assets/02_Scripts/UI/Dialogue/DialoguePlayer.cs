@@ -402,6 +402,13 @@ public sealed class DialoguePlayer : MonoBehaviour
             return;
         }
 
+        // CharacterImage가 빈 대사는 캐릭터가 등장하지 않는 연출이므로 완전히 숨긴다. (예: stage_008 엘리자 사망 분기)
+        if (string.IsNullOrWhiteSpace(line.CharacterImage))
+        {
+            characterCanvasGroup.alpha = 0f;
+            return;
+        }
+
         characterCanvasGroup.alpha = line.SpeakerName == PlayerSpeakerName ? playerSpeakerAlpha : 1f;
     }
 

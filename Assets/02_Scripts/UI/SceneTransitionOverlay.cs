@@ -212,9 +212,17 @@ public sealed class SceneTransitionOverlay : MonoBehaviour
 
     /// <summary>
     /// 100%가 한 프레임 이상 표시된 뒤 다음 콘텐츠를 시작하기 전에 사용하는 완료 홀드다.
+    /// Task 55의 동전 정지 연출이 끝나기 전에는 홀드를 시작하지 않아, 동전이 완전히 멈춘 뒤에만 로딩 화면이 걷힌다.
     /// </summary>
     public IEnumerator WaitForLoadingCompletedHold()
     {
+        while (loadingScreenView != null
+            && loadingScreenView.IsVisible
+            && !loadingScreenView.IsCompletionPresentationFinished)
+        {
+            yield return null;
+        }
+
         yield return WaitForRealtimeSeconds(
             loadingScreenView != null ? loadingScreenView.CompletedHoldSeconds : 0f);
     }
