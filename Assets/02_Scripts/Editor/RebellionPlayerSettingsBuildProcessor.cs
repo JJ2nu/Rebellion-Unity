@@ -5,6 +5,13 @@ using UnityEngine;
 using System.IO;
 using System.Linq;
 
+internal enum RebellionWindowsBuildKind
+{
+    Release,
+    Debug,
+    Demo,
+}
+
 public sealed class RebellionPlayerSettingsBuildProcessor : IPreprocessBuildWithReport
 {
     private const string IconPath = "Assets/04_Images/UI/icon.png";
@@ -34,32 +41,39 @@ public sealed class RebellionPlayerSettingsBuildProcessor : IPreprocessBuildWith
     [MenuItem("Rebellion/Build Windows/Release")]
     private static void BuildWindowsRelease()
     {
-        BuildWindows(string.Empty, BuildOptions.None, false);
+        RebellionBuildVersionWindow.Open(RebellionWindowsBuildKind.Release, GetBuildVersion());
     }
 
     [MenuItem("Rebellion/Build Windows/Debug")]
     private static void BuildWindowsDebug()
     {
-        BuildWindows(
-            DebugBuildFolderSuffix,
-            BuildOptions.Development | BuildOptions.AllowDebugging,
-            false);
+        RebellionBuildVersionWindow.Open(RebellionWindowsBuildKind.Debug, GetBuildVersion());
     }
 
     [MenuItem("Rebellion/Build Windows/Demo")]
     private static void BuildWindowsDemo()
     {
-        BuildWindows(DemoBuildFolderSuffix, BuildOptions.None, true);
+        RebellionBuildVersionWindow.Open(RebellionWindowsBuildKind.Demo, GetBuildVersion());
     }
 
-    private static void BuildWindows(
-        string outputFolderSuffix,
-        BuildOptions buildOptions,
-        bool includeDemoContent)
+    internal static void BuildWindows(RebellionWindowsBuildKind buildKind, string buildVersion)
     {
+        buildVersion = buildVersion.Trim();
+        PlayerSettings.bundleVersion = buildVersion;
         ApplyPlayerSettings();
 
-        string outputFolderName = GetBuildVersion() + outputFolderSuffix;
+        string outputFolderSuffix = buildKind switch
+        {
+            RebellionWindowsBuildKind.Debug => DebugBuildFolderSuffix,
+            RebellionWindowsBuildKind.Demo => DemoBuildFolderSuffix,
+            _ => string.Empty,
+        };
+        BuildOptions buildOptions = buildKind == RebellionWindowsBuildKind.Debug
+            ? BuildOptions.Development | BuildOptions.AllowDebugging
+            : BuildOptions.None;
+        bool includeDemoContent = buildKind == RebellionWindowsBuildKind.Demo;
+
+        string outputFolderName = buildVersion + outputFolderSuffix;
         string outputDirectory = Path.Combine(BuildRoot, SanitizePathSegment(outputFolderName));
         Directory.CreateDirectory(outputDirectory);
 
@@ -136,5 +150,72 @@ public sealed class RebellionPlayerSettingsBuildProcessor : IPreprocessBuildWith
         char[] invalidChars = Path.GetInvalidFileNameChars();
         return new string(value.Select(character =>
             invalidChars.Contains(character) ? '_' : character).ToArray());
+    }
+}
+
+internal sealed class RebellionBuildVersionWindow : EditorWindow
+{
+    private const float WindowWidth = 360f;
+    private const float WindowHeight = 116f;
+
+    [SerializeField] private RebellionWindowsBuildKind buildKind;
+    [SerializeField] private string buildVersion;
+
+    internal static void Open(RebellionWindowsBuildKind buildKind, string currentVersion)
+    {
+        RebellionBuildVersionWindow window = CreateInstance<RebellionBuildVersionWindow>();
+        window.buildKind = buildKind;
+        window.buildVersion = currentVersion;
+        window.titleContent = new GUIContent($"{buildKind} Build");
+        window.minSize = new Vector2(WindowWidth, WindowHeight);
+        window.maxSize = window.minSize;
+        window.ShowUtility();
+        window.Focus();
+    }
+
+    private void OnGUI()
+    {
+        EditorGUILayout.Space(10f);
+        GUI.SetNextControlName("BuildVersionField");
+        buildVersion = EditorGUILayout.TextField("Build Version", buildVersion);
+        EditorGUILayout.Space(8f);
+
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            GUILayout.FlexibleSpace();
+            if (GUILayout.Button("Cancel", GUILayout.Width(90f)))
+            {
+                Close();
+            }
+
+            using (new EditorGUI.DisabledScope(!IsVersionValid(buildVersion)))
+            {
+                if (GUILayout.Button("Build", GUILayout.Width(90f)))
+                {
+                    string requestedVersion = buildVersion.Trim();
+                    Close();
+                    RebellionPlayerSettingsBuildProcessor.BuildWindows(buildKind, requestedVersion);
+                    GUIUtility.ExitGUI();
+                }
+            }
+        }
+
+        if (Event.current.type == EventType.Repaint)
+        {
+            EditorGUI.FocusTextInControl("BuildVersionField");
+        }
+    }
+
+    private static bool IsVersionValid(string version)
+    {
+        if (string.IsNullOrWhiteSpace(version))
+        {
+            return false;
+        }
+
+        string trimmedVersion = version.Trim();
+        return trimmedVersion.IndexOfAny(Path.GetInvalidFileNameChars()) < 0
+            && !trimmedVersion.Contains('/')
+            && !trimmedVersion.Contains('\\');
     }
 }
