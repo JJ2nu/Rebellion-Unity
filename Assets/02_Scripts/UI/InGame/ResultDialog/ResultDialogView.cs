@@ -25,6 +25,17 @@ public readonly struct ResultDialogDialogueViewState
 }
 
 /// <summary>
+/// 키보드 조작이 선택지 버튼에 표시할 시각 상태다.
+/// Normal은 기본, Hover는 하이라이트(선택 대상), Pressed는 확정 입력 중을 뜻한다.
+/// </summary>
+public enum ResultDialogChoiceKeyboardVisual
+{
+    Normal,
+    Hover,
+    Pressed,
+}
+
+/// <summary>
 /// ResultDialog의 텍스트, 캐릭터, 선택 버튼 표현과 플레이어 입력 전달만 담당하는 Passive View다.
 /// 결과 판정과 표시 단계 전이는 Controller가 결정한다.
 /// </summary>
@@ -52,6 +63,16 @@ public sealed class ResultDialogView : MonoBehaviour
     public event Action AdvanceRequested;
     public event Action ConfirmRequested;
     public event Action ReconsiderRequested;
+
+    // 키보드 조작이 마우스와 같은 hover/클릭 SFX를 내도록 선택지 버튼의 UIButtonSfx를 캐시한다.
+    private UIButtonSfx confirmButtonSfx;
+    private UIButtonSfx reconsiderButtonSfx;
+
+    private void Awake()
+    {
+        confirmButtonSfx = confirmCommandButton != null ? confirmCommandButton.GetComponent<UIButtonSfx>() : null;
+        reconsiderButtonSfx = reconsiderButton != null ? reconsiderButton.GetComponent<UIButtonSfx>() : null;
+    }
 
     private void OnEnable()
     {
@@ -101,6 +122,50 @@ public sealed class ResultDialogView : MonoBehaviour
         {
             characterAnimator.Play(state.CharacterState, 0, 0f);
         }
+    }
+
+    // 키보드 조작의 선택지 하이라이트·확정 표시를 한 번에 적용한다. 어느 버튼이 어떤 상태인지는 Controller가 결정한다.
+    // 선택지 버튼은 ColorTint 전환을 쓰므로 마우스와 같은 색(highlighted/pressed)을 같은 경로(CrossFadeColor)로 적용한다.
+    public void ApplyChoiceKeyboardVisuals(
+        ResultDialogChoiceKeyboardVisual confirmVisual,
+        ResultDialogChoiceKeyboardVisual reconsiderVisual)
+    {
+        ApplyChoiceKeyboardVisual(confirmCommandButton, confirmVisual);
+        ApplyChoiceKeyboardVisual(reconsiderButton, reconsiderVisual);
+    }
+
+    public void PlayChoiceKeyboardHoverSfx(bool onConfirmButton)
+    {
+        UIButtonSfx sfx = onConfirmButton ? confirmButtonSfx : reconsiderButtonSfx;
+        sfx?.PlayHoverSfxForKeyboard();
+    }
+
+    public void PlayChoiceKeyboardClickSfx(bool onConfirmButton)
+    {
+        UIButtonSfx sfx = onConfirmButton ? confirmButtonSfx : reconsiderButtonSfx;
+        sfx?.PlayClickSfxForKeyboard();
+    }
+
+    private static void ApplyChoiceKeyboardVisual(Button button, ResultDialogChoiceKeyboardVisual visual)
+    {
+        if (button == null || button.targetGraphic == null)
+        {
+            return;
+        }
+
+        ColorBlock colors = button.colors;
+        Color target = colors.normalColor;
+        if (visual == ResultDialogChoiceKeyboardVisual.Hover)
+        {
+            target = colors.highlightedColor;
+        }
+        else if (visual == ResultDialogChoiceKeyboardVisual.Pressed)
+        {
+            target = colors.pressedColor;
+        }
+
+        // 버튼이 다시 활성화될 때는 Selectable이 상태를 초기화하므로 이전 키보드 틴트가 남지 않는다.
+        button.targetGraphic.CrossFadeColor(target * colors.colorMultiplier, colors.fadeDuration, true, true);
     }
 
     public void SetChoiceButtonsVisible(bool showConfirm, bool showReconsider)

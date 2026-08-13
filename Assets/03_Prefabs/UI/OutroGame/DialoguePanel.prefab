@@ -81,6 +81,8 @@ MonoBehaviour:
   playerSpeakerAlpha: 0.2
   advanceAudioSource: {fileID: 3657721705473644501}
   advanceClip: {fileID: 8300000, guid: 6af1e2fddb166cc47800dd1f5e1a67d8, type: 3}
+  skipButton: {fileID: 0}
+  skipAction: {fileID: 0}
   nextStageRequestedEvent:
     m_PersistentCalls:
       m_Calls: []

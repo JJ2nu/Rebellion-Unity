@@ -2250,6 +2250,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7070420057443958020, guid: 6f6d04f0de814e84abc172415791e21a, type: 3}
+      propertyPath: m_SpriteState.m_PressedSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 61cfaa2bfc195bd46a6f74f4e0b1314a, type: 3}
+    - target: {fileID: 7070420057443958020, guid: 6f6d04f0de814e84abc172415791e21a, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
       value: 1
       objectReference: {fileID: 0}
@@ -3424,6 +3428,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4851209905463527083, guid: 834b924183d3c5b4494fe37d1f12f314, type: 3}
+      propertyPath: m_SpriteState.m_PressedSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 33cd82bc9e041354cb8b84a0a2672ecb, type: 3}
     - target: {fileID: 4851209905463527083, guid: 834b924183d3c5b4494fe37d1f12f314, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
       value: 1

@@ -22,7 +22,6 @@ public sealed class HumanoidRagdollController : MonoBehaviour
     [SerializeField, Min(0f)] private float slashImpulse = 1.35f;
     [SerializeField, Min(0f)] private float projectileImpulse = 2f;
     [SerializeField, Min(0f)] private float directionalPushMultiplier = 1.4f;
-    [SerializeField, Min(0f)] private float upwardImpulse = 0.08f;
     [SerializeField, Min(0f)] private float poseVariationTorque = 0.55f;
     [SerializeField, Min(0f)] private float poseVariationYawTorque = 0.22f;
 
@@ -37,6 +36,10 @@ public sealed class HumanoidRagdollController : MonoBehaviour
     [SerializeField, Min(0f)] private float sleepAngularSpeed = 0.6f;
     [SerializeField, Min(0f)] private float stableTimeBeforeSleep = 0.18f;
     [SerializeField, Min(0.1f)] private float forceSleepAfter = 2.2f;
+
+    [Header("Collision Handoff")]
+    [SerializeField, Min(0f)] private float initialPenetrationClearance = 0.01f;
+    [SerializeField, Min(0f)] private float maxInitialPenetrationCorrection = 0.15f;
 
     private readonly List<RagdollPart> parts = new();
     private readonly Dictionary<Collider, RagdollPart> ownedColliders = new();
@@ -53,8 +56,12 @@ public sealed class HumanoidRagdollController : MonoBehaviour
     private RagdollPart hipsPart;
     private RagdollPart chestPart;
     private RagdollPart headPart;
+    private Transform skeletonRoot;
+    private Vector3 initialSkeletonRootLocalPosition;
+    private Quaternion initialSkeletonRootLocalRotation;
 
     public bool IsRagdollActive => isRagdollActive;
+    public bool HasPendingImpact => hasPendingImpact;
     public int ActiveFallVariant => activeFallVariant;
 
     private void Awake()
@@ -104,6 +111,12 @@ public sealed class HumanoidRagdollController : MonoBehaviour
         }
 
         SelectFallVariant();
+        UpdateActiveTransitionTime();
+        transitionCoroutine = StartCoroutine(TransitionAfterDeathPose());
+    }
+
+    private void UpdateActiveTransitionTime()
+    {
         bool useDirectionalBluntFall = hasPendingImpact
             && pendingAttackType == HitImpactAttackType.Blunt;
         float subtleVariation = Mathf.Sin(GetInstanceID() * 12.9898f)
@@ -116,7 +129,6 @@ public sealed class HumanoidRagdollController : MonoBehaviour
             transitionNormalizedTime + variantPoseOffset + subtleVariation,
             0.1f,
             0.8f);
-        transitionCoroutine = StartCoroutine(TransitionAfterDeathPose());
     }
 
     public void SetPendingImpact(Vector3 hitPoint, Vector3 impactDirection, HitImpactAttackType attackType)
@@ -131,6 +143,12 @@ public sealed class HumanoidRagdollController : MonoBehaviour
         if (isRagdollActive)
         {
             ApplyPendingImpact();
+        }
+        else if (transitionCoroutine != null)
+        {
+            // 에디터/디버그 경로처럼 사망 이벤트에서 뒤늦게 전달되더라도
+            // 이미 진행 중인 전환이 공격 종류에 맞는 시점을 사용하게 한다.
+            UpdateActiveTransitionTime();
         }
     }
 
@@ -168,6 +186,8 @@ public sealed class HumanoidRagdollController : MonoBehaviour
         {
             animator.enabled = true;
         }
+
+        RestoreSkeletonRootTransform();
 
         foreach (RagdollPart part in parts)
         {
@@ -250,11 +270,24 @@ public sealed class HumanoidRagdollController : MonoBehaviour
             inheritedVelocity = Vector3.ClampMagnitude(
                 hips.SampledVelocity * inheritedAnimationVelocity,
                 1.5f);
+            // 사망 모션의 위쪽 루트/골반 속도도 래그돌에 넘기지 않는다.
+            inheritedVelocity.y = Mathf.Min(0f, inheritedVelocity.y);
         }
 
+        // 동적 전환 전에 콜라이더만 켜고, 사망 모션에서 바닥 안으로 들어간
+        // 발/다리 깊이를 먼저 해소한다. 그렇지 않으면 PhysX가 첫 프레임에
+        // 전신을 위로 밀어내면서 외력이 없어도 캐릭터가 튀어 오른다.
         foreach (RagdollPart part in parts)
         {
             part.Collider.enabled = true;
+        }
+
+        IgnoreGameplayPieceCollisions();
+        Physics.SyncTransforms();
+        ResolveInitialEnvironmentPenetration();
+
+        foreach (RagdollPart part in parts)
+        {
             part.Body.isKinematic = false;
             part.Body.useGravity = true;
             part.Body.linearDamping = linearDrag;
@@ -270,6 +303,122 @@ public sealed class HumanoidRagdollController : MonoBehaviour
 
         ApplyPendingImpact();
         settlingCoroutine = StartCoroutine(SettleRagdoll());
+    }
+
+    private void IgnoreGameplayPieceCollisions()
+    {
+        PieceBase owner = GetComponent<PieceBase>();
+        PieceBase[] scenePieces = FindObjectsByType<PieceBase>(FindObjectsSortMode.None);
+        foreach (PieceBase otherPiece in scenePieces)
+        {
+            if (otherPiece == null || otherPiece == owner)
+            {
+                continue;
+            }
+
+            // 기물의 루트/선택 콜라이더는 Transform으로 직접 이동한다.
+            // 공격자의 전진 중 이 콜라이더가 막 활성화된 물리 본을 관통하면
+            // PhysX가 큰 분리 속도를 주므로, 래그돌은 환경과만 충돌하게 한다.
+            foreach (Collider gameplayCollider in otherPiece.GetComponentsInChildren<Collider>(true))
+            {
+                if (gameplayCollider == null)
+                {
+                    continue;
+                }
+
+                foreach (RagdollPart part in parts)
+                {
+                    Physics.IgnoreCollision(part.Collider, gameplayCollider, true);
+                }
+            }
+        }
+    }
+
+    private void ResolveInitialEnvironmentPenetration()
+    {
+        if (skeletonRoot == null || maxInitialPenetrationCorrection <= 0f)
+        {
+            return;
+        }
+
+        const int maxIterations = 2;
+        float totalCorrection = 0f;
+        for (int iteration = 0; iteration < maxIterations; iteration++)
+        {
+            float remainingCorrection = maxInitialPenetrationCorrection - totalCorrection;
+            if (remainingCorrection <= 0.0001f)
+            {
+                break;
+            }
+
+            float requiredUpwardCorrection = FindRequiredUpwardCorrection(remainingCorrection);
+            if (requiredUpwardCorrection <= 0.0001f)
+            {
+                break;
+            }
+
+            float correction = Mathf.Min(requiredUpwardCorrection, remainingCorrection);
+            skeletonRoot.position += Vector3.up * correction;
+            totalCorrection += correction;
+            Physics.SyncTransforms();
+        }
+    }
+
+    private float FindRequiredUpwardCorrection(float searchDistance)
+    {
+        float requiredCorrection = 0f;
+        Vector3 padding = Vector3.one * Mathf.Max(initialPenetrationClearance, 0.005f);
+
+        foreach (RagdollPart part in parts)
+        {
+            Bounds bounds = part.Collider.bounds;
+            Collider[] overlaps = Physics.OverlapBox(
+                bounds.center,
+                bounds.extents + padding,
+                Quaternion.identity,
+                ~0,
+                QueryTriggerInteraction.Ignore);
+
+            foreach (Collider other in overlaps)
+            {
+                if (other == null
+                    || other == part.Collider
+                    || ownedColliders.ContainsKey(other)
+                    || other.transform.IsChildOf(transform)
+                    || other.GetComponentInParent<PieceBase>() != null)
+                {
+                    continue;
+                }
+
+                if (!Physics.ComputePenetration(
+                        part.Collider,
+                        part.Collider.transform.position,
+                        part.Collider.transform.rotation,
+                        other,
+                        other.transform.position,
+                        other.transform.rotation,
+                        out Vector3 separationDirection,
+                        out float separationDistance))
+                {
+                    continue;
+                }
+
+                // 벽이나 오브제 옆면은 수직 보정 대상으로 삼지 않는다.
+                // 위쪽을 향하는 접촉만 바닥 침투로 판정한다.
+                if (separationDirection.y < 0.6f)
+                {
+                    continue;
+                }
+
+                float upwardDistance = separationDistance / separationDirection.y
+                    + initialPenetrationClearance;
+                requiredCorrection = Mathf.Max(
+                    requiredCorrection,
+                    Mathf.Min(upwardDistance, searchDistance));
+            }
+        }
+
+        return requiredCorrection;
     }
 
     private void SelectFallVariant()
@@ -338,16 +487,18 @@ public sealed class HumanoidRagdollController : MonoBehaviour
             _ => slashImpulse,
         };
 
-        Vector3 direction = (pendingImpactDirection + Vector3.up * upwardImpulse).normalized;
-        Vector3 horizontalImpulse = Vector3.ProjectOnPlane(direction, Vector3.up)
-            * (impulse * directionalPushMultiplier);
-        Vector3 verticalImpulse = Vector3.up * (direction.y * impulse);
+        Vector3 horizontalDirection = Vector3.ProjectOnPlane(pendingImpactDirection, Vector3.up);
+        if (horizontalDirection.sqrMagnitude <= 0.0001f)
+        {
+            horizontalDirection = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
+        }
+        horizontalDirection.Normalize();
+        Vector3 horizontalImpulse = horizontalDirection * (impulse * directionalPushMultiplier);
 
         // 가벼운 팔·다리나 먼 피격점에 힘을 가하면 과한 회전력 때문에 몸이 날아간다.
-        // 중심부 질량의 수평 밀림만 별도 배율로 키우고 수직 충격은 기존 값을 유지한다.
-        impactPart.Body.AddForce(horizontalImpulse + verticalImpulse, ForceMode.Impulse);
+        // 중심부 질량에 수평 충격만 적용해 피격 벡터에 Y값이 있어도 위로 뜨지 않게 한다.
+        impactPart.Body.AddForce(horizontalImpulse, ForceMode.Impulse);
 
-        Vector3 horizontalDirection = Vector3.ProjectOnPlane(pendingImpactDirection, Vector3.up);
         if (horizontalDirection.sqrMagnitude > 0.0001f && poseVariationTorque > 0f)
         {
             horizontalDirection.Normalize();
@@ -470,6 +621,8 @@ public sealed class HumanoidRagdollController : MonoBehaviour
         RagdollPart rightUpperLeg = AddCapsulePart(HumanBodyBones.RightUpperLeg, HumanBodyBones.RightLowerLeg, 8f, 0.11f, 0f, false);
         RagdollPart rightLowerLeg = AddCapsulePart(HumanBodyBones.RightLowerLeg, HumanBodyBones.RightFoot, 5f, 0.09f, 0f, false);
         RagdollPart rightFoot = AddBoxPart(HumanBodyBones.RightFoot, 1f, new Vector3(0.16f, 0.12f, 0.28f), false, Vector3.forward);
+
+        CacheSkeletonRootTransform();
 
         // 관절별 가동 범위를 사람의 움직임에 가깝게 제한한다.
         Connect(chestPart, hipsPart, -20f, 20f, 20f, 15f);
@@ -650,6 +803,11 @@ public sealed class HumanoidRagdollController : MonoBehaviour
     private void SetAnimationMode(bool restorePose)
     {
         isRagdollActive = false;
+        if (restorePose)
+        {
+            RestoreSkeletonRootTransform();
+        }
+
         foreach (RagdollPart part in parts)
         {
             part.Body.isKinematic = true;
@@ -659,6 +817,33 @@ public sealed class HumanoidRagdollController : MonoBehaviour
             {
                 part.Bone.SetLocalPositionAndRotation(part.InitialLocalPosition, part.InitialLocalRotation);
             }
+        }
+    }
+
+    private void CacheSkeletonRootTransform()
+    {
+        if (hipsPart == null)
+        {
+            return;
+        }
+
+        skeletonRoot = hipsPart.Bone;
+        while (skeletonRoot.parent != null && skeletonRoot.parent != transform)
+        {
+            skeletonRoot = skeletonRoot.parent;
+        }
+
+        initialSkeletonRootLocalPosition = skeletonRoot.localPosition;
+        initialSkeletonRootLocalRotation = skeletonRoot.localRotation;
+    }
+
+    private void RestoreSkeletonRootTransform()
+    {
+        if (skeletonRoot != null)
+        {
+            skeletonRoot.SetLocalPositionAndRotation(
+                initialSkeletonRootLocalPosition,
+                initialSkeletonRootLocalRotation);
         }
     }
 

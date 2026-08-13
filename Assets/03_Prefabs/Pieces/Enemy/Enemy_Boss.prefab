@@ -141,7 +141,6 @@ MonoBehaviour:
   slashImpulse: 1.35
   projectileImpulse: 2
   directionalPushMultiplier: 1.4
-  upwardImpulse: 0.08
   poseVariationTorque: 0.55
   poseVariationYawTorque: 0.22
   linearDrag: 0.35
@@ -154,6 +153,8 @@ MonoBehaviour:
   sleepAngularSpeed: 0.6
   stableTimeBeforeSleep: 0.18
   forceSleepAfter: 2.2
+  initialPenetrationClearance: 0.01
+  maxInitialPenetrationCorrection: 0.15
 --- !u!1 &4566810906019764094
 GameObject:
   m_ObjectHideFlags: 0

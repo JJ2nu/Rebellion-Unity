@@ -41,6 +41,34 @@ public sealed class UIButtonSfx : MonoBehaviour, IPointerEnterHandler, IPointerD
             return;
         }
 
+        PlayClickSfxSet();
+    }
+
+    // 키보드 하이라이트가 마우스 hover와 같은 소리를 내도록 외부(키보드 입력 처리)에서 호출하는 진입점이다.
+    public void PlayHoverSfxForKeyboard()
+    {
+        if (button != null && !button.interactable)
+        {
+            return;
+        }
+
+        PlayClip(hoverClip);
+    }
+
+    // 키보드 확정이 마우스 클릭(PointerDown)과 같은 소리를 내도록 외부에서 호출하는 진입점이다.
+    public void PlayClickSfxForKeyboard()
+    {
+        if (button != null && !button.interactable)
+        {
+            return;
+        }
+
+        PlayClickSfxSet();
+    }
+
+    // 마우스 클릭과 키보드 확정이 같은 클릭음 조합을 공유한다.
+    private void PlayClickSfxSet()
+    {
         if (clickClip != null)
         {
             PlayClip(clickClip);
