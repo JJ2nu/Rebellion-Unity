@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.InputSystem;
 
 /// <summary>
 /// 시뮬레이션 실행 상태와 보관된 결과를 Simulation Controls View 상태로 변환한다.
@@ -19,6 +20,15 @@ public sealed class StageSimulationControls : MonoBehaviour
 
     private StageSimulationControlsView view;
 
+    // UI Submit과 분리된 배치 모드 Spacebar Play 전용 Action이다 (StageTutorialController의 Space 선례와 동일한 방식).
+    private InputAction spacebarPlayAction;
+
+    // Spacebar를 누른 채 유지 중인지 추적해, 릴리스 실행과 모달 개입 시 pressed 표시 취소를 판단한다.
+    private bool isSpacebarPlayHeld;
+
+    // 모달(튜토리얼 등)을 닫은 바로 그 Space 입력이 콜백 순서에 따라 Play로 이어지지 않도록 해제 프레임을 기록한다.
+    private int lastModalUnblockFrame = -1;
+
     private void Awake()
     {
         view = GetComponent<StageSimulationControlsView>();
@@ -26,6 +36,11 @@ public sealed class StageSimulationControls : MonoBehaviour
         {
             Debug.LogWarning($"{nameof(StageSimulationControls)} has no Simulation Controls view assigned.", this);
         }
+
+        spacebarPlayAction = new InputAction(
+            "StartSimulationBySpacebar",
+            InputActionType.Button,
+            "<Keyboard>/space");
 
         EnsureBindings();
         MatchConfirmButtonToPlayButton();
@@ -45,6 +60,15 @@ public sealed class StageSimulationControls : MonoBehaviour
         }
 
         SubscribeViewEvents();
+
+        // 눌림(pressed 표시)과 릴리스(실행)를 나눠 마우스 클릭과 같은 press-release 감각을 만든다.
+        spacebarPlayAction.performed += HandleSpacebarPlayPressed;
+        spacebarPlayAction.canceled += HandleSpacebarPlayReleased;
+        spacebarPlayAction.Enable();
+
+        // Spacebar를 누른 채 모달(튜토리얼·타이틀 복귀 팝업 등)이 열리면 pressed 표시를 취소하기 위해 구독한다.
+        StageInputModalGate.BlockedStateChanged += HandleModalBlockedChanged;
+
         ApplyState();
     }
 
@@ -56,7 +80,22 @@ public sealed class StageSimulationControls : MonoBehaviour
             simulationController.SimulationFinished -= HandleSimulationFinished;
         }
 
+        if (spacebarPlayAction != null)
+        {
+            spacebarPlayAction.performed -= HandleSpacebarPlayPressed;
+            spacebarPlayAction.canceled -= HandleSpacebarPlayReleased;
+            spacebarPlayAction.Disable();
+        }
+
+        StageInputModalGate.BlockedStateChanged -= HandleModalBlockedChanged;
+        isSpacebarPlayHeld = false;
+
         UnsubscribeViewEvents();
+    }
+
+    private void OnDestroy()
+    {
+        spacebarPlayAction?.Dispose();
     }
 
     public void StartSimulation()
@@ -125,6 +164,58 @@ public sealed class StageSimulationControls : MonoBehaviour
     public void MatchConfirmButtonToPlayButton()
     {
         view?.MatchConfirmButtonToPlayButton();
+    }
+
+    private void HandleSpacebarPlayPressed(InputAction.CallbackContext _)
+    {
+        // 모달 잠금 중, 모달이 해제된 그 프레임, 시뮬레이션 실행 중, 결과 대기 중에는 Spacebar Play를 받지 않는다.
+        if (StageInputModalGate.IsBlocked ||
+            lastModalUnblockFrame == Time.frameCount ||
+            IsSimulationRunningOrPendingResult())
+        {
+            return;
+        }
+
+        // 실행은 릴리스에서 하고, 누르고 있는 동안은 어떤 버튼이 실행될지 pressed Sprite로 보여준다.
+        isSpacebarPlayHeld = true;
+        view?.ShowPlayPressedSprite();
+    }
+
+    private void HandleSpacebarPlayReleased(InputAction.CallbackContext _)
+    {
+        if (!isSpacebarPlayHeld)
+        {
+            return;
+        }
+
+        isSpacebarPlayHeld = false;
+
+        // pressed Sprite를 현재 상태 기준 표시로 되돌린 뒤 시작한다.
+        ApplyState();
+
+        // 누르고 있는 사이 상태가 바뀌었을 수 있어 릴리스 시점에 다시 확인한다.
+        if (StageInputModalGate.IsBlocked || IsSimulationRunningOrPendingResult())
+        {
+            return;
+        }
+
+        StartSimulation();
+    }
+
+    private void HandleModalBlockedChanged(bool isBlocked)
+    {
+        // Spacebar를 누른 채 모달이 열리면 릴리스해도 실행되지 않으므로 pressed 표시를 먼저 되돌린다.
+        if (isBlocked && isSpacebarPlayHeld)
+        {
+            isSpacebarPlayHeld = false;
+            ApplyState();
+        }
+
+        // 해제 프레임을 기록해 모달을 닫은 Space 입력이 같은 프레임에 Play로 새는 것을 막는다.
+        if (!isBlocked)
+        {
+            lastModalUnblockFrame = Time.frameCount;
+        }
     }
 
     private void HandleRunningStateChanged(bool _)

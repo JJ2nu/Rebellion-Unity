@@ -83,6 +83,20 @@ public sealed class StageSimulationControlsView : MonoBehaviour
         ConfirmRequested?.Invoke();
     }
 
+    // Spacebar Play 입력이 유지되는 동안 마우스 press-hold와 같은 pressed Sprite를 표시한다.
+    // 복원은 Controller가 ApplyState 재적용으로 처리하므로 여기서는 표시만 담당한다.
+    public void ShowPlayPressedSprite()
+    {
+        EnsurePlayButtonPresentation();
+        if (playButton == null)
+        {
+            return;
+        }
+
+        Sprite pressedSprite = playButton.spriteState.pressedSprite;
+        SetPlayButtonSprite(pressedSprite != null ? pressedSprite : playInactiveSprite);
+    }
+
     public void MatchConfirmButtonToPlayButton()
     {
         if (playButton == null || confirmButton == null)
