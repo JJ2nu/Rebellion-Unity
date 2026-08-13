@@ -44,12 +44,22 @@ public sealed class CombatDeathReactionPresentation : MonoBehaviour
         }
 
         HumanoidRagdollController ragdoll = victim.GetComponent<HumanoidRagdollController>();
+        Restore(victim);
+
         if (ragdoll != null)
         {
-            ragdoll.SetPendingImpact(hitPoint, impactDirection, attackType);
-        }
+            // AttackHitbox가 사망 처리 전에 전달하는 것이 정상 경로다.
+            // 에디터 테스트처럼 공격 판정을 거치지 않는 경로만 여기서 보완한다.
+            if (!ragdoll.HasPendingImpact && !ragdoll.IsRagdollActive)
+            {
+                ragdoll.SetPendingImpact(hitPoint, impactDirection, attackType);
+            }
 
-        Restore(victim);
+            // 래그돌 대상은 사망 모션과 물리 충격 자체가 반동을 표현한다.
+            // 별도의 시각 루트 오프셋을 병행하면 동적 전환 뒤 부모 Transform이
+            // 다시 움직여 전신에 가짜 속도와 위쪽 반발을 만들 수 있다.
+            return;
+        }
 
         Transform visualRoot = FindVisualRoot(victim);
         if (visualRoot == null || visualRoot.parent == null)

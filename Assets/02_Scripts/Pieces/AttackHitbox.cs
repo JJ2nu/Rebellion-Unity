@@ -85,6 +85,7 @@ public class AttackHitbox : MonoBehaviour
 
         _hitPieces.Add(piece);
         Direction hitDirection = GetIncomingDirection(impactDirection);
+        bool isLethal = piece.CurrentHealth <= 1;
         StageManager.Instance?.PlayPieceHitSfx(piece);
         SimulationController.Instance?.ReportHitConfirmed(
             _owner,
@@ -93,7 +94,17 @@ public class AttackHitbox : MonoBehaviour
             impactDirection,
             attackType,
             damage: 1,
-            isLethal: piece.CurrentHealth <= 1);
+            isLethal: isLethal);
+
+        // PieceBase.Die에서 전환 시점을 계산하기 전에 피격 종류와 방향을 넘긴다.
+        // 사망 이벤트 이후에만 전달하면 둔기 전용 전환 시점을 고르지 못하고,
+        // 일부 배치에서는 발이 바닥 안쪽인 이른 자세에서 물리가 시작된다.
+        if (isLethal)
+        {
+            piece.GetComponent<HumanoidRagdollController>()
+                ?.SetPendingImpact(hitPoint, impactDirection, attackType);
+        }
+
         piece.TakeDamage(1,hitDirection);
         StageManager.Instance?.PlayHitImpact(hitPoint, impactDirection, attackType);
     }
