@@ -24,6 +24,12 @@ public sealed class StageSceneFlowBinder : MonoBehaviour
     public bool WasLastAudioDramaSkipped =>
         audioDramaPlayer != null && audioDramaPlayer.WasLastPlaybackSkipped;
 
+    public bool IsAudioDramaBlockingSimulationSpacebar()
+    {
+        EnsureBindings();
+        return audioDramaPlayer != null && audioDramaPlayer.BlocksSimulationSpacebar;
+    }
+
     private void OnEnable()
     {
         EnsureBindings();
