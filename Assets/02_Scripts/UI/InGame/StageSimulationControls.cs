@@ -217,7 +217,9 @@ public sealed class StageSimulationControls : MonoBehaviour
     private void HandleSpacebarPressed(InputAction.CallbackContext _)
     {
         // 모달 잠금 중이거나 모달이 해제된 그 프레임에는 어떤 Spacebar 조작도 받지 않는다.
-        if (StageInputModalGate.IsBlocked || lastModalUnblockFrame == Time.frameCount)
+        if (StageInputModalGate.IsBlocked ||
+            lastModalUnblockFrame == Time.frameCount ||
+            IsAudioDramaBlockingSpacebar())
         {
             return;
         }
@@ -253,6 +255,16 @@ public sealed class StageSimulationControls : MonoBehaviour
 
     private void HandleSpacebarReleased(InputAction.CallbackContext _)
     {
+        // 드라마 재생 중 시작된 Space 입력은 릴리스 시점에도 Play/결과 버튼으로 넘기지 않는다.
+        // 스킵과 Controls 콜백 순서가 반대여도 AudioDramaPlayer가 종료 프레임까지 차단한다.
+        if (IsAudioDramaBlockingSpacebar())
+        {
+            isSpacebarPlayHeld = false;
+            isSpacebarConfirmHeld = false;
+            ApplyState();
+            return;
+        }
+
         // 결과 버튼 확정 릴리스: 하이라이트된 버튼을 기존 버튼 클릭과 같은 경로로 실행한다.
         if (isSpacebarConfirmHeld)
         {
@@ -448,6 +460,12 @@ public sealed class StageSimulationControls : MonoBehaviour
         bool isSimulationMode = simulationController != null && simulationController._isRunning;
         bool hasSimulationResult = stageSceneFlowBinder != null && stageSceneFlowBinder.HasPendingSimulationResult;
         return isSimulationMode || hasSimulationResult;
+    }
+
+    private bool IsAudioDramaBlockingSpacebar()
+    {
+        return stageSceneFlowBinder != null &&
+               stageSceneFlowBinder.IsAudioDramaBlockingSimulationSpacebar();
     }
 
     private void SubscribeViewEvents()
