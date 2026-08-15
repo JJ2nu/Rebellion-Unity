@@ -45,6 +45,7 @@ public sealed class AudioDramaPlayer : MonoBehaviour
     private bool skipRequested;
     private bool holdPanelAfterPlayback;
     private bool wasLastPlaybackSkipped;
+    private int playbackEndedFrame = -1;
 
     #endregion
 
@@ -53,6 +54,8 @@ public sealed class AudioDramaPlayer : MonoBehaviour
     public bool IsPlaying => playRoutine != null;
     public bool IsFullyVisible => canvasGroup != null && canvasGroup.alpha >= 0.99f;
     public bool WasLastPlaybackSkipped => wasLastPlaybackSkipped;
+    public bool BlocksSimulationSpacebar =>
+        IsPlaying || playbackEndedFrame == Time.frameCount;
 
     #endregion
 
@@ -131,6 +134,7 @@ public sealed class AudioDramaPlayer : MonoBehaviour
             HideImmediate();
             holdPanelAfterPlayback = false;
             playRoutine = null;
+            playbackEndedFrame = Time.frameCount;
             yield break;
         }
 
@@ -141,11 +145,13 @@ public sealed class AudioDramaPlayer : MonoBehaviour
             HideImmediate();
             holdPanelAfterPlayback = false;
             playRoutine = null;
+            playbackEndedFrame = Time.frameCount;
             yield break;
         }
 
         yield return PlayDataAndWait(data, clip, shouldHoldPanelAfterPlayback);
         playRoutine = null;
+        playbackEndedFrame = Time.frameCount;
     }
 
     public void Stop()
@@ -168,6 +174,10 @@ public sealed class AudioDramaPlayer : MonoBehaviour
         {
             HideImmediate();
         }
+
+        // AudioDrama와 Simulation Controls가 같은 Space performed 이벤트를 받는다.
+        // 스킵 콜백이 먼저 실행돼 IsPlaying이 false가 되더라도 같은 프레임의 Play 입력은 막는다.
+        playbackEndedFrame = Time.frameCount;
     }
 
     #endregion
