@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Mission Prefab의 생성, 텍스트 표시, 간격과 실패 연출 명령만 담당하는 Passive View다.
+/// Mission Prefab의 생성, 텍스트 표시, 간격과 실패·클리어 연출 명령만 담당하는 Passive View다.
 /// </summary>
 public sealed class InGameMissionView : MonoBehaviour
 {
@@ -11,15 +11,28 @@ public sealed class InGameMissionView : MonoBehaviour
     [SerializeField] private InGameMissionSlotUI subMissionPrefab;
     [SerializeField] private float subMissionVerticalSpacing = 90f;
 
+    // 실패 취소선과 클리어 동그라미를 하나의 대기열로 묶어 슬롯별 연출이 겹치지 않게 순차 재생한다.
+    private readonly struct ResultMark
+    {
+        public ResultMark(InGameMissionSlotUI slot, bool isSuccess)
+        {
+            Slot = slot;
+            IsSuccess = isSuccess;
+        }
+
+        public InGameMissionSlotUI Slot { get; }
+        public bool IsSuccess { get; }
+    }
+
     private readonly List<InGameMissionSlotUI> subMissionSlots = new();
-    private readonly Queue<InGameMissionSlotUI> failureQueue = new();
-    private readonly HashSet<InGameMissionSlotUI> failedSlots = new();
+    private readonly Queue<ResultMark> resultMarkQueue = new();
+    private readonly HashSet<InGameMissionSlotUI> markedSlots = new();
     private InGameMissionSlotUI mainMissionSlot;
-    private Coroutine failureSequenceCoroutine;
+    private Coroutine resultMarkSequenceCoroutine;
 
     private void OnDisable()
     {
-        StopFailureSequence();
+        StopResultMarkSequence();
     }
 
     public void Render(string stageTitle, IReadOnlyList<string> subMissions)
@@ -59,58 +72,78 @@ public sealed class InGameMissionView : MonoBehaviour
 
     public void ShowMissionFailure(int missionIndex)
     {
+        EnqueueResultMark(missionIndex, isSuccess: false);
+    }
+
+    public void ShowMissionSuccess(int missionIndex)
+    {
+        EnqueueResultMark(missionIndex, isSuccess: true);
+    }
+
+    public void ResetMissionResultMarks()
+    {
+        StopResultMarkSequence();
+        resultMarkQueue.Clear();
+        markedSlots.Clear();
+        mainMissionSlot?.ResetFailureImmediate();
+        mainMissionSlot?.ResetSuccessImmediate();
+        foreach (InGameMissionSlotUI slot in subMissionSlots)
+        {
+            slot?.ResetFailureImmediate();
+            slot?.ResetSuccessImmediate();
+        }
+    }
+
+    private void EnqueueResultMark(int missionIndex, bool isSuccess)
+    {
         InGameMissionSlotUI slot = GetMissionSlot(missionIndex);
-        if (slot == null || !failedSlots.Add(slot))
+        if (slot == null || !markedSlots.Add(slot))
         {
             return;
         }
 
-        // 새 실패가 연출 중 발생해도 현재 실패선을 중단하지 않고 대기열 뒤에서 이어서 재생한다.
-        failureQueue.Enqueue(slot);
-        if (failureSequenceCoroutine == null)
+        // 새 연출이 재생 중 발생해도 현재 연출을 중단하지 않고 대기열 뒤에서 이어서 재생한다.
+        resultMarkQueue.Enqueue(new ResultMark(slot, isSuccess));
+        if (resultMarkSequenceCoroutine == null)
         {
-            failureSequenceCoroutine = StartCoroutine(PlayFailureSequence());
+            resultMarkSequenceCoroutine = StartCoroutine(PlayResultMarkSequence());
         }
     }
 
-    public void ResetMissionFailures()
+    private IEnumerator PlayResultMarkSequence()
     {
-        StopFailureSequence();
-        failureQueue.Clear();
-        failedSlots.Clear();
-        mainMissionSlot?.ResetFailureImmediate();
-        foreach (InGameMissionSlotUI slot in subMissionSlots)
+        while (resultMarkQueue.Count > 0)
         {
-            slot?.ResetFailureImmediate();
-        }
-    }
-
-    private IEnumerator PlayFailureSequence()
-    {
-        while (failureQueue.Count > 0)
-        {
-            InGameMissionSlotUI slot = failureQueue.Dequeue();
-            if (slot == null)
+            ResultMark mark = resultMarkQueue.Dequeue();
+            if (mark.Slot == null)
             {
                 continue;
             }
 
-            slot.ShowFailure(true);
-            yield return new WaitForSecondsRealtime(slot.FailSequenceDuration);
+            if (mark.IsSuccess)
+            {
+                mark.Slot.ShowSuccess(true);
+                yield return new WaitForSecondsRealtime(mark.Slot.ClearSequenceDuration);
+            }
+            else
+            {
+                mark.Slot.ShowFailure(true);
+                yield return new WaitForSecondsRealtime(mark.Slot.FailSequenceDuration);
+            }
         }
 
-        failureSequenceCoroutine = null;
+        resultMarkSequenceCoroutine = null;
     }
 
-    private void StopFailureSequence()
+    private void StopResultMarkSequence()
     {
-        if (failureSequenceCoroutine == null)
+        if (resultMarkSequenceCoroutine == null)
         {
             return;
         }
 
-        StopCoroutine(failureSequenceCoroutine);
-        failureSequenceCoroutine = null;
+        StopCoroutine(resultMarkSequenceCoroutine);
+        resultMarkSequenceCoroutine = null;
     }
 
     private InGameMissionSlotUI GetMissionSlot(int missionIndex)
@@ -148,9 +181,9 @@ public sealed class InGameMissionView : MonoBehaviour
 
     private void ClearRenderedMissions()
     {
-        StopFailureSequence();
-        failureQueue.Clear();
-        failedSlots.Clear();
+        StopResultMarkSequence();
+        resultMarkQueue.Clear();
+        markedSlots.Clear();
         mainMissionSlot = null;
         subMissionSlots.Clear();
 
