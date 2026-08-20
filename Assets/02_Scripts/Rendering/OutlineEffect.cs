@@ -2,12 +2,19 @@ using UnityEngine;
 
 /// <summary>
 /// 호버 시 외곽선을 표시한다.
-/// 각 Renderer의 materials 배열 끝에 outlineMaterial을 추가하고, 해제 시 원래대로 복원한다.
+/// 마스크 렌더러가 유닛 실루엣을 스텐실에 먼저 기록하고, 헐 렌더러가 실루엣 바깥에만 외곽선을 그려서
+/// 메쉬(파츠)별 내부 경계선 없이 유닛 전체 테두리 하나만 보이게 한다.
 /// </summary>
 public class OutlineEffect : MonoBehaviour
 {
     [SerializeField] private Material outlineMaterial;
     private const float DefaultOutlineWidth = 0.03f;
+    // 모든 마스크가 먼저 그려진 뒤 헐이 그려지도록 렌더 큐를 분리한다.
+    private const int MaskRenderQueue = 2001;
+    private const int HullRenderQueue = 2002;
+
+    // 겹쳐 보이는 유닛끼리 서로의 외곽선을 지우지 않도록 유닛마다 1~255 스텐실 참조값을 순환 할당한다.
+    private static int nextStencilRef = 1;
 
     private Renderer[] renderers;
     private Material[][] originalMaterials;
@@ -18,15 +25,31 @@ public class OutlineEffect : MonoBehaviour
     private float outlineWidth = DefaultOutlineWidth;
     private bool isOutlineVisible;
     private bool isPersistent;
+    private int stencilRef;
+    private Material maskMaterialInstance;
+    private Material hullMaterialInstance;
 
     private void Awake()
     {
         EnsureCache();
     }
 
+    private void OnDestroy()
+    {
+        DestroyDuplicatedOutlineRenderers();
+        DestroyMaterialInstances();
+    }
+
     public void SetOutlineMaterial(Material material)
     {
+        if (isOutlineVisible)
+        {
+            RemoveAppliedOutline();
+            isOutlineVisible = false;
+        }
+
         outlineMaterial = material;
+        DestroyMaterialInstances();
         EnsureCache();
     }
 
@@ -85,15 +108,18 @@ public class OutlineEffect : MonoBehaviour
 
         isOutlineVisible = true;
 
+        if (useDuplicatedRenderers)
+        {
+            EnsureMaterialInstances();
+            hullMaterialInstance.SetFloat("_OutlineWidth", outlineWidth);
+            hullMaterialInstance.SetColor("_OutlineColor", color);
+            CreateDuplicatedOutlineRenderers();
+            return;
+        }
+
         var mpb = new MaterialPropertyBlock();
         mpb.SetFloat("_OutlineWidth", outlineWidth);
         mpb.SetColor("_OutlineColor", color);
-
-        if (useDuplicatedRenderers)
-        {
-            CreateDuplicatedOutlineRenderers(mpb);
-            return;
-        }
 
         for (int i = 0; i < renderers.Length; i++)
         {
@@ -165,6 +191,7 @@ public class OutlineEffect : MonoBehaviour
             Renderer childRenderer = childRenderers[rendererIndex];
             if (childRenderer == null ||
                 childRenderer.gameObject.name.EndsWith("_OutlineRenderer") ||
+                childRenderer.gameObject.name.EndsWith("_OutlineMaskRenderer") ||
                 IsExcluded(childRenderer.transform))
             {
                 continue;
@@ -191,7 +218,53 @@ public class OutlineEffect : MonoBehaviour
         return false;
     }
 
-    private void CreateDuplicatedOutlineRenderers(MaterialPropertyBlock propertyBlock)
+    private void EnsureMaterialInstances()
+    {
+        if (maskMaterialInstance != null && hullMaterialInstance != null)
+        {
+            return;
+        }
+
+        DestroyMaterialInstances();
+
+        // Awake를 거치지 않고 사용돼도 참조값이 할당되도록 지연 할당한다.
+        if (stencilRef == 0)
+        {
+            stencilRef = nextStencilRef;
+            nextStencilRef = nextStencilRef % 255 + 1;
+        }
+
+        // 마스크: 색·깊이는 쓰지 않고 유닛 실루엣 픽셀에 스텐실 참조값만 기록한다.
+        maskMaterialInstance = new Material(outlineMaterial);
+        maskMaterialInstance.SetFloat("_OutlineWidth", 0f);
+        maskMaterialInstance.SetFloat("_StencilRef", stencilRef);
+        maskMaterialInstance.SetFloat("_StencilComp", (float)UnityEngine.Rendering.CompareFunction.Always);
+        maskMaterialInstance.SetFloat("_StencilOp", (float)UnityEngine.Rendering.StencilOp.Replace);
+        maskMaterialInstance.SetFloat("_Cull", (float)UnityEngine.Rendering.CullMode.Back);
+        maskMaterialInstance.SetFloat("_ZWrite", 0f);
+        maskMaterialInstance.SetFloat("_ColorMask", 0f);
+        // 원본 메쉬와 동일 깊이에서 ZTest가 확실히 통과하도록 살짝 앞으로 당긴다.
+        maskMaterialInstance.SetFloat("_OffsetFactor", -1f);
+        maskMaterialInstance.SetFloat("_OffsetUnits", -1f);
+        maskMaterialInstance.renderQueue = MaskRenderQueue;
+
+        // 헐: 스텐실이 기록되지 않은 실루엣 바깥 픽셀에만 외곽선을 그린다.
+        hullMaterialInstance = new Material(outlineMaterial);
+        hullMaterialInstance.SetFloat("_StencilRef", stencilRef);
+        hullMaterialInstance.SetFloat("_StencilComp", (float)UnityEngine.Rendering.CompareFunction.NotEqual);
+        hullMaterialInstance.SetFloat("_StencilOp", (float)UnityEngine.Rendering.StencilOp.Keep);
+        hullMaterialInstance.renderQueue = HullRenderQueue;
+    }
+
+    private void DestroyMaterialInstances()
+    {
+        DestroyRuntimeObject(maskMaterialInstance);
+        DestroyRuntimeObject(hullMaterialInstance);
+        maskMaterialInstance = null;
+        hullMaterialInstance = null;
+    }
+
+    private void CreateDuplicatedOutlineRenderers()
     {
         DestroyDuplicatedOutlineRenderers();
 
@@ -203,20 +276,23 @@ public class OutlineEffect : MonoBehaviour
                 continue;
             }
 
-            Renderer outlineRenderer = CreateDuplicatedOutlineRenderer(sourceRenderer);
-            if (outlineRenderer == null)
+            Renderer maskRenderer = CreateDuplicatedOutlineRenderer(sourceRenderer, maskMaterialInstance, "_OutlineMaskRenderer");
+            if (maskRenderer != null)
             {
-                continue;
+                duplicatedOutlineRenderers.Add(maskRenderer);
             }
 
-            outlineRenderer.SetPropertyBlock(propertyBlock);
-            duplicatedOutlineRenderers.Add(outlineRenderer);
+            Renderer hullRenderer = CreateDuplicatedOutlineRenderer(sourceRenderer, hullMaterialInstance, "_OutlineRenderer");
+            if (hullRenderer != null)
+            {
+                duplicatedOutlineRenderers.Add(hullRenderer);
+            }
         }
     }
 
-    private Renderer CreateDuplicatedOutlineRenderer(Renderer sourceRenderer)
+    private Renderer CreateDuplicatedOutlineRenderer(Renderer sourceRenderer, Material rendererMaterial, string nameSuffix)
     {
-        GameObject outlineObject = new GameObject($"{sourceRenderer.gameObject.name}_OutlineRenderer");
+        GameObject outlineObject = new GameObject($"{sourceRenderer.gameObject.name}{nameSuffix}");
         outlineObject.transform.SetParent(sourceRenderer.transform, false);
         outlineObject.layer = sourceRenderer.gameObject.layer;
 
@@ -269,7 +345,7 @@ public class OutlineEffect : MonoBehaviour
         Material[] outlineMaterials = new Material[Mathf.Max(1, subMeshCount)];
         for (int materialIndex = 0; materialIndex < outlineMaterials.Length; materialIndex++)
         {
-            outlineMaterials[materialIndex] = outlineMaterial;
+            outlineMaterials[materialIndex] = rendererMaterial;
         }
 
         outlineRenderer.sharedMaterials = outlineMaterials;
@@ -297,13 +373,23 @@ public class OutlineEffect : MonoBehaviour
             return;
         }
 
+        DestroyRuntimeObject(outlineObject);
+    }
+
+    private static void DestroyRuntimeObject(Object target)
+    {
+        if (target == null)
+        {
+            return;
+        }
+
         if (Application.isPlaying)
         {
-            Destroy(outlineObject);
+            Destroy(target);
         }
         else
         {
-            DestroyImmediate(outlineObject);
+            DestroyImmediate(target);
         }
     }
 

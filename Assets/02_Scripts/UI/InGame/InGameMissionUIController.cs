@@ -76,7 +76,7 @@ public sealed class InGameMissionUIController : MonoBehaviour
 
         view.Render(data.GetStageTitle(), subMissionTexts);
         view.ApplyMainMissionProgress(primaryMission.DisplayText, 0, currentStageEnemyCount);
-        view.ResetMissionFailures();
+        view.ResetMissionResultMarks();
     }
 
     private void HandleMissionFactsChanged(SimulationMissionFacts facts)
@@ -105,6 +105,15 @@ public sealed class InGameMissionUIController : MonoBehaviour
             facts.DeadEnemyCount,
             facts.TotalEnemyCount);
         EvaluateMissions(facts, MissionEvaluationMoment.SimulationFinished);
+
+        // 클리어 동그라미는 도중에 성공이 확정된 미션도 시뮬레이션이 완전히 끝난 뒤에만 표시한다.
+        for (int index = 0; index < boundMissions.Count; index++)
+        {
+            if (boundMissions[index].State == MissionEvaluationState.Succeeded)
+            {
+                view?.ShowMissionSuccess(index);
+            }
+        }
     }
 
     private void HandleSimulationReset()
@@ -116,7 +125,7 @@ public sealed class InGameMissionUIController : MonoBehaviour
 
         BoundMission primaryMission = boundMissions.Count > 0 ? boundMissions[0] : null;
         view?.ApplyMainMissionProgress(primaryMission?.DisplayText, 0, currentStageEnemyCount);
-        view?.ResetMissionFailures();
+        view?.ResetMissionResultMarks();
     }
 
     private void EvaluateMissions(

@@ -506,6 +506,13 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
 
     public void OnWorldHover(WorldInputEventData eventData)
     {
+        // 시뮬레이션 연출 실행 중(결과 확정 전)에는 진영과 무관하게 hover 아웃라인과
+        // 공격 범위 표시를 차단한다. UnHover는 정리 경로이므로 차단하지 않는다.
+        if (SimulationController.Instance != null && SimulationController.Instance.IsExecutingSimulation)
+        {
+            return;
+        }
+
         var allPieces = StageManager.Instance?.GetAllActivePieces();
         bool willAttack = allPieces != null && CheckCanActNow(allPieces);
         Color outlineColor = Faction == Faction.Neutral || willAttack ? Color.green : Color.red;

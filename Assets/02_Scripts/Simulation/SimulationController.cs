@@ -61,8 +61,10 @@ public class SimulationController : MonoBehaviour
         Lose,
     }
 
-    [SerializeField] public SimulationResult LastSimulationResult = SimulationResult.Lose; 
+    [SerializeField] public SimulationResult LastSimulationResult = SimulationResult.Lose;
     private bool isExecutingSimulation;
+    // 연출 실행 중(결과 확정 전) 여부. PieceBase의 hover 아웃라인 차단처럼 외부에서 읽기 전용으로 사용한다.
+    public bool IsExecutingSimulation => isExecutingSimulation;
     private int combatPresentationRunId;
     private readonly HashSet<Skills> executedSkills = new();
     private readonly List<PieceBase> missionFactTrackedPieces = new();
@@ -275,6 +277,10 @@ public class SimulationController : MonoBehaviour
         SetRunning(true);
         isExecutingSimulation = true;
 
+        // Play 시점에 이미 떠 있던 hover 아웃라인과 공격 범위 표시를 즉시 정리한다.
+        // 연출 중에는 PieceBase.OnWorldHover가 차단되므로 다시 표시되지 않는다.
+        ClearHoverIndicators();
+
         // OpeningShot이 회전 중인 gameplay camera를 복사하지 않도록 기본 구도 복귀를 먼저 완료한다.
         yield return WaitForMapViewRotationReset();
 
@@ -372,6 +378,26 @@ public class SimulationController : MonoBehaviour
             new CombatSimulationFinishedContext(combatPresentationRunId, result, finalPieces),
             nameof(CombatSimulationFinished));
         SimulationFinished?.Invoke(result);
+    }
+
+    /// <summary>
+    /// hover가 남긴 아웃라인(비지속), 공격 범위 타일, 위협 표시 플래그를 정리한다.
+    /// 기물 위에 마우스를 올린 채 Play를 눌러도 연출 중에 hover 표시가 남지 않게 한다.
+    /// </summary>
+    private static void ClearHoverIndicators()
+    {
+        if (StageManager.Instance != null)
+        {
+            foreach (PieceBase piece in StageManager.Instance.GetAllActivePieces())
+            {
+                // Hide는 지속(persistent) 아웃라인은 건드리지 않으므로 hover 아웃라인만 정리된다.
+                piece?.GetComponent<OutlineEffect>()?.Hide();
+            }
+
+            StageManager.Instance.ClearAttackRange();
+        }
+
+        GameManager.Instance?.ClearAllRangeHighlights();
     }
 
     private IEnumerator WaitForMapViewRotationReset()

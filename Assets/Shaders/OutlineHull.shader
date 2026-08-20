@@ -4,6 +4,16 @@ Shader "Custom/OutlineHull"
     {
         _OutlineColor ("Outline Color", Color) = (1, 0.8, 0, 1)
         _OutlineWidth ("Outline Width", Range(0.0, 0.05)) = 0.015
+        // 아래 렌더 상태 값들은 OutlineEffect가 런타임 머티리얼 인스턴스에 주입한다.
+        // 기본값은 스텐실을 사용하지 않는 기존 단독 헐 패스와 동일하게 동작한다.
+        [IntRange] _StencilRef ("Stencil Ref", Range(0, 255)) = 0
+        [Enum(UnityEngine.Rendering.CompareFunction)] _StencilComp ("Stencil Comp", Float) = 8
+        [Enum(UnityEngine.Rendering.StencilOp)] _StencilOp ("Stencil Op", Float) = 0
+        [Enum(UnityEngine.Rendering.CullMode)] _Cull ("Cull", Float) = 1
+        [Enum(Off, 0, On, 1)] _ZWrite ("ZWrite", Float) = 1
+        [Enum(UnityEngine.Rendering.ColorWriteMask)] _ColorMask ("Color Mask", Float) = 15
+        _OffsetFactor ("Depth Offset Factor", Float) = 0
+        _OffsetUnits ("Depth Offset Units", Float) = 0
     }
 
     SubShader
@@ -18,9 +28,20 @@ Shader "Custom/OutlineHull"
         Pass
         {
             Name "OutlineHull"
-            Cull Front
-            ZWrite On
+            Cull [_Cull]
+            ZWrite [_ZWrite]
             ZTest LEqual
+            ColorMask [_ColorMask]
+            Offset [_OffsetFactor], [_OffsetUnits]
+
+            // 마스크 인스턴스: 유닛 실루엣 픽셀에 참조값을 기록 (Comp Always / Pass Replace)
+            // 헐 인스턴스: 실루엣 바깥에만 외곽선을 그림 (Comp NotEqual / Pass Keep)
+            Stencil
+            {
+                Ref [_StencilRef]
+                Comp [_StencilComp]
+                Pass [_StencilOp]
+            }
 
             HLSLPROGRAM
             #pragma vertex vert
