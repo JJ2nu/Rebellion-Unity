@@ -1,4 +1,4 @@
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
@@ -12,14 +12,22 @@ internal enum RebellionWindowsBuildKind
     Demo,
 }
 
+internal enum RebellionWebBuildKind
+{
+    Development,
+    Release,
+}
+
 public sealed class RebellionPlayerSettingsBuildProcessor : IPreprocessBuildWithReport
 {
     private const string IconPath = "Assets/04_Images/UI/icon.png";
     private const string DefaultBuildVersion = "1.0.1";
     private const string BuildRoot = "Builds";
+    private const string WebBuildRoot = "Builds/Web";
     private const string ExecutableName = "ReBellion.exe";
     private const string DebugBuildFolderSuffix = "-Debug";
     private const string DemoBuildFolderSuffix = "-Demo";
+    private const string WebDevelopmentFolderSuffix = "-Development";
     private const string DemoBuildDefine = "REBELLION_DEMO_BUILD";
     private const string DemoAssetRoot = "Assets/10_Demo/";
     private const string DemoBootstrapScenePath = "Assets/10_Demo/Scenes/DemoBootstrap.unity";
@@ -56,6 +64,18 @@ public sealed class RebellionPlayerSettingsBuildProcessor : IPreprocessBuildWith
         RebellionBuildVersionWindow.Open(RebellionWindowsBuildKind.Demo, GetBuildVersion());
     }
 
+    [MenuItem("Rebellion/Build Web/Development")]
+    public static void BuildWebDevelopment()
+    {
+        BuildWeb(RebellionWebBuildKind.Development, GetBuildVersion());
+    }
+
+    [MenuItem("Rebellion/Build Web/Release")]
+    public static void BuildWebRelease()
+    {
+        BuildWeb(RebellionWebBuildKind.Release, GetBuildVersion());
+    }
+
     internal static void BuildWindows(RebellionWindowsBuildKind buildKind, string buildVersion)
     {
         buildVersion = buildVersion.Trim();
@@ -77,11 +97,7 @@ public sealed class RebellionPlayerSettingsBuildProcessor : IPreprocessBuildWith
         string outputDirectory = Path.Combine(BuildRoot, SanitizePathSegment(outputFolderName));
         Directory.CreateDirectory(outputDirectory);
 
-        string[] regularScenes = EditorBuildSettings.scenes
-            .Where(scene => scene.enabled)
-            .Select(scene => scene.path)
-            .Where(path => !path.StartsWith(DemoAssetRoot))
-            .ToArray();
+        string[] regularScenes = GetRegularScenes();
 
         string[] scenes = includeDemoContent
             ? new[] { DemoBootstrapScenePath }
@@ -105,6 +121,58 @@ public sealed class RebellionPlayerSettingsBuildProcessor : IPreprocessBuildWith
         }
 
         BuildPipeline.BuildPlayer(playerOptions);
+    }
+
+    internal static void BuildWeb(RebellionWebBuildKind buildKind, string buildVersion)
+    {
+        buildVersion = buildVersion.Trim();
+        PlayerSettings.bundleVersion = buildVersion;
+        ApplyPlayerSettings();
+
+        // itch.io는 Unity의 .br 산출물에 Brotli Content-Encoding을 적용한다.
+        // Compression Format은 Development 빌드에는 적용되지 않지만 Release 빌드에는 반드시 사용한다.
+        PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Brotli;
+
+        bool isDevelopment = buildKind == RebellionWebBuildKind.Development;
+        if (!isDevelopment)
+        {
+            // 제출 Release는 최신 원본 GLB와 대형 텍스처를 Web 전용 압축 상태로 먼저 갱신한다.
+            GlbExternalTextureConverter.OptimizeWebAssets();
+        }
+
+        string outputFolderName = buildVersion
+            + (isDevelopment ? WebDevelopmentFolderSuffix : string.Empty);
+        string outputDirectory = Path.Combine(
+            WebBuildRoot,
+            SanitizePathSegment(outputFolderName));
+        if (Directory.Exists(outputDirectory))
+        {
+            Directory.Delete(outputDirectory, true);
+        }
+
+        Directory.CreateDirectory(outputDirectory);
+
+        // Web 제출 빌드도 Windows Release와 같은 일반 Scene만 사용해 Demo 전용 코드와 콘텐츠를 제외한다.
+        BuildPlayerOptions playerOptions = new()
+        {
+            scenes = GetRegularScenes(),
+            locationPathName = outputDirectory,
+            target = BuildTarget.WebGL,
+            options = BuildOptions.DetailedBuildReport
+                | (isDevelopment ? BuildOptions.Development : BuildOptions.None)
+        };
+
+        BuildReport report = BuildPipeline.BuildPlayer(playerOptions);
+        if (report.summary.result != BuildResult.Succeeded)
+        {
+            throw new BuildFailedException(
+                $"Web {buildKind} build failed with result {report.summary.result}.");
+        }
+
+        if (!isDevelopment)
+        {
+            WebBuildPackageUtility.ValidateAndPackage(outputDirectory, buildVersion);
+        }
     }
 
     private static void ApplyPlayerSettings()
@@ -143,6 +211,15 @@ public sealed class RebellionPlayerSettingsBuildProcessor : IPreprocessBuildWith
         return string.IsNullOrWhiteSpace(PlayerSettings.bundleVersion)
             ? DefaultBuildVersion
             : PlayerSettings.bundleVersion.Trim();
+    }
+
+    private static string[] GetRegularScenes()
+    {
+        return EditorBuildSettings.scenes
+            .Where(scene => scene.enabled)
+            .Select(scene => scene.path)
+            .Where(path => !path.StartsWith(DemoAssetRoot))
+            .ToArray();
     }
 
     private static string SanitizePathSegment(string value)

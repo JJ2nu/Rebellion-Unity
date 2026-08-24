@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 
 /// <summary>
@@ -459,7 +459,9 @@ public sealed class GameFlowManager : MonoBehaviour
 
         bool hasIntroAudioDrama = !string.IsNullOrWhiteSpace(step.IntroAudioDramaStageId);
         binder.LoadStage(step.StagePath, !hasIntroAudioDrama);
+        yield return binder.WaitForStageLoad();
         bool stageLoaded = StageManager.Instance != null &&
+                           StageManager.Instance.LastStageLoadSucceeded &&
                            StageManager.Instance.CurrentStageId == currentStageId;
         if (stageLoaded)
         {
@@ -479,7 +481,7 @@ public sealed class GameFlowManager : MonoBehaviour
 
         if (showCampaignLoading)
         {
-            // LoadStage 반환은 JSON·맵·피스 생성과 StageLoaded 구독자 실행이 끝난 실제 동기 경계다.
+            // Web에서는 StreamingAssets 요청까지 기다린 뒤 JSON·맵·피스 생성과 StageLoaded 구독을 완료한다.
             overlay.SetLoadingProgress(
                 CampaignLoadingSceneLoadWeight +
                 CampaignLoadingSceneActivationAndBinderWeight +

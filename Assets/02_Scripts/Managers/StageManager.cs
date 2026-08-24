@@ -1,8 +1,9 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.Networking;
 
 public class StageManager : MonoBehaviour
 {
@@ -14,9 +15,11 @@ public class StageManager : MonoBehaviour
     public event Action<bool> RetryResetStateChanged;
 
     public StageData CurrentStageData => currentStageData;
-    public string CurrentStageId => string.IsNullOrWhiteSpace(currentStagePath)
+    public string CurrentStageId => string.IsNullOrWhiteSpace(loadedStagePath)
         ? string.Empty
-        : Path.GetFileNameWithoutExtension(currentStagePath);
+        : Path.GetFileNameWithoutExtension(loadedStagePath);
+    public bool IsStageLoading { get; private set; }
+    public bool LastStageLoadSucceeded { get; private set; }
     public bool IsRetryResetting { get; private set; }
 
     [SerializeField] private GameObject[] allyPiecePrefabs;
@@ -45,6 +48,8 @@ public class StageManager : MonoBehaviour
 
     private GameManager gameManager;
     private string currentStagePath;
+    private string loadedStagePath;
+    private Coroutine stageLoadCoroutine;
     private Transform mapRoot;
     private GameObject[] loadedMaps = Array.Empty<GameObject>();
     private int currentMapIndex = -1;
@@ -114,6 +119,9 @@ public class StageManager : MonoBehaviour
     public void LoadStage(string stagePath, bool playMapAudioImmediately = true)
     {
         currentStagePath = stagePath;
+        loadedStagePath = null;
+        currentStageData = null;
+        LastStageLoadSucceeded = false;
         SetCurrentStageEnemyPieceCounts(null);
 
         Debug.Log($"[StageManager] LoadStage called: {currentStagePath}", this);
@@ -124,24 +132,82 @@ public class StageManager : MonoBehaviour
             return;
         }
 
+        if (stageLoadCoroutine != null)
+        {
+            StopCoroutine(stageLoadCoroutine);
+            stageLoadCoroutine = null;
+        }
+
+        IsStageLoading = true;
+#if UNITY_WEBGL && !UNITY_EDITOR
+        stageLoadCoroutine = StartCoroutine(
+            LoadStageFromWebRoutine(currentStagePath, playMapAudioImmediately));
+#else
         string fullPath = ResolveStagePath(currentStagePath);
         if (!File.Exists(fullPath))
         {
             Debug.LogWarning($"Stage file not found: {fullPath}", this);
+            FinishStageLoad(false);
             return;
         }
 
-        string json = File.ReadAllText(fullPath);
+        LoadStageFromJson(
+            File.ReadAllText(fullPath),
+            currentStagePath,
+            fullPath,
+            playMapAudioImmediately);
+#endif
+    }
+
+    public IEnumerator WaitForStageLoad()
+    {
+        while (IsStageLoading)
+        {
+            yield return null;
+        }
+    }
+
+#if UNITY_WEBGL && !UNITY_EDITOR
+    private IEnumerator LoadStageFromWebRoutine(
+        string stagePath,
+        bool playMapAudioImmediately)
+    {
+        string stageUrl = ResolveStagePath(stagePath);
+        using UnityWebRequest request = UnityWebRequest.Get(stageUrl);
+        yield return request.SendWebRequest();
+
+        stageLoadCoroutine = null;
+        if (request.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogWarning(
+                $"Stage request failed: {stageUrl} ({request.responseCode}) {request.error}",
+                this);
+            FinishStageLoad(false);
+            yield break;
+        }
+
+        LoadStageFromJson(request.downloadHandler.text, stagePath, stageUrl, playMapAudioImmediately);
+    }
+#endif
+
+    private void LoadStageFromJson(
+        string json,
+        string stagePath,
+        string sourcePath,
+        bool playMapAudioImmediately)
+    {
         if (string.IsNullOrWhiteSpace(json))
         {
-            Debug.LogWarning($"Stage file is empty: {fullPath}", this);
+            Debug.LogWarning($"Stage file is empty: {sourcePath}", this);
+            FinishStageLoad(false);
             return;
         }
 
         StageData parsedData = JsonUtility.FromJson<StageData>(json);
         if (parsedData == null)
         {
-            Debug.LogWarning($"Failed to parse stage file: {fullPath}", this);
+            Debug.LogWarning($"Failed to parse stage file: {sourcePath}", this);
+            FinishStageLoad(false);
             return;
         }
 
@@ -194,9 +260,17 @@ public class StageManager : MonoBehaviour
         EnsureHitImpactPoolSize();
 
         //Debug.Log($"Stage parsed: mapIndex={parsedData.mapIndex}, entityCount={parsedData.entities.Length}", this);
+        loadedStagePath = stagePath;
+        FinishStageLoad(true);
         StageLoaded?.Invoke(currentStageData);
 
         SimulationController.Instance?.ResetSimulation();
+    }
+
+    private void FinishStageLoad(bool succeeded)
+    {
+        LastStageLoadSucceeded = succeeded;
+        IsStageLoading = false;
     }
 
     /// <summary>
@@ -620,12 +694,16 @@ public class StageManager : MonoBehaviour
     }
     private string ResolveStagePath(string stagePath)
     {
+#if UNITY_WEBGL && !UNITY_EDITOR
+        return $"{Application.streamingAssetsPath.TrimEnd('/')}/{stagePath.Replace('\\', '/')}";
+#else
         if (Path.IsPathRooted(stagePath))
         {
             return stagePath;
         }
 
         return Path.Combine(Application.streamingAssetsPath, stagePath);
+#endif
     }
 
     private void CacheStageEntities(StageData stageData)

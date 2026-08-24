@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 /// <summary>
 /// 빌드 Player 시작 시 항상 모니터 기본 해상도의 테두리 없는 전체화면(FullScreenWindow)을 강제한다.
@@ -14,7 +14,7 @@ public static class StartupFullscreenEnforcer
     private static void EnforceFullscreen()
     {
         // Editor에서는 Game View 크기를 건드리지 않도록 아무 동작도 하지 않는다.
-        if (Application.isEditor)
+        if (Application.isEditor || Application.platform == RuntimePlatform.WebGLPlayer)
         {
             return;
         }

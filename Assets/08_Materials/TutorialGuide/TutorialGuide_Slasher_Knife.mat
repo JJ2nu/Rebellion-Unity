@@ -11,9 +11,9 @@ Material:
   m_Shader: {fileID: 4800000, guid: 248a4ef6cd5d82e429e29f16e2842bce, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
+  m_ValidKeywords: []
+  m_InvalidKeywords:
   - _SURFACE_TYPE_TRANSPARENT
-  m_InvalidKeywords: []
   m_LightmapFlags: 2
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 1
@@ -28,7 +28,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 2206419210577876865, guid: d4c74c91681c58140a743e56cd427fe8, type: 3}
+        m_Texture: {fileID: 2800000, guid: 3ccc180ec59bad540b9dc3cc49085077, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - emissiveTexture:
@@ -36,7 +36,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - metallicRoughnessTexture:
-        m_Texture: {fileID: 6053648892821399410, guid: d4c74c91681c58140a743e56cd427fe8, type: 3}
+        m_Texture: {fileID: 2800000, guid: 3c0bef9654a244041976f81e2bc5a84d, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - normalTexture:

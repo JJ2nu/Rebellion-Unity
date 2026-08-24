@@ -1,4 +1,5 @@
-using System;
+﻿using System;
+using System.Collections;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
@@ -58,20 +59,24 @@ public class GameManager : MonoBehaviour
     }
 
     // 옵션에 따라 첫 스테이지를 자동으로 시작
-    private void Start()
+    private IEnumerator Start()
     {
         if (!autoStartFirstStage || string.IsNullOrWhiteSpace(initialStagePath))
         {
-            return;
+            yield break;
         }
 
         if (GameFlowManager.HasActiveCampaign)
         {
             // Title Campaign은 GameFlowManager가 인트로 오디오를 보류한 단일 LoadStage 경로를 사용한다.
-            return;
+            yield break;
         }
 
         LoadStage(initialStagePath);
+        if (stageManager != null)
+        {
+            yield return stageManager.WaitForStageLoad();
+        }
 
         if (autoStartCampaignFlow)
         {

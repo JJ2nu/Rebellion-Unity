@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 
 /// <summary>
@@ -103,6 +103,17 @@ public sealed class StageSceneFlowBinder : MonoBehaviour
         }
 
         gameManager.LoadStage(stagePath, playMapAudioImmediately);
+    }
+
+    public IEnumerator WaitForStageLoad()
+    {
+        StageManager stageManager = StageManager.Instance;
+        if (stageManager == null)
+        {
+            yield break;
+        }
+
+        yield return stageManager.WaitForStageLoad();
     }
 
     public void PlayCurrentMapAudio()

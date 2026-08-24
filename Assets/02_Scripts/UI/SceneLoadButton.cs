@@ -42,6 +42,14 @@ public sealed class SceneLoadButton : MonoBehaviour
             button.interactable = false;
         }
 
+#if UNITY_WEBGL && !UNITY_EDITOR
+        // 브라우저 탭은 Application.Quit으로 닫을 수 없으므로 무반응 종료 버튼을 노출하지 않는다.
+        if (loadMode == LoadMode.Quit)
+        {
+            button.interactable = false;
+        }
+#endif
+
 #if UNITY_EDITOR || REBELLION_DEMO_BUILD
         // 이번 시연에서 비활성화한 Challenge는 Bootstrap 설정만으로 Title 버튼 입력도 함께 막는다.
         if (!DemoSessionController.IsSceneSelectionAllowed(sceneName))
@@ -65,6 +73,13 @@ public sealed class SceneLoadButton : MonoBehaviour
         {
             return;
         }
+
+#if UNITY_WEBGL && !UNITY_EDITOR
+        if (loadMode == LoadMode.Quit)
+        {
+            return;
+        }
+#endif
 
         if (GameSceneManager.Instance == null)
         {
