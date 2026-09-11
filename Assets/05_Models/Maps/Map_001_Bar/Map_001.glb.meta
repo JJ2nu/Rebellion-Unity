@@ -1,6 +1,8 @@
 fileFormatVersion: 2
 guid: d9e34986b1ff03449bc29f40f2ef2494
-DefaultImporter:
+GltfImporter:
+  editorImportSettings:
+    generateSecondaryUVSet: 1
   externalObjects: {}
   userData: 
   assetBundleName: 

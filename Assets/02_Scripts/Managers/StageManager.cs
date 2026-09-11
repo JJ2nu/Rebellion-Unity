@@ -847,6 +847,21 @@ public class StageManager : MonoBehaviour
             map.SetActive(index == currentMapIndex);
             //Debug.Log($"[StageManager] Map '{map.name}' active={index == currentMapIndex}", this);
         }
+
+        if (currentMapIndex < 0 || currentMapIndex >= loadedMaps.Length)
+        {
+            return;
+        }
+
+        GameObject activeMap = loadedMaps[currentMapIndex];
+        if (activeMap == null)
+        {
+            return;
+        }
+
+        // 모든 맵 Prefab의 생성/OnEnable이 끝난 뒤 선택 맵의 프로필과 베이크 데이터를 순서대로 확정한다.
+        activeMap.GetComponentInChildren<MapLightingProfile>(true)?.Apply();
+        activeMap.GetComponentInChildren<MapBakedLightingApplier>(true)?.Apply();
     }
     private void SetMapsActive(bool isActive)
     {
