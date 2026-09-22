@@ -11,6 +11,8 @@ public sealed class SimulationSkipController : MonoBehaviour
     [SerializeField] private SimulationController simulationController;
     [SerializeField] private CombatPresentationDirector presentationDirector;
     [SerializeField] private OpeningShotPresentationView openingShotView;
+    // 완전승리 레터박스가 내려오는 동안과 걷히는 동안 Skip을 막는다. 비어 있으면 SimulationController와 같은 오브젝트에서 찾는다.
+    [SerializeField] private PerfectWinLetterboxPresentation letterboxPresentation;
 
     [Header("Skip")]
     [SerializeField, Min(1f)] private float skipTimeScale = 30f;
@@ -39,8 +41,17 @@ public sealed class SimulationSkipController : MonoBehaviour
             simulationController.RunningStateChanged += HandleRunningStateChanged;
             simulationController.SimulationFinished -= HandleSimulationFinished;
             simulationController.SimulationFinished += HandleSimulationFinished;
+            // 레터박스가 있으면 SimulationFinished가 퇴장 뒤로 미뤄지므로 결과 확정 이벤트에서 먼저 배속을 끝낸다.
+            simulationController.CombatSimulationFinished -= HandleCombatSimulationFinished;
+            simulationController.CombatSimulationFinished += HandleCombatSimulationFinished;
             simulationController.SimulationReset -= HandleSimulationReset;
             simulationController.SimulationReset += HandleSimulationReset;
+        }
+
+        if (letterboxPresentation != null)
+        {
+            letterboxPresentation.SkipAvailabilityChanged -= ApplyVisibility;
+            letterboxPresentation.SkipAvailabilityChanged += ApplyVisibility;
         }
 
         if (view != null)
@@ -58,7 +69,13 @@ public sealed class SimulationSkipController : MonoBehaviour
         {
             simulationController.RunningStateChanged -= HandleRunningStateChanged;
             simulationController.SimulationFinished -= HandleSimulationFinished;
+            simulationController.CombatSimulationFinished -= HandleCombatSimulationFinished;
             simulationController.SimulationReset -= HandleSimulationReset;
+        }
+
+        if (letterboxPresentation != null)
+        {
+            letterboxPresentation.SkipAvailabilityChanged -= ApplyVisibility;
         }
 
         if (view != null)
@@ -104,6 +121,14 @@ public sealed class SimulationSkipController : MonoBehaviour
         ApplyVisibility();
     }
 
+    private void HandleCombatSimulationFinished(CombatSimulationFinishedContext _)
+    {
+        // 결과가 확정된 순간 배속을 끝내 레터박스 퇴장과 마지막 사망 연출이 정상 속도로 보이게 한다.
+        isSimulationExecuting = false;
+        EndSkip();
+        ApplyVisibility();
+    }
+
     private void HandleSimulationReset()
     {
         isSimulationExecuting = false;
@@ -125,7 +150,9 @@ public sealed class SimulationSkipController : MonoBehaviour
 
     private void ApplyVisibility()
     {
-        view?.SetVisible(isSimulationExecuting && !isSkipActive);
+        // 레터박스가 내려오는 동안에는 버튼과 ESC 스킵을 모두 숨기고, 바가 다 내려온 뒤에 보인다.
+        bool letterboxAllowsSkip = letterboxPresentation == null || letterboxPresentation.IsSkipAllowed;
+        view?.SetVisible(isSimulationExecuting && !isSkipActive && letterboxAllowsSkip);
     }
 
     private void BeginSkip()
@@ -167,6 +194,12 @@ public sealed class SimulationSkipController : MonoBehaviour
         if (simulationController == null)
         {
             simulationController = SimulationController.Instance;
+        }
+
+        // 레터박스 컴포넌트는 Simulator Prefab에서 SimulationController와 같은 오브젝트에 붙는다.
+        if (letterboxPresentation == null && simulationController != null)
+        {
+            simulationController.TryGetComponent(out letterboxPresentation);
         }
     }
 }

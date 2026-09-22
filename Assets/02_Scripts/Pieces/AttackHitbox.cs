@@ -79,6 +79,15 @@ public class AttackHitbox : MonoBehaviour
         if (piece == _owner) return; // 자기 자신은 공격하지 않음
         if (_hitPieces.Contains(piece)) return;
 
+        // Play 요청 시 확정한 전투 기록에 없는 물리 접촉은 연출 충돌로만 취급한다.
+        // 같은 기록은 Phase 종료 보정과 중복 적용되지 않도록 여기서 먼저 소비한다.
+        SimulationController simulationController = SimulationController.Instance;
+        if (simulationController != null &&
+            !simulationController.TryAuthorizePredictedHit(_owner, piece))
+        {
+            return;
+        }
+
         Vector3 hitPoint = other.ClosestPoint(transform.position);
         Vector3 impactDirection = GetImpactDirection(hitPoint, piece);
         HitImpactAttackType attackType = GetAttackType();

@@ -25,6 +25,8 @@ public class SimulationController : MonoBehaviour
     private PieceBase _currentClickedPiece = null;
     [SerializeField] private List<SkillBase> _skills;
     [SerializeField] private PreSimulationSkillPresentationController preSimulationPresentationController;
+    // 완전승리 레터박스 연출. 같은 Simulator 오브젝트의 컴포넌트를 사용하며 비어 있으면 TryGetComponent로 찾는다.
+    [SerializeField] private PerfectWinLetterboxPresentation letterboxPresentation;
     public IReadOnlyList<SkillBase> GetStageSkills() => _skills.AsReadOnly();
 
     // SimulationFinished는 결과 UI에 값을 전달하고, RunningStateChanged는 배치 UI 잠금 상태를 동기화한다.
@@ -51,6 +53,7 @@ public class SimulationController : MonoBehaviour
     public IReadOnlyList<int> CurrentStageEnemyTypeCounts => _currentStageEnemyTypeCounts;
     public int CurrentDeadEnemyCount => GetDeadCount(Faction.Enemy);
     public SimulationMissionFacts CurrentMissionFacts { get; private set; }
+    public CombatPredictionResult CurrentPrediction { get; private set; }
     public enum SimulationResult
     {
         PerfectWin,
@@ -68,6 +71,8 @@ public class SimulationController : MonoBehaviour
     private int combatPresentationRunId;
     private readonly HashSet<Skills> executedSkills = new();
     private readonly List<PieceBase> missionFactTrackedPieces = new();
+    private readonly HashSet<CombatPredictionHit> consumedPredictionHits = new();
+    private CombatPredictionPhase activePredictionPhase;
 
     public enum Skills
     {
@@ -96,7 +101,44 @@ public class SimulationController : MonoBehaviour
     private void OnDestroy()
     {
         preSimulationPresentationController?.CancelCurrentSequence();
+        letterboxPresentation?.CancelImmediately();
         StopMissionFactTracking();
+    }
+
+    private void EnsureLetterboxPresentation()
+    {
+        if (letterboxPresentation == null)
+        {
+            TryGetComponent(out letterboxPresentation);
+        }
+    }
+
+    /// <summary>
+    /// Play 요청 시 고정한 선계산이 완전승리·전체 미션 성공이면 레터박스를 내린다.
+    /// 실제 결과가 달라져도 연출은 같은 경로로 걷히고 승패 판정은 기존 흐름을 그대로 따른다.
+    /// </summary>
+    private void BeginPerfectWinLetterboxIfPredicted()
+    {
+        EnsureLetterboxPresentation();
+        if (letterboxPresentation == null)
+        {
+            return;
+        }
+
+        bool shouldPlay = letterboxPresentation.ShouldPlay(
+            CurrentPrediction,
+            StageManager.Instance?.CurrentStageData,
+            _currentStageEnemyCount,
+            out string skipReason);
+        if (shouldPlay)
+        {
+            Debug.Log("[PerfectWinLetterbox] Started (prediction=PerfectWin, allMissions=Succeeded)", this);
+            letterboxPresentation.BeginEnter();
+        }
+        else
+        {
+            Debug.Log($"[PerfectWinLetterbox] Skipped reason={skipReason}", this);
+        }
     }
 
     /// <summary>
@@ -191,9 +233,51 @@ public class SimulationController : MonoBehaviour
         }
 
         StageManager.Instance?.CompleteRetryResetImmediately();
+        CreatePredictionForPlayRequest();
         StageManager.Instance?.SetTutorialGhostPiecesActive(false);
         ResetMapViewRotation();
         StartCoroutine(RunSimulation());
+    }
+
+    /// <summary>
+    /// 현재 배치만 읽어 결과를 계산한다. 호출 자체는 기물·UI·미션·로그 상태를 바꾸지 않는다.
+    /// Play 경로는 StartSimulation에서 이 값을 CurrentPrediction으로 고정하고 별도 로그를 남긴다.
+    /// </summary>
+    public CombatPredictionResult PredictCurrentPlacement()
+    {
+        StageManager stageManager = StageManager.Instance;
+        IReadOnlyList<PieceBase> pieces = stageManager != null
+            ? stageManager.GetAllActivePieces()
+            : Array.Empty<PieceBase>();
+        int boardSize = stageManager?.CurrentStageData?.boardSize ?? 6;
+        OpeningShotSkill openingShotSkill = GetOpeningShotSkill();
+        PieceBase openingShotTarget = openingShotSkill != null && openingShotSkill.HasConfirmedTarget
+            ? openingShotSkill.Target
+            : null;
+
+        return CombatPredictionResolver.Resolve(pieces, boardSize, openingShotTarget);
+    }
+
+    private void CreatePredictionForPlayRequest()
+    {
+        string stageId = StageManager.Instance?.CurrentStageId ?? string.Empty;
+        Debug.Log(
+            $"[SimulationPrediction] Started timing=PlayRequest.BeforeSimulationCoroutine " +
+            $"stage={stageId}",
+            this);
+
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        CurrentPrediction = PredictCurrentPlacement();
+        stopwatch.Stop();
+
+        Debug.Log(
+            $"[SimulationPrediction] Completed stage={stageId} " +
+            $"perfectWin={CurrentPrediction.IsPerfectWin} " +
+            $"predictedResult={CurrentPrediction.PredictedResult} " +
+            $"pieces={CurrentPrediction.PieceCount} " +
+            $"openingShot={CurrentPrediction.OpeningShotExecuted} " +
+            $"elapsedMs={stopwatch.Elapsed.TotalMilliseconds:F3}",
+            this);
     }
 
     private void ResetMapViewRotation()
@@ -218,9 +302,15 @@ public class SimulationController : MonoBehaviour
     {
         // 외부 Presentation이 숨긴 화면과 입력을 먼저 복구한 뒤 Simulation 코루틴을 정리한다.
         preSimulationPresentationController?.CancelCurrentSequence();
+        // Opening Shot 복구 뒤에 호출해야 레터박스가 보관한 연출 전 UI 상태가 최종값이 된다.
+        EnsureLetterboxPresentation();
+        letterboxPresentation?.CancelImmediately();
         StopAllCoroutines();
         isExecutingSimulation = false;
         StopMissionFactTracking();
+        activePredictionPhase = null;
+        consumedPredictionHits.Clear();
+        CurrentPrediction = null;
 
         foreach (var bullet in GameObject.FindGameObjectsWithTag("Bullet"))
         {
@@ -280,6 +370,8 @@ public class SimulationController : MonoBehaviour
         // Play 시점에 이미 떠 있던 hover 아웃라인과 공격 범위 표시를 즉시 정리한다.
         // 연출 중에는 PieceBase.OnWorldHover가 차단되므로 다시 표시되지 않는다.
         ClearHoverIndicators();
+        // Play 직후 바가 내려오기 시작해야 하므로 카메라 복귀·Opening Shot보다 먼저 시작한다.
+        BeginPerfectWinLetterboxIfPredicted();
 
         // OpeningShot이 회전 중인 gameplay camera를 복사하지 않도록 기본 구도 복귀를 먼저 완료한다.
         yield return WaitForMapViewRotationReset();
@@ -365,6 +457,21 @@ public class SimulationController : MonoBehaviour
 
         var finalPieces = StageManager.Instance.GetAllPieces();
         var result = DetermineResult(finalPieces);
+        bool predictionMatches = CurrentPrediction != null &&
+            result == CurrentPrediction.PredictedResult;
+        Debug.Log(
+            $"[SimulationPrediction] Verified " +
+            $"perfectWin={CurrentPrediction?.IsPerfectWin ?? false} " +
+            $"predictedResult={CurrentPrediction?.PredictedResult.ToString() ?? "Missing"} " +
+            $"actualResult={result} match={predictionMatches}",
+            this);
+        if (!predictionMatches)
+        {
+            Debug.LogError(
+                "[SimulationPrediction] Actual result did not match the Play-request prediction.",
+                this);
+        }
+
         ShowSurvivingEnemyOutlines(finalPieces);
         CurrentMissionFacts = BuildMissionFacts(finalPieces);
         StopMissionFactTracking();
@@ -377,6 +484,14 @@ public class SimulationController : MonoBehaviour
             CombatSimulationFinished,
             new CombatSimulationFinishedContext(combatPresentationRunId, result, finalPieces),
             nameof(CombatSimulationFinished));
+
+        // 레터박스가 떠 있으면 바 퇴장과 UI 복귀가 끝난 뒤에 결과 UI(미션 마크·Retry/Confirm)를 알린다.
+        // 예측과 실제 결과가 달라도 같은 경로로 걷히며 result 값은 바뀌지 않는다.
+        if (letterboxPresentation != null && letterboxPresentation.IsActive)
+        {
+            yield return letterboxPresentation.PlayExit();
+        }
+
         SimulationFinished?.Invoke(result);
     }
 
@@ -521,6 +636,7 @@ public class SimulationController : MonoBehaviour
         if (active.Count == 0) yield break;
 
         _currentPhase = phaseIndex;
+        BeginPredictionPhase(phaseIndex);
         var phaseContext = new CombatPhaseContext(combatPresentationRunId, phaseIndex, active);
         InvokeSafely(PhaseStarted, phaseContext, nameof(PhaseStarted));
 
@@ -539,12 +655,126 @@ public class SimulationController : MonoBehaviour
 
         yield return new WaitUntil(() => active.All(p => p.IsActionFinished || p.IsDead));
 
+        // 물리 콜백이 놓친 기록은 Phase 종료 경계에서 적용해 프레임률과 충돌 순서가
+        // 최종 생사를 바꾸지 않게 한다. 이미 충돌로 소비한 기록은 다시 적용하지 않는다.
+        ApplyRemainingPredictionHits();
+
         foreach (var piece in active)
         {
             piece.EndAttackHitboxes();
         }
 
         InvokeSafely(PhaseEnded, phaseContext, nameof(PhaseEnded));
+        activePredictionPhase = null;
+        consumedPredictionHits.Clear();
+    }
+
+    /// <summary>
+    /// AttackHitbox가 현재 선계산 기록에 포함된 접촉인지 확인한다.
+    /// 실행 중에는 기록 외 접촉을 피해로 바꾸지 않아 물리 순서가 결과를 변경하지 못한다.
+    /// </summary>
+    public bool TryAuthorizePredictedHit(PieceBase attacker, PieceBase victim)
+    {
+        if (!isExecutingSimulation)
+        {
+            return true;
+        }
+
+        if (activePredictionPhase == null || attacker == null || victim == null)
+        {
+            return false;
+        }
+
+        foreach (CombatPredictionHit hit in activePredictionPhase.Hits)
+        {
+            if (hit.Source == attacker &&
+                hit.Target == victim &&
+                !consumedPredictionHits.Contains(hit))
+            {
+                consumedPredictionHits.Add(hit);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void BeginPredictionPhase(int phaseIndex)
+    {
+        activePredictionPhase = CurrentPrediction?.GetPhase(phaseIndex);
+        consumedPredictionHits.Clear();
+    }
+
+    private void ApplyRemainingPredictionHits()
+    {
+        if (activePredictionPhase == null)
+        {
+            return;
+        }
+
+        foreach (CombatPredictionHit hit in activePredictionPhase.Hits)
+        {
+            if (consumedPredictionHits.Contains(hit) ||
+                hit.Source == null ||
+                hit.Target == null ||
+                hit.Target.IsDead)
+            {
+                continue;
+            }
+
+            consumedPredictionHits.Add(hit);
+            ApplyPredictedHit(hit);
+        }
+    }
+
+    private void ApplyPredictedHit(CombatPredictionHit hit)
+    {
+        Vector3 hitPoint = hit.Target.transform.position + Vector3.up;
+        Vector3 impactDirection = hit.Target.transform.position - hit.Source.transform.position;
+        impactDirection.y = 0f;
+        if (impactDirection.sqrMagnitude <= 0.0001f)
+        {
+            (int deltaX, int deltaY) = hit.Source.GetFacingDelta();
+            impactDirection = new Vector3(deltaX, 0f, deltaY);
+        }
+
+        impactDirection.Normalize();
+        HitImpactAttackType attackType = hit.Source.PieceType switch
+        {
+            PieceType.Gunman => HitImpactAttackType.Projectile,
+            PieceType.Brawler => HitImpactAttackType.Blunt,
+            _ => HitImpactAttackType.Slash,
+        };
+        bool isLethal = hit.Target.CurrentHealth <= hit.Damage;
+
+        StageManager.Instance?.PlayPieceHitSfx(hit.Target);
+        ReportHitConfirmed(
+            hit.Source,
+            hit.Target,
+            hitPoint,
+            impactDirection,
+            attackType,
+            hit.Damage,
+            isLethal);
+        if (isLethal)
+        {
+            hit.Target.GetComponent<HumanoidRagdollController>()
+                ?.SetPendingImpact(hitPoint, impactDirection, attackType);
+        }
+
+        hit.Target.TakeDamage(hit.Damage, GetIncomingDirection(impactDirection));
+        StageManager.Instance?.PlayHitImpact(hitPoint, impactDirection, attackType);
+    }
+
+    private static Direction GetIncomingDirection(Vector3 impactDirection)
+    {
+        Vector3 incomingDirection = -impactDirection;
+        if (Mathf.Abs(incomingDirection.x) > Mathf.Abs(incomingDirection.z))
+        {
+            return incomingDirection.x >= 0f ? Direction.East : Direction.West;
+        }
+
+        return incomingDirection.z >= 0f ? Direction.North : Direction.South;
     }
 
     private IEnumerator TickSteps()

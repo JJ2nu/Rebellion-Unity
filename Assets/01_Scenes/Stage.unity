@@ -2389,6 +2389,7 @@ MonoBehaviour:
   simulationController: {fileID: 1344161039}
   presentationDirector: {fileID: 1642931999}
   openingShotView: {fileID: 2110169916}
+  letterboxPresentation: {fileID: 0}
   skipTimeScale: 30
   skipMaximumDeltaTime: 0.5
 --- !u!114 &1260835065
@@ -3992,7 +3993,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6562320009633688067, guid: f0e9e1a4490476f4e83197bb34b20713, type: 3}
       propertyPath: initialStagePath
-      value: Stages/stage_001.json
+      value: Stages/stage_002.json
       objectReference: {fileID: 0}
     - target: {fileID: 6562320009633688067, guid: f0e9e1a4490476f4e83197bb34b20713, type: 3}
       propertyPath: autoStartFirstStage
@@ -4026,6 +4027,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 189234727033187378, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
+      propertyPath: gameplayUiCanvasGroup
+      value: 
+      objectReference: {fileID: 372993849}
     - target: {fileID: 4409555646253879751, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
       propertyPath: returnTransitionDuration
       value: 1
