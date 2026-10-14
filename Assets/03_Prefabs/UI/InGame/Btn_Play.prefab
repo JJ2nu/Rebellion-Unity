@@ -61,16 +61,16 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.78, g: 0.73, b: 0.67, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: d83be8a3de5161649b2d2b8352b374a1, type: 3}
+  m_Sprite: {fileID: 6963994117791204665, guid: 6deaf182acc6fda44bddd5e2f386906d, type: 3}
   m_Type: 0
-  m_PreserveAspect: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
@@ -107,10 +107,10 @@ MonoBehaviour:
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
   m_SpriteState:
-    m_HighlightedSprite: {fileID: 21300000, guid: e9ea83174dc46ab42801302e765d565f, type: 3}
-    m_PressedSprite: {fileID: 21300000, guid: 0ad6d8d58f8a24f48ae65ad9f3e06c5f, type: 3}
-    m_SelectedSprite: {fileID: 21300000, guid: 0ad6d8d58f8a24f48ae65ad9f3e06c5f, type: 3}
-    m_DisabledSprite: {fileID: 0}
+    m_HighlightedSprite: {fileID: -1116765220337025944, guid: 6deaf182acc6fda44bddd5e2f386906d, type: 3}
+    m_PressedSprite: {fileID: 4018192241916834068, guid: 6deaf182acc6fda44bddd5e2f386906d, type: 3}
+    m_SelectedSprite: {fileID: 4018192241916834068, guid: 6deaf182acc6fda44bddd5e2f386906d, type: 3}
+    m_DisabledSprite: {fileID: 4018192241916834068, guid: 6deaf182acc6fda44bddd5e2f386906d, type: 3}
   m_AnimationTriggers:
     m_NormalTrigger: Normal
     m_HighlightedTrigger: Highlighted

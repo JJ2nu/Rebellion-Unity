@@ -32,10 +32,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1625653432496940006}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 45.8, y: 60}
-  m_SizeDelta: {x: -85.6, y: 120}
+  m_AnchorMin: {x: 0.5, y: 0.18}
+  m_AnchorMax: {x: 0.5, y: 0.18}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 36.8, y: 36.8}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5221125318866562139
 CanvasRenderer:
@@ -59,7 +59,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -92,12 +92,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 60
-  m_fontSizeBase: 60
+  m_fontSize: 25.6
+  m_fontSizeBase: 25.6
   m_fontWeight: 400
-  m_enableAutoSizing: 0
-  m_fontSizeMin: 18
-  m_fontSizeMax: 72
+  m_enableAutoSizing: 1
+  m_fontSizeMin: 16
+  m_fontSizeMax: 25.6
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -178,9 +178,9 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: -410, y: 50}
-  m_SizeDelta: {x: 165, y: 198}
-  m_Pivot: {x: 1, y: 0}
+  m_AnchoredPosition: {x: -420, y: 160}
+  m_SizeDelta: {x: 200, y: 200}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4150201318837396113
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -202,16 +202,16 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.78, g: 0.73, b: 0.67, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 72e1dc1421fb6f7478926754fbd9c923, type: 3}
+  m_Sprite: {fileID: 913624794171670820, guid: a7498caed7490b140b4c8ccc230b47d4, type: 3}
   m_Type: 0
-  m_PreserveAspect: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
@@ -238,20 +238,20 @@ MonoBehaviour:
     m_SelectOnDown: {fileID: 0}
     m_SelectOnLeft: {fileID: 0}
     m_SelectOnRight: {fileID: 0}
-  m_Transition: 2
+  m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
-    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_HighlightedColor: {r: 0.85, g: 0.85, b: 0.85, a: 0.9}
+    m_PressedColor: {r: 0.65, g: 0.65, b: 0.65, a: 0.9}
+    m_SelectedColor: {r: 1, g: 1, b: 1, a: 1}
+    m_DisabledColor: {r: 1, g: 1, b: 1, a: 1}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
   m_SpriteState:
-    m_HighlightedSprite: {fileID: 21300000, guid: 3b067b1e64b31d143a5dae53710ee44c, type: 3}
-    m_PressedSprite: {fileID: 21300000, guid: 72e1dc1421fb6f7478926754fbd9c923, type: 3}
-    m_SelectedSprite: {fileID: 21300000, guid: 6ef08048928e9a548b00b7ba3a9e2179, type: 3}
-    m_DisabledSprite: {fileID: 21300000, guid: 6ef08048928e9a548b00b7ba3a9e2179, type: 3}
+    m_HighlightedSprite: {fileID: 913624794171670820, guid: a7498caed7490b140b4c8ccc230b47d4, type: 3}
+    m_PressedSprite: {fileID: 913624794171670820, guid: a7498caed7490b140b4c8ccc230b47d4, type: 3}
+    m_SelectedSprite: {fileID: -3744841609666544347, guid: a7498caed7490b140b4c8ccc230b47d4, type: 3}
+    m_DisabledSprite: {fileID: -3744841609666544347, guid: a7498caed7490b140b4c8ccc230b47d4, type: 3}
   m_AnimationTriggers:
     m_NormalTrigger: Normal
     m_HighlightedTrigger: Highlighted
@@ -277,11 +277,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InGameUnitStorageSlotUI
   button: {fileID: 4041035073397175236}
   storageImage: {fileID: 3896313827174021439}
-  activeSprite: {fileID: 21300000, guid: 72e1dc1421fb6f7478926754fbd9c923, type: 3}
-  deactiveSprite: {fileID: 21300000, guid: 6ef08048928e9a548b00b7ba3a9e2179, type: 3}
-  lockedSprite: {fileID: 21300000, guid: 40fdf226f16f60847a44b22d2d4e8632, type: 3}
+  activeSprite: {fileID: 913624794171670820, guid: a7498caed7490b140b4c8ccc230b47d4, type: 3}
+  deactiveSprite: {fileID: -3744841609666544347, guid: a7498caed7490b140b4c8ccc230b47d4, type: 3}
+  lockedSprite: {fileID: -3744841609666544347, guid: a7498caed7490b140b4c8ccc230b47d4, type: 3}
   countText: {fileID: 7473671234362213182}
   buttonLockView: {fileID: 90000000000000102}
+  guideHighlightCycleSeconds: 1.8
+  guideHighlightScaleAmount: 0.07
 --- !u!225 &90000000000000101
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -308,10 +310,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UIButtonLockView
   button: {fileID: 4041035073397175236}
   targetImage: {fileID: 3896313827174021439}
-  activeSprite: {fileID: 21300000, guid: 72e1dc1421fb6f7478926754fbd9c923, type: 3}
-  hoverSprite: {fileID: 21300000, guid: 3b067b1e64b31d143a5dae53710ee44c, type: 3}
-  unavailableSprite: {fileID: 21300000, guid: 6ef08048928e9a548b00b7ba3a9e2179, type: 3}
-  lockSprite: {fileID: 21300000, guid: 40fdf226f16f60847a44b22d2d4e8632, type: 3}
+  activeSprite: {fileID: 913624794171670820, guid: a7498caed7490b140b4c8ccc230b47d4, type: 3}
+  hoverSprite: {fileID: 913624794171670820, guid: a7498caed7490b140b4c8ccc230b47d4, type: 3}
+  unavailableSprite: {fileID: -3744841609666544347, guid: a7498caed7490b140b4c8ccc230b47d4, type: 3}
+  lockSprite: {fileID: -3744841609666544347, guid: a7498caed7490b140b4c8ccc230b47d4, type: 3}
   canvasGroup: {fileID: 90000000000000101}
 --- !u!82 &4728523819807856928
 AudioSource:

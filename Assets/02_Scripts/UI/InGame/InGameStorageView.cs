@@ -30,8 +30,6 @@ public sealed class InGameStorageView : MonoBehaviour
 
     [SerializeField] private UnitStoragePrefabBinding[] storagePrefabs =
         Array.Empty<UnitStoragePrefabBinding>();
-    [SerializeField] private Vector2 rightAnchoredPosition = new(-50f, 50f);
-    [SerializeField] private float horizontalSpacing = 180f;
 
     private readonly List<InGameUnitStorageSlotUI> renderedSlots = new();
 
@@ -51,7 +49,6 @@ public sealed class InGameStorageView : MonoBehaviour
             CreateStorage(data.UnitType, data.DeployableCount);
         }
 
-        AlignStoragesFromRight();
         return renderedSlots;
     }
 
@@ -81,25 +78,11 @@ public sealed class InGameStorageView : MonoBehaviour
             return;
         }
 
+        // 종류별 Prefab의 고정 위치를 유지해 칼은 위, 주먹과 총은 아래에 배치한다.
+        // 배치 가능한 종류가 줄어들어도 남은 버튼의 위치는 바뀌지 않는다.
         InGameUnitStorageSlotUI slot = Instantiate(prefab, transform, false);
         slot.Bind(unitType, deployableCount);
         renderedSlots.Add(slot);
-    }
-
-    private void AlignStoragesFromRight()
-    {
-        int slotCount = renderedSlots.Count;
-        for (int index = 0; index < slotCount; index++)
-        {
-            RectTransform slotTransform = renderedSlots[index].transform as RectTransform;
-            if (slotTransform == null)
-            {
-                continue;
-            }
-
-            float xOffset = horizontalSpacing * (slotCount - 1 - index);
-            slotTransform.anchoredPosition = rightAnchoredPosition - new Vector2(xOffset, 0f);
-        }
     }
 
     private InGameUnitStorageSlotUI FindStoragePrefab(PieceType unitType)
