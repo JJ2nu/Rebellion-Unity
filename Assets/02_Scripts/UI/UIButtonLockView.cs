@@ -149,7 +149,7 @@ public sealed class UIButtonLockView : MonoBehaviour
             targetImage.sprite = nextSprite;
         }
 
-        targetImage.color = Color.white;
+        // 상태 전환 시에도 Prefab Image에 지정한 배경과 어울리는 틴트를 유지한다.
     }
 
     private Sprite ResolveSpriteForCurrentState()

@@ -2986,8 +2986,6 @@ MonoBehaviour:
     prefab: {fileID: 6280077286570951610, guid: b456f772248c3584098608783bd44678, type: 3}
   - unitType: 2
     prefab: {fileID: 234377154686284589, guid: 4b11bb69a12107a49843b4af32612e50, type: 3}
-  rightAnchoredPosition: {x: -50, y: 50}
-  horizontalSpacing: 180
 --- !u!114 &1642931999 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 9079607396915526106, guid: 336a135fefd7aeb4a9b5e2844d25bcec, type: 3}
