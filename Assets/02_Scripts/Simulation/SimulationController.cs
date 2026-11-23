@@ -15,6 +15,8 @@ public class SimulationController : MonoBehaviour
     [Header("Debug (Read-only)")]
     public bool _isRunning;
     [SerializeField] private int _currentPhase;
+    // 인계 지점에서 다음 페이즈로 넘어간 뒤 아직 동작이 끝나지 않은 페이즈 수다.
+    private int pendingPhaseCompletions;
     [SerializeField] private int _currentStep;
     [SerializeField] private string _lastResult = "-";
 
@@ -356,8 +358,21 @@ public class SimulationController : MonoBehaviour
             .OrderBy(x => x)
             .ToList();
 
+        // 준비 자세: 행동할 기물이 모두 같은 순간에 조준·자세 낮추기를 시작해 전투가 한순간에 벌어지는 것처럼 보이게 한다.
+        foreach (var piece in allPieces)
+        {
+            if (!piece.IsDead && piece.CanAct && piece.EffectivePhaseIndex > 0)
+            {
+                piece.BeginReadyPose();
+            }
+        }
+
+        // 페이즈 순서는 유지하되, 앞 페이즈 기물이 인계 지점(주먹 타격, 단검 돌진)에 닿으면 다음 페이즈를 바로 출발시킨다.
+        pendingPhaseCompletions = 0;
         foreach (var phase in phases)
             yield return RunPhase(phase, allPieces);
+
+        yield return new WaitUntil(() => pendingPhaseCompletions == 0);
 
         // 총알은 Stop 호출 후 프레임 끝에 파괴되므로, 실제로 모두 사라진 뒤 최종 상태를 판정한다.
         yield return new WaitUntil(() =>
@@ -537,6 +552,15 @@ public class SimulationController : MonoBehaviour
         // 스탭 카운터: stepDuration마다 _currentStep 증가
         StartCoroutine(TickSteps());
 
+        // 다음 페이즈는 이 페이즈 기물이 인계 지점에 닿는 즉시 출발한다. 동작의 나머지와 정리는 별도로 기다린다.
+        yield return new WaitUntil(() => active.All(p => p.HasReachedPhaseHandoff || p.IsActionFinished || p.IsDead));
+
+        pendingPhaseCompletions++;
+        StartCoroutine(CompletePhase(phaseContext, active));
+    }
+
+    private IEnumerator CompletePhase(CombatPhaseContext phaseContext, List<PieceBase> active)
+    {
         yield return new WaitUntil(() => active.All(p => p.IsActionFinished || p.IsDead));
 
         foreach (var piece in active)
@@ -545,6 +569,7 @@ public class SimulationController : MonoBehaviour
         }
 
         InvokeSafely(PhaseEnded, phaseContext, nameof(PhaseEnded));
+        pendingPhaseCompletions--;
     }
 
     private IEnumerator TickSteps()

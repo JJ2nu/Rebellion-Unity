@@ -1,0 +1,31 @@
+{
+  "verdict": "accept",
+  "genre": "essay",
+  "fidelity_violations": [],
+  "residual_findings": [
+    {
+      "id": "E-1",
+      "severity": "S2",
+      "location": "전투 연출 문단",
+      "finding": "비슷한 길이의 완료형 문장 일부 잔존. 사례의 단계와 합쇼체를 보존할 필요가 있어 추가 수정하지 않음."
+    }
+  ],
+  "overediting": [],
+  "correction_count": 0,
+  "corrections": [],
+  "body_changed": false,
+  "summary_created": true,
+  "request_constraints": {
+    "within_1000_characters": true,
+    "harness_and_personal_skill_in_one_paragraph": true,
+    "reuse_of_personally_defined_work_criteria_connected": true,
+    "final_design_and_judgment_role_preserved": true,
+    "personal_skill_authorship_not_fabricated": true
+  },
+  "self_validation_passed": 6,
+  "grade": "A",
+  "gate_change_rate": 0.1343,
+  "original_characters": 840,
+  "final_characters": 828,
+  "notes": "원문과 대조한 결과 사실·전문용어·주도권이 보존되었고 두 번째 문단의 기준 적용과 재사용 관계가 명확해졌다. 본문은 채택하고 summary만 생성했다."
+}

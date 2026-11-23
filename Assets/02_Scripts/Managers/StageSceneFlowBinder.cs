@@ -15,6 +15,7 @@ public sealed class StageSceneFlowBinder : MonoBehaviour
 
     private GameFlowManager flowManager;
     private bool isBound;
+    private GuidedTutorialDirector guidedTutorialDirector;
 
     // 결과 이벤트 직후 Scene을 바꾸지 않고 Retry, 판정 다이얼로그, 최종 확정 UI가 같은 값을 공유한다.
     private bool hasPendingSimulationResult;
@@ -111,8 +112,42 @@ public sealed class StageSceneFlowBinder : MonoBehaviour
         gameManager?.PlayCurrentMapAudio();
     }
 
+    /// <summary>
+    /// 현재 Stage가 시작 전에 튜토리얼을 기다려야 하는지 돌려준다.
+    /// 대사형 튜토리얼 단계가 있으면 그것을, 없으면 기존 Stage 1 조작법 팝업을 사용한다.
+    /// </summary>
+    public bool HasStageTutorial(string stageId, string legacyPopupStageId)
+    {
+        StageData stageData = StageManager.Instance != null ? StageManager.Instance.CurrentStageData : null;
+        return (stageData != null && stageData.HasGuidedTutorial) || stageId == legacyPopupStageId;
+    }
+
     public IEnumerator PlayStageTutorialAndWait()
     {
+        StageData stageData = StageManager.Instance != null ? StageManager.Instance.CurrentStageData : null;
+        if (stageData != null && stageData.HasGuidedTutorial)
+        {
+            if (guidedTutorialDirector != null)
+            {
+                Destroy(guidedTutorialDirector.gameObject);
+            }
+
+            EnsureBindings();
+            guidedTutorialDirector = GuidedTutorialDirector.Create(
+                this,
+                ResolveTutorialParent(),
+                stageData,
+                simulationController);
+
+            // 첫 조작 단계까지의 도입 대사가 끝나면 플레이 준비 완료로 넘긴다. 이후 단계는 Director가 계속 진행한다.
+            while (guidedTutorialDirector != null && !guidedTutorialDirector.IsIntroComplete)
+            {
+                yield return null;
+            }
+
+            yield break;
+        }
+
         if (stageTutorialController == null)
         {
             Debug.LogWarning("[StageSceneFlowBinder] StageTutorialController is not assigned.", this);
@@ -121,6 +156,25 @@ public sealed class StageSceneFlowBinder : MonoBehaviour
 
         // GameFlowManager는 이 대기가 끝난 뒤에만 StageReady와 Demo 타이머 시작을 기록한다.
         yield return stageTutorialController.ShowAndWait();
+    }
+
+    private RectTransform ResolveTutorialParent()
+    {
+        // 기존 조작법 팝업과 같은 부모(16:9 AspectContentRoot)에 대사창을 올려 고정 비율 레터박스를 그대로 따른다.
+        if (stageTutorialController != null && stageTutorialController.transform.parent is RectTransform popupParent)
+        {
+            return popupParent;
+        }
+
+        FixedAspectRatioCanvas aspectRoot = FindFirstObjectByType<FixedAspectRatioCanvas>();
+        if (aspectRoot != null)
+        {
+            return (RectTransform)aspectRoot.transform;
+        }
+
+        StageSimulationControlsView controls = FindFirstObjectByType<StageSimulationControlsView>();
+        Canvas canvas = controls != null ? controls.GetComponentInParent<Canvas>(true) : null;
+        return canvas != null ? (RectTransform)canvas.rootCanvas.transform : null;
     }
 
     public void EndLoadedStage()

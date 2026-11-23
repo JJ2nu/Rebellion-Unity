@@ -37,6 +37,9 @@ public sealed class PlacementController : MonoBehaviour
 
     public bool IsPlacing => pendingSlot != null;
 
+    /// <summary>배치 중인 슬롯의 기물 종류. 배치 중이 아니면 null이다.</summary>
+    public PieceType? PendingUnitType => pendingSlot != null ? pendingSlot.UnitType : null;
+
     private void OnDestroy()
     {
         // Stage 종료 중 영속 WorldInputRaycaster에 배치 우선순위가 남지 않게 먼저 해제한다.
@@ -118,6 +121,12 @@ public void BeginPlacement(InGameUnitStorageSlotUI slot)
         }
 
         if (slot.RemainingDeployableCount <= 0)
+        {
+            return;
+        }
+
+        // 튜토리얼 단계가 잠근 슬롯은 배치를 시작하지 않는다.
+        if (!StageTutorialGate.IsSlotAllowed(slot.UnitType))
         {
             return;
         }
@@ -319,6 +328,7 @@ public void HandleAllyPieceRightClick(PieceBase piece)
 
         ResolveDependencies();
         if (stageManager == null) return;
+        if (!CanRemoveForTutorial(piece)) return;
 
         if (IsPlacing) CancelPlacement();
 
@@ -337,6 +347,7 @@ public void HandleAllyPieceRightClick(PieceBase piece)
 
         ResolveDependencies();
         if (stageManager == null) return;
+        if (!CanRemoveForTutorial(piece)) return;
 
         if (IsPlacing) CancelPlacement();
 
@@ -351,6 +362,14 @@ public void HandleAllyPieceRightClick(PieceBase piece)
             currentFacingDirection = prevDirection; // 이전 방향 유지
 
         }
+    }
+
+    private bool CanRemoveForTutorial(PieceBase piece)
+    {
+        // 강제 배치된 기물은 튜토리얼이 끝날 때까지 회수·재배치하지 못하게 해 안내 구도를 유지한다.
+        int boardSize = stageManager?.CurrentStageData?.boardSize ?? 6;
+        int cellIndex = StageGridIndexUtility.ToCellIndex(boardSize, piece.SpawnGridX, piece.SpawnGridY);
+        return StageTutorialGate.CanRemovePieceAt(cellIndex);
     }
 
     public void RegisterSlot(InGameUnitStorageSlotUI slot)
@@ -389,6 +408,14 @@ public void HandleAllyPieceRightClick(PieceBase piece)
         if (pendingSlot != null &&
             stageManager.TryGetTutorialGhostRequiredType(cell.CellIndex, out PieceType requiredType) &&
             pendingSlot.UnitType != requiredType)
+        {
+            return false;
+        }
+
+        // 대사형 튜토리얼의 강제 배치 단계는 지정 칸과 지정 방향에서만 배치를 허용한다.
+        // 방향이 틀리면 배치 불가 표시가 나오고, 회전하면 같은 칸에서 바로 배치 가능 표시로 바뀐다.
+        if (pendingSlot != null &&
+            !StageTutorialGate.CanPlace(pendingSlot.UnitType, cell.CellIndex, currentFacingDirection))
         {
             return false;
         }
@@ -542,6 +569,7 @@ public void HandleAllyPieceRightClick(PieceBase piece)
             // 미리보기는 StageManager 목록에 없으므로 배치된 기물들만 대상으로 공격 가능 여부를 판정한다.
             previewPiece.CheckCanAct(stageManager.GetAllActivePieces());
             previewPiece.ShowAttackRangeCells();
+            AttackLinePresenter.ShowHover(previewPiece);
         }
 
         // ClearAllRangeHighlights가 모든 셀을 Default로 되돌리므로,
@@ -557,6 +585,7 @@ public void HandleAllyPieceRightClick(PieceBase piece)
     {
         StageManager.Instance?.ClearAttackRange();
         GameManager.Instance?.ClearAllRangeHighlights();
+        AttackLinePresenter.HideHover();
     }
 
     private void NotifyPlacementStateChanged(bool previousState)

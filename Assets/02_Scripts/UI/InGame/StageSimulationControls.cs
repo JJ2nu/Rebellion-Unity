@@ -101,6 +101,8 @@ public sealed class StageSimulationControls : MonoBehaviour
 
         // Spacebar를 누른 채 모달(튜토리얼·타이틀 복귀 팝업 등)이 열리면 pressed 표시를 취소하기 위해 구독한다.
         StageInputModalGate.BlockedStateChanged += HandleModalBlockedChanged;
+        StageTutorialGate.Changed -= ApplyState;
+        StageTutorialGate.Changed += ApplyState;
 
         ApplyState();
     }
@@ -133,6 +135,7 @@ public sealed class StageSimulationControls : MonoBehaviour
         }
 
         StageInputModalGate.BlockedStateChanged -= HandleModalBlockedChanged;
+        StageTutorialGate.Changed -= ApplyState;
         isSpacebarPlayHeld = false;
         ResetResultKeyboardFocus();
 
@@ -150,7 +153,7 @@ public sealed class StageSimulationControls : MonoBehaviour
     {
         EnsureBindings();
 
-        if (IsSimulationRunningOrPendingResult())
+        if (IsSimulationRunningOrPendingResult() || StageTutorialGate.IsSimulationStartLocked)
         {
             ApplyState();
             return;
@@ -243,7 +246,8 @@ public sealed class StageSimulationControls : MonoBehaviour
         }
 
         // 배치 모드 Spacebar Play. 시뮬레이션 실행 중·결과 대기 중에는 받지 않는다.
-        if (IsSimulationRunningOrPendingResult())
+        // 튜토리얼이 시작을 잠근 단계에서도 받지 않는다.
+        if (IsSimulationRunningOrPendingResult() || StageTutorialGate.IsSimulationStartLocked)
         {
             return;
         }
@@ -438,7 +442,7 @@ public sealed class StageSimulationControls : MonoBehaviour
         // ViewState에는 게임 상태가 아니라 View가 그대로 적용할 최종 표시 값만 담는다.
         StageSimulationControlsViewState state = new(
             isPlayVisible: !hasSimulationResult && !isSimulationMode,
-            isPlayInteractable: !isSimulationMode && !hasSimulationResult,
+            isPlayInteractable: !isSimulationMode && !hasSimulationResult && !StageTutorialGate.IsSimulationStartLocked,
             useInactivePlaySprite: isSimulationMode,
             areResultActionsVisible: hasSimulationResult);
         view?.Apply(state);

@@ -46,6 +46,12 @@ public sealed class CombatCameraPresentation : MonoBehaviour
     [SerializeField, Min(0f)] private float maxShakeRotationOffset = 0.35f;
     [SerializeField, Min(0f)] private float maxLensPunch = 0f;
 
+    [Header("Gunman Focus Gate")]
+    // 권총 페이즈 카메라 이동이 이 비율만큼 남았을 때 포커스가 잡힌 것으로 본다. 권총 기물은 이때 발사 모션을 시작한다.
+    [SerializeField, Range(0.01f, 1f)] private float gunmanFocusSettledRatio = 0.3f;
+    // 카메라가 거의 움직이지 않거나 다른 연출로 막혀도 발사가 멈추지 않도록 기다리는 최대 시간(실시간 초).
+    [SerializeField, Min(0f)] private float gunmanFocusMaxWait = 1f;
+
     private readonly HashSet<PieceBase> focusPieces = new();
     private readonly List<CameraShakeImpulse> shakeImpulses = new();
     private readonly List<BulletController> trackedProjectiles = new();
@@ -69,6 +75,29 @@ public sealed class CombatCameraPresentation : MonoBehaviour
     private float smoothAnchorLensSize;
     private uint hitSequence;
     private bool isGunmanPhase;
+    private float gunmanFocusStartError;
+    private float gunmanFocusStartRealtime;
+
+    /// <summary>
+    /// 권총 페이즈에서 카메라가 권총 기물 쪽으로 충분히 다가왔는지. 권총 페이즈가 아니거나 연출이 없으면 항상 true다.
+    /// </summary>
+    public bool IsGunmanFocusSettled
+    {
+        get
+        {
+            if (!baselineCaptured || !isGunmanPhase || gunmanFocusStartError <= 0.001f)
+            {
+                return true;
+            }
+
+            if (Time.unscaledTime - gunmanFocusStartRealtime >= gunmanFocusMaxWait)
+            {
+                return true;
+            }
+
+            return GetFocusError() <= gunmanFocusStartError * gunmanFocusSettledRatio;
+        }
+    }
 
     private void LateUpdate()
     {
@@ -146,6 +175,13 @@ public sealed class CombatCameraPresentation : MonoBehaviour
         }
 
         RecalculateFocusTarget(focusTransitionDuration);
+
+        if (isGunmanPhase)
+        {
+            // 이동 시작 시점의 남은 거리를 기준으로 포커스 도달 정도를 판단한다.
+            gunmanFocusStartError = GetFocusError();
+            gunmanFocusStartRealtime = Time.unscaledTime;
+        }
     }
 
     public void IncludeAttack(CombatAttackContext context)
@@ -399,6 +435,14 @@ public sealed class CombatCameraPresentation : MonoBehaviour
 
         targetLensSize = GetZoomedLensSize();
         transitionDuration = nextTransitionDuration;
+    }
+
+    // 현재 카메라와 목표 구도 사이의 남은 차이. 위치(로컬 단위)와 회전(45도 = 1)을 합산한다.
+    private float GetFocusError()
+    {
+        float positionError = Vector3.Distance(smoothAnchorLocalPosition, targetLocalPosition);
+        float rotationError = Quaternion.Angle(smoothAnchorLocalRotation, targetLocalRotation) / 45f;
+        return positionError + rotationError;
     }
 
     private static bool ContainsGunman(IReadOnlyList<CombatPieceSnapshot> pieces)

@@ -17,6 +17,8 @@ public class BrawlerPiece : PieceBase
     private AttackHitbox _fistHitBox;
     private float _attackClipLength = -1f;
     private bool _isExecutingAttack;
+    // 주먹이 앞으로 뻗어 타격 지점에 닿았는지. 단검 기물은 이 순간에 맞춰 튀어나간다.
+    private bool _hasReachedHandoff;
     private Vector3 _attackStartPosition;
 
     private void Awake()
@@ -41,6 +43,8 @@ public class BrawlerPiece : PieceBase
 
     public override int SimulationPhaseIndex => 1;
 
+    public override bool HasReachedPhaseHandoff => _hasReachedHandoff || IsActionFinished;
+
     protected override PieceBase FindTarget(IReadOnlyList<PieceBase> allPieces)
     {
         var closest = FindClosestInLine(allPieces);
@@ -49,6 +53,7 @@ public class BrawlerPiece : PieceBase
 
     public override IEnumerator ExecuteAction(IReadOnlyList<PieceBase> allPieces, float stepDuration)
     {
+        _hasReachedHandoff = false;
         var target = FindTarget(allPieces);
         if (target == null)
         {
@@ -88,6 +93,8 @@ public class BrawlerPiece : PieceBase
         {
             transform.position = attackPosition;
         }
+
+        _hasReachedHandoff = true;
 
         if (IsDead)
         {
@@ -157,7 +164,14 @@ public class BrawlerPiece : PieceBase
     public override void ResetState()
     {
         _isExecutingAttack = false;
+        _hasReachedHandoff = false;
         base.ResetState();
+    }
+
+    public override void OnSimulationStart()
+    {
+        _hasReachedHandoff = false;
+        base.OnSimulationStart();
     }
 
     private IEnumerator MovePositionOverTime(Vector3 from, Vector3 to, float duration)

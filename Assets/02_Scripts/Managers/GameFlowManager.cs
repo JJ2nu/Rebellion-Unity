@@ -18,6 +18,8 @@ public sealed class GameFlowManager : MonoBehaviour
     // 인게임 타이틀 복귀 버튼의 플레이로그 세션 종료 트리거 이름.
     private const string ReturnToTitleButtonEndTrigger = "returnToTitleButton";
     private const string Stage001 = "stage_001";
+    // Stage 1 튜토리얼 후반(1-2). 1-1을 마치면 Dialogue 없이 바로 이어지고, 1-2를 마친 뒤 Stage 1 대사로 넘어간다.
+    private const string Stage001Part2 = "stage_001_2";
     private const string Stage002 = "stage_002";
     private const string Stage003 = "stage_003";
     private const string Stage004 = "stage_004";
@@ -41,6 +43,7 @@ public sealed class GameFlowManager : MonoBehaviour
     private static readonly CampaignStageStep[] CampaignStages =
     {
         new(Stage001, AudioDramaStage1),
+        new(Stage001Part2, null),
         new(Stage002, null),
         new(Stage003, null),
         new(Stage004, AudioDramaStage4),
@@ -246,8 +249,8 @@ public sealed class GameFlowManager : MonoBehaviour
 
     private IEnumerator CompleteLoadedStageStartRoutine(string stageId, StageSceneFlowBinder binder)
     {
-        // Stage Scene 단독 실행은 맵 오디오가 이미 재생 중이므로 다시 시작하지 않고 Stage 1만 튜토리얼을 기다린다.
-        if (stageId == Stage001)
+        // Stage Scene 단독 실행은 맵 오디오가 이미 재생 중이므로 다시 시작하지 않고 튜토리얼 Stage만 튜토리얼을 기다린다.
+        if (binder.HasStageTutorial(stageId, Stage001))
         {
             yield return binder.PlayStageTutorialAndWait();
         }
@@ -416,6 +419,17 @@ public sealed class GameFlowManager : MonoBehaviour
         }
 
         PlaytestLogger.RecordStageExited(PlaytestLogger.ProgressedStageExitReason);
+
+        // 튜토리얼 1-1은 대사 Scene을 거치지 않고 같은 Stage Scene으로 1-2를 이어서 연다.
+        if (currentStageId == Stage001)
+        {
+            currentStageId = Stage001Part2;
+            nextStageAfterDialogue = null;
+            pendingDialogueLevel = null;
+            StartCampaignSceneRoutine(LoadStageFromStageRoutine());
+            return;
+        }
+
         PlaytestLogger.RecordDialogueEntered();
         ResolveDialogueAndNextStage(result);
         LoadDialogueSceneFromStage();
@@ -507,7 +521,9 @@ public sealed class GameFlowManager : MonoBehaviour
 
         yield return overlay.FadeIn();
 
-        if (stageLoaded && currentStageId != Stage001)
+        string preparedStageId = currentStageId;
+        bool hasStageTutorial = stageLoaded && binder.HasStageTutorial(preparedStageId, Stage001);
+        if (stageLoaded && !hasStageTutorial)
         {
 #if UNITY_EDITOR || REBELLION_DEMO_BUILD
             // 튜토리얼이 없는 Stage는 기존처럼 화면이 보이는 순간부터 Demo 시간을 계산한다.
@@ -522,12 +538,12 @@ public sealed class GameFlowManager : MonoBehaviour
             binder.PlayCurrentMapAudio();
         }
 
-        if (stageLoaded && currentStageId == Stage001)
+        if (hasStageTutorial)
         {
-            // Stage 1은 맵 오디오를 먼저 시작한 뒤 튜토리얼이 닫힐 때까지 플레이 준비를 보류한다.
+            // 튜토리얼 Stage는 맵 오디오를 먼저 시작한 뒤 도입 튜토리얼이 끝날 때까지 플레이 준비를 보류한다.
             yield return binder.PlayStageTutorialAndWait();
 
-            if (binder != currentStageBinder || currentStageId != Stage001)
+            if (binder != currentStageBinder || currentStageId != preparedStageId)
             {
                 yield break;
             }
@@ -625,6 +641,14 @@ public sealed class GameFlowManager : MonoBehaviour
             isLoadingCampaignScene = false;
         }
         campaignSceneRoutine = null;
+    }
+
+    private IEnumerator LoadStageFromStageRoutine()
+    {
+        SceneTransitionOverlay overlay = SceneTransitionOverlay.Instance;
+        yield return overlay.FadeOut();
+        currentStageBinder?.EndLoadedStage();
+        yield return LoadStageSceneRoutine(false);
     }
 
     private IEnumerator LoadDialogueSceneFromStageRoutine()
@@ -743,6 +767,8 @@ public sealed class GameFlowManager : MonoBehaviour
         switch (currentStageId)
         {
             case Stage001:
+            case Stage001Part2:
+                // 1-2까지 마친 뒤 기존 Stage 1 결과·브리핑 대사를 재생한다.
                 pendingDialogueLevel = Stage001;
                 nextStageAfterDialogue = Stage002;
                 break;

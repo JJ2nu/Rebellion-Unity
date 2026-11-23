@@ -688,11 +688,20 @@ public sealed class PlaytestLogger : MonoBehaviour
             return -1;
         }
 
-        int separatorIndex = stageId.LastIndexOf('_');
-        return separatorIndex >= 0 &&
-               int.TryParse(stageId[(separatorIndex + 1)..], out int stageIndex)
-            ? stageIndex
-            : -1;
+        // "stage_001" → 100, 하위 Stage "stage_001_2" → 102. 하위 번호가 다음 본 Stage보다 앞서도록 100을 곱한다.
+        string[] parts = stageId.Split('_');
+        if (parts.Length < 2 || !int.TryParse(parts[1], out int stageIndex))
+        {
+            return -1;
+        }
+
+        int subStageIndex = 0;
+        if (parts.Length >= 3 && !int.TryParse(parts[2], out subStageIndex))
+        {
+            return -1;
+        }
+
+        return stageIndex * 100 + subStageIndex;
     }
 
     private static int GetNextStageVisitNumber(string stageId)

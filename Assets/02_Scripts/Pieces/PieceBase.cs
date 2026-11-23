@@ -151,6 +151,20 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
         ResetColliderState();
     }
 
+    /// <summary>
+    /// 전투가 한순간에 일어나는 것처럼 보이도록, Phase 0 직후 행동할 모든 기물이 동시에 취하는 준비 자세.
+    /// 권총은 조준한 채 대기하고 단검은 자세를 낮춘 채 대기한다. 기본은 준비 자세가 없다.
+    /// </summary>
+    public virtual void BeginReadyPose()
+    {
+    }
+
+    /// <summary>
+    /// 다음 페이즈 기물이 출발해도 되는 지점에 도달했는지 여부. 페이즈 순서는 유지하되 앞 기물의 동작이
+    /// 완전히 끝나기 전에 다음 기물이 이어 움직이게 하는 기준이다. 기본은 행동 완료 시점이다.
+    /// </summary>
+    public virtual bool HasReachedPhaseHandoff => IsActionFinished;
+
     /// <summary>Phase 0에서 호출. FindTarget 결과로 CanAct를 설정한다.</summary>
     public void CheckCanAct(IReadOnlyList<PieceBase> allPieces)
     {
@@ -518,12 +532,14 @@ public abstract class PieceBase : MonoBehaviour, IWorldInputTarget
         Color outlineColor = Faction == Faction.Neutral || willAttack ? Color.green : Color.red;
         GetComponent<OutlineEffect>()?.ShowWithColor(outlineColor);
         ShowAttackRangeCells();
+        AttackLinePresenter.ShowHover(this);
     }
     public void OnWorldUnHover(WorldInputEventData eventData)
     {
         GetComponent<OutlineEffect>()?.Hide();
         StageManager.Instance?.ClearAttackRange();
         GameManager.Instance?.ClearAllRangeHighlights();
+        AttackLinePresenter.HideHover();
     }
 
     public static event System.Action<PieceBase> AllyRightClicked;

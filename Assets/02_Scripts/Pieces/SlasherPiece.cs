@@ -16,11 +16,22 @@ public class SlasherPiece : PieceBase
     [SerializeField] private float _slashRootMotionDistance = 3.5944f;
     [SerializeField, Min(0f)] private float _arrivalEaseDuration = 0.08f;
 
+    [Header("Ready Pose")]
+    // Slash.anim 0.20초(1.567초 중) 지점. 몸이 가장 낮아지고 돌진이 시작되기 직전 자세에서 멈춰 기다린다.
+    [SerializeField, Range(0f, 1f)] private float _crouchHoldNormalizedTime = 0.128f;
+    // 웅크리는 구간의 루트 이동 거리. 웅크린 자세에서 돌진을 이어갈 때 남은 거리로 배율을 다시 계산한다.
+    [SerializeField, Min(0f)] private float _crouchRootMotionDistance = 0.28f;
+    // 돌진 대부분이 끝난 지점(약 0.47초). 권총 기물은 이 지점부터 발사할 수 있다.
+    [SerializeField, Range(0f, 1f)] private float _handoffNormalizedTime = 0.3f;
+
 
     private float _attackClipLength = 1.367f;
 
     private int _currentAttackRange = 1;
     private AttackHitbox _knifeHitBox;
+    private bool _isCrouching;
+    private bool _hasReachedHandoff;
+    private Coroutine _crouchRoutine;
 
     private void Awake()
     {
@@ -44,6 +55,39 @@ public class SlasherPiece : PieceBase
 
     public override int SimulationPhaseIndex => 2;
 
+    public override bool HasReachedPhaseHandoff => _hasReachedHandoff || IsActionFinished;
+
+    /// <summary>
+    /// 돌진 직전의 낮은 자세까지만 공격 모션을 재생하고 멈춘다. 주먹 기물이 움직인 뒤 ExecuteAction이 같은 자세에서 이어 튀어나간다.
+    /// </summary>
+    public override void BeginReadyPose()
+    {
+        if (_animator == null || IsDead)
+        {
+            return;
+        }
+
+        StopCrouchRoutine();
+        SetAnimatorRootMotion(false);
+        _animator.speed = _animSpeedMultiplier;
+        _animator.Play(AttackStateName, 0, 0f);
+        _animator.Update(0f);
+        _isCrouching = true;
+        _crouchRoutine = StartCoroutine(HoldCrouchPose());
+    }
+
+    public override void OnSimulationStart()
+    {
+        ClearReadyState();
+        base.OnSimulationStart();
+    }
+
+    public override void ResetState()
+    {
+        ClearReadyState();
+        base.ResetState();
+    }
+
     protected override PieceBase FindTarget(IReadOnlyList<PieceBase> allPieces)
     {
         var closest = FindClosestInLine(allPieces);
@@ -52,9 +96,20 @@ public class SlasherPiece : PieceBase
 
     public override IEnumerator ExecuteAction(IReadOnlyList<PieceBase> allPieces, float stepDuration)
     {
+        bool resumeFromCrouch = _isCrouching && _animator != null;
+        _isCrouching = false;
+        _hasReachedHandoff = false;
+        StopCrouchRoutine();
+
+        // 표적은 출발 순간에 다시 찾는다. 앞선 주먹 공격으로 표적이 사라졌으면 웅크린 자세를 풀고 끝낸다.
         PieceBase target = FindTarget(allPieces);
         if (target == null)
         {
+            if (resumeFromCrouch)
+            {
+                ReturnToIdlePose();
+            }
+
             FinishAction();
             yield break;
         }
@@ -72,18 +127,27 @@ public class SlasherPiece : PieceBase
         Vector3 startCellPosition = GetCellWorldPosition(GridX, GridY, transform.position);
         Vector3 targetCellPosition = GetCellWorldPosition(targetGX, targetGY, target.transform.position);
         float desiredMoveDistance = Vector3.Distance(startCellPosition, targetCellPosition);
-        float rootMotionScale = _slashRootMotionDistance > 0f
-            ? desiredMoveDistance / _slashRootMotionDistance
+        // 웅크린 자세에서 이어가면 웅크리는 구간의 루트 이동은 이미 지나갔으므로 남은 거리 기준으로 배율을 맞춘다.
+        float remainingRootMotionDistance = resumeFromCrouch
+            ? _slashRootMotionDistance - _crouchRootMotionDistance
+            : _slashRootMotionDistance;
+        float rootMotionScale = remainingRootMotionDistance > 0.01f
+            ? desiredMoveDistance / remainingRootMotionDistance
             : 1f;
 
         StageManager.Instance?.PlaySlasherAttackSfx();
         _knifeHitBox?.BeginAttack();
         if (_animator != null)
         {
-            SetAnimatorRootMotionOverride(attackDirection, rootMotionScale);
+            // 웅크린 자세에서 이어갈 때는 루트 이동을 켜는 첫 프레임의 누적 이동을 버려 제자리 튐을 막는다.
+            SetAnimatorRootMotionOverride(attackDirection, rootMotionScale, resumeFromCrouch);
             _animator.speed = _animSpeedMultiplier;
-            _animator.Play(AttackStateName, 0, 0f);
-            _animator.Update(0f);
+            if (!resumeFromCrouch)
+            {
+                _animator.Play(AttackStateName, 0, 0f);
+                _animator.Update(0f);
+            }
+
             yield return WaitForAttackAnimationEnd();
         }
         else
@@ -153,6 +217,11 @@ public class SlasherPiece : PieceBase
             if (stateInfo.IsName(AttackStateName))
             {
                 enteredAttackState = true;
+                if (stateInfo.normalizedTime >= _handoffNormalizedTime)
+                {
+                    _hasReachedHandoff = true;
+                }
+
                 if (stateInfo.normalizedTime >= 1f)
                 {
                     break;
@@ -194,6 +263,54 @@ public class SlasherPiece : PieceBase
         {
             transform.position = to;
         }
+    }
+
+    private IEnumerator HoldCrouchPose()
+    {
+        while (_isCrouching && !IsDead)
+        {
+            AnimatorStateInfo stateInfo = _animator.GetCurrentAnimatorStateInfo(0);
+            if (stateInfo.IsName(AttackStateName) && stateInfo.normalizedTime >= _crouchHoldNormalizedTime)
+            {
+                _animator.speed = 0f;
+                break;
+            }
+
+            yield return null;
+        }
+
+        _crouchRoutine = null;
+    }
+
+    private void ReturnToIdlePose()
+    {
+        if (_animator == null)
+        {
+            return;
+        }
+
+        _animator.speed = 1f;
+        SetAnimatorRootMotion(false);
+        if (_animator.HasState(0, Animator.StringToHash(IdleStateName)))
+        {
+            _animator.CrossFadeInFixedTime(IdleStateName, 0.15f, 0);
+        }
+    }
+
+    private void StopCrouchRoutine()
+    {
+        if (_crouchRoutine != null)
+        {
+            StopCoroutine(_crouchRoutine);
+            _crouchRoutine = null;
+        }
+    }
+
+    private void ClearReadyState()
+    {
+        StopCrouchRoutine();
+        _isCrouching = false;
+        _hasReachedHandoff = false;
     }
 
     public void OnAttackAnimationEnd()

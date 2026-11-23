@@ -46,6 +46,10 @@ public sealed class StageSimulationControlsView : MonoBehaviour
     [SerializeField] private Button retryButton;
     [SerializeField] private Button confirmButton;
 
+    [Header("Temporary")]
+    // 확정 버튼 전용 리소스가 오기 전까지 플레이 버튼과 같은 이미지를 쓴다. 리소스가 들어오면 끈다.
+    [SerializeField] private bool usePlaySpriteForConfirm = true;
+
     private Image playButtonImage;
     private Sprite playActiveSprite;
     private Sprite playInactiveSprite;
@@ -62,6 +66,10 @@ public sealed class StageSimulationControlsView : MonoBehaviour
     public event Action RetryRequested;
     public event Action ConfirmRequested;
 
+    // 튜토리얼 스포트라이트가 시작·재시도 버튼 위치를 강조할 때 사용한다.
+    public RectTransform PlayButtonRect => playButton != null ? playButton.transform as RectTransform : null;
+    public RectTransform RetryButtonRect => retryButton != null ? retryButton.transform as RectTransform : null;
+
     private void Awake()
     {
         WarnIfButtonIsMissing(playButton, "Play");
@@ -69,6 +77,7 @@ public sealed class StageSimulationControlsView : MonoBehaviour
         WarnIfButtonIsMissing(confirmButton, "Confirm");
         EnsurePlayButtonPresentation();
         MatchConfirmButtonToPlayButton();
+        ApplyTemporaryConfirmSprite();
 
         // 버튼이 비활성일 때도 GetComponent는 동작하므로 키보드 SFX 위임 대상을 미리 캐시한다.
         retryButtonSfx = retryButton != null ? retryButton.GetComponent<UIButtonSfx>() : null;
@@ -255,6 +264,26 @@ public sealed class StageSimulationControlsView : MonoBehaviour
             colors.disabledColor = Color.white;
             playButton.colors = colors;
         }
+    }
+
+    // 확정 버튼의 기본·hover·pressed 이미지를 플레이 버튼 것으로 덮어쓴다. Scene의 pressed 오버라이드도 함께 덮는다.
+    private void ApplyTemporaryConfirmSprite()
+    {
+        if (!usePlaySpriteForConfirm || playButton == null || confirmButton == null)
+        {
+            return;
+        }
+
+        Image playImage = playButton.targetGraphic as Image;
+        Image confirmImage = confirmButton.targetGraphic as Image;
+        if (playImage == null || confirmImage == null)
+        {
+            return;
+        }
+
+        confirmImage.sprite = playActiveSprite != null ? playActiveSprite : playImage.sprite;
+        confirmButton.transition = playButton.transition;
+        confirmButton.spriteState = playButton.spriteState;
     }
 
     private void SetPlayButtonSprite(Sprite sprite)
