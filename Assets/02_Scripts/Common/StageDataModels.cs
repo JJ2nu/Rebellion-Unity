@@ -79,6 +79,11 @@ public class StageData
     // 튜토리얼에서 권장 배치를 보여주는 비상호작용 고스트 기물
     public TutorialGhostPieceData[] tutorialGhostPieces = Array.Empty<TutorialGhostPieceData>();
 
+    // 대사형 튜토리얼 진행 단계. 비어 있으면 튜토리얼 없는 일반 스테이지다.
+    public TutorialStepData[] tutorialSteps = Array.Empty<TutorialStepData>();
+
+    public bool HasGuidedTutorial => tutorialSteps != null && tutorialSteps.Length > 0;
+
     public string GetStageTitle()
     {
         // 아직 이관되지 않은 Challenge 데이터도 기존 제목으로 정상 표시한다.
@@ -131,6 +136,39 @@ public class TutorialGhostPieceData
 
     // 배열 저장 규칙 기준 셀 인덱스
     public int cellIndex;
+}
+
+/// <summary>
+/// 대사형 튜토리얼의 한 단계. type에 따라 사용하는 필드가 다르다.
+/// line          : 대사 한 줄. 클릭/Space로 넘긴다.
+/// place         : pieceType 슬롯만 열고 cellIndex·facing 그대로 배치하게 한다. selectText(슬롯 선택 중) → text(칸 배치 중).
+/// placeAll      : 남은 슬롯을 자유롭게 모두 배치할 때까지 기다린다.
+/// start         : 시뮬레이션 시작 버튼을 열고 누를 때까지 기다린다.
+/// result        : 시뮬레이션 종료까지 기다린다. text는 진행 중 표시, calloutText는 같은 진영끼리 맞았을 때 표시.
+/// waitRetry     : 결과 화면에서 Retry를 누르면 gotoId 단계로 돌아간다. text는 대기 중 표시.
+/// enemyLines    : 이후 배치 단계 동안 적 기물의 사선을 항상 표시한다.
+/// condition은 직전 result 단계 결과로 단계를 거른다: "" = 항상, "win", "fail", "perfect".
+/// </summary>
+[Serializable]
+public class TutorialStepData
+{
+    public string type = "line";
+    public string id = "";
+    public string condition = "";
+
+    public string speaker = "";
+    // DialogueCharacter Animator 상태 이름. 비우면 캐릭터를 숨긴다.
+    public string character = "";
+    public string text = "";
+    public string selectText = "";
+    public string calloutText = "";
+
+    public int pieceType = -1;
+    public int cellIndex = -1;
+    // 0 = North, 1 = East, 2 = South, 3 = West. -1이면 방향을 강제하지 않는다.
+    public int facing = -1;
+
+    public string gotoId = "";
 }
 
 [Serializable]

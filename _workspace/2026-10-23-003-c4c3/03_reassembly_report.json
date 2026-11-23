@@ -1,0 +1,15 @@
+{
+  "source_chars": 841,
+  "output_chars": 829,
+  "total_ratio": 0.986,
+  "warnings": [],
+  "chunks": [
+    {
+      "index": 1,
+      "passthrough": false,
+      "orig_chars": 840,
+      "rewritten_chars": 828,
+      "ratio": 0.986
+    }
+  ]
+}

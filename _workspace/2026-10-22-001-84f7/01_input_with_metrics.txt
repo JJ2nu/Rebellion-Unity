@@ -1,0 +1,42 @@
+[정량 사전 점수 v2.0 — v1.6 8지표(KatFish baseline) + v2.0 카운트형]
+risk_band: low  (score 3)
+route_hint: light  (권고 — 사용자·오케스트레이터가 무시 가능)
+route_reason: 카운트형 티 0건(라우터가 세는 항목 기준) · risk_band low — 단일 콜·최소 파이프라인 권장. 카운터 밖 티는 monolith 가 룰북으로 잡는다
+genre: essay
+char_count: 735
+
+[v1.6 지표]
+- comma_inclusion_rate: 0.60  (z=+1.94 vs essay 인간 baseline)  ★ S1 트리거
+- comma_usage_rate: 1.20  (z=+0.10 vs essay 인간 baseline)
+- ending_comma_rate: 0.55  (z=+6.41 vs essay 인간 baseline)  ★ S1 트리거
+- comma_segment_length: 7.27  (z=+1.39 vs essay 인간 baseline)  · S2 시그널
+- conclusion_pivot_count: 0
+- safe_balance_count: 0
+- hanja_nominalizer_density: 0.000  (z=-2.00 vs essay 인간 baseline)
+- lexical_diversity: 0.88  (z=+4.62 vs essay 인간 baseline)
+
+[v2.0 카운트형 지표 — 원값 / baseline calibration 전 z-score 해석 보류]
+- double_passive_count (이중 피동, 본진 A-8): 0
+- by_passive_count (~에 의해 피동, 본진 A-9): 0
+- pronoun_density (인칭 대명사 밀도, 본진 A-16): 0.000
+- have_make_literal_count (have/make 직역, 본진 A-7): 0
+- double_particle_count (이중 조사 결합, 본진 A-19): 0
+- relative_clause_nesting (관형절 3중+ 중첩 문장 수, 본진 A-18): 0
+- deul_overuse_rate ('-들' 남용률, 본진 A-17 hold): 0.000
+- 카운트 > 0 지표는 해당 본진 ID 처방(quick-rules.md·taxonomy)과 교차 확인 후 윤문할 것.
+
+[근거 사용 가이드]
+- 위 점수는 *근거 보조*다. 단독 판정 금지(보고서 명시).
+- z>1.0 지표는 quick-rules.md S1·S2 패턴과 교차 확인 후 윤문할 것.
+- ending_comma_rate가 ★ S1 트리거인 경우 C-11(연결어미 뒤 쉼표) 우선 손질.
+- conclusion_pivot 매치 토큰은 D-1·H-1 처방 적용 대상.
+
+[원문 시작]
+Unity 기반 전략 퍼즐 게임 ‘Re:bellion’을 개발하며 AI를 활용해 전투 시스템의 오류를 해결하고 연출을 고도화했습니다. 기물 종류별로 순차 진행되는 퍼즐 규칙을 유지하면서, 반복 플레이의 안정성과 전투의 역동감을 함께 확보하는 것이 목표였습니다.
+
+Codex와 Unity MCP를 연동해 기존 C# 코드와 씬·프리팹 구조를 분석하고 구현하도록 했습니다. 저는 게임 규칙과 제약조건을 구체화하고, 원인 분석부터 대안 비교, 단계별 구현과 직접 플레이 검증까지 개발 과정을 주도했습니다. 설계·검토와 Unity 반복 작업에 사용할 AI 모델을 나누고, 작업 난도에 따른 추론 강도와 하위 에이전트의 역할·범위도 지정했습니다.
+
+예를 들어 적이 총에 맞아 쓰러졌는데도 패배하는 현상을 발견하고, 모든 총알이 소멸한 뒤 결과를 판정하도록 처리 순서 변경을 제안했습니다. 재시도 시에는 위치뿐 아니라 애니메이션·히트박스·총알까지 함께 초기화하도록 요구해 상태 복원 흐름을 통합했습니다. 또한 ‘전투가 밋밋하다’는 피드백을 카메라 포커싱, 히트스톱, 피격 방향 기반 VFX로 구체화하고, 과도한 흔들림과 어색한 타이밍을 직접 확인하며 조정했습니다.
+
+그 결과 기물 배치·전투 실행·재시도가 이어지는 플레이 흐름을 안정화하고 전투 피드백을 강화했습니다. AI에는 코드 분석·구현·반복 수정을 맡기고, 저는 문제 정의, 게임 규칙과 구현 방향 결정, 우선순위 설정, 플레이 검증과 최종 반영 판단을 담당했습니다.
+[원문 끝]

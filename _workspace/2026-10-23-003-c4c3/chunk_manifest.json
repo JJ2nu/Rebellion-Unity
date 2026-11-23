@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "created": "2026-10-23",
+  "source_file": "01_input.txt",
+  "source_chars": 841,
+  "source_sha256": "cf7c43fc277439e27a6aee8e11147e26ba0a6a167c55ae353ec9dc7c5abc7f50",
+  "genre": "essay",
+  "target_chunk_chars": 7000,
+  "max_chunk_chars": 9000,
+  "route_hint": "light",
+  "route_reason": "카운트형 티 0건(라우터가 세는 항목 기준) · risk_band low — 단일 콜·최소 파이프라인 권장. 카운터 밖 티는 monolith 가 룰북으로 잡는다",
+  "chunk_count": 1,
+  "body_chunk_count": 1,
+  "passthrough_chunk_count": 0,
+  "lossless_check": "ok",
+  "warnings": [
+    "입력 841자 ≤ 청킹 권장 최소 15,000자 — 단일 콜 실증 범위라 --chunk 비권장 (권고, route_hint 참조)"
+  ],
+  "chunks": [
+    {
+      "index": 1,
+      "start": 0,
+      "end": 841,
+      "char_count": 841,
+      "starts_with_heading": false,
+      "heading": null,
+      "passthrough": false,
+      "input_file": "01_chunk_01_input_with_metrics.txt",
+      "rewritten_file": "02_chunk_01_rewritten.txt"
+    }
+  ]
+}

@@ -29,6 +29,117 @@
             "cellIndex": 35
         }
     ],
+    "tutorialSteps": [
+        {
+            "type": "line",
+            "speaker": "부관 엘리자",
+            "character": "Eliza_Resistance_Despair30",
+            "text": "대장, 선술집 안에 칼트 병력이 숨어 있습니다. 작전을 시작하기 전에 대원들이 어떻게 움직이는지부터 짚고 가죠."
+        },
+        {
+            "type": "line",
+            "speaker": "부관 엘리자",
+            "character": "Eliza_Resistance_Despair30",
+            "text": "대원은 바라보는 방향 일직선만 공격합니다. 그 직선에서 가장 가까이 있는 상대가 적일 때만 움직이죠."
+        },
+        {
+            "type": "line",
+            "speaker": "부관 엘리자",
+            "character": "Eliza_Resistance_Despair30",
+            "text": "사이에 아군이 서 있으면 사선이 막혀 아무것도 하지 않습니다. 적도 똑같은 규칙으로 움직입니다."
+        },
+        {
+            "type": "place",
+            "speaker": "부관 엘리자",
+            "character": "Eliza_Resistance_Despair30",
+            "text": "표시된 칸에 배치하세요. 반투명 가이드와 같은 방향을 보도록 TAB이나 마우스 휠로 돌린 뒤 클릭하면 됩니다.",
+            "selectText": "먼저 권총 대원을 고르세요. 강조된 슬롯입니다.",
+            "pieceType": 2,
+            "cellIndex": 35,
+            "facing": 2
+        },
+        {
+            "type": "line",
+            "speaker": "부관 엘리자",
+            "character": "Eliza_Resistance_Joy",
+            "text": "좋습니다. 권총은 사거리가 6칸이라 판 끝까지 닿습니다. 빨간 사선이 적에게 닿았으니 이 대원은 쏩니다."
+        },
+        {
+            "type": "line",
+            "speaker": "부관 엘리자",
+            "character": "Eliza_Resistance_Despair30",
+            "text": "총알은 관통합니다. 사선 위의 적은 모두 쓰러지지만, 그 뒤에 아군이 서 있으면 아군도 맞습니다."
+        },
+        {
+            "type": "line",
+            "speaker": "부관 엘리자",
+            "character": "Eliza_Resistance_Despair30",
+            "text": "대원은 주먹 → 단검 → 권총 순서로 움직입니다. 주먹은 바로 앞 1칸, 단검은 2칸 안의 적에게 돌진해 그 자리를 차지하죠."
+        },
+        {
+            "type": "line",
+            "speaker": "부관 엘리자",
+            "character": "Eliza_Resistance_Despair30",
+            "text": "남은 적은 직접 맡아 주세요. 대원 위에 마우스를 올리면 사선이 보입니다. 빨간 원은 공격 대상, 회색 X는 사선이 막혔다는 뜻입니다."
+        },
+        {
+            "type": "placeAll",
+            "speaker": "부관 엘리자",
+            "character": "Eliza_Resistance_Despair30",
+            "text": "남은 대원을 모두 배치하세요. 배치한 대원을 좌클릭하면 다시 옮기고, 우클릭하면 회수합니다.",
+            "id": "placeAll"
+        },
+        {
+            "type": "start",
+            "speaker": "부관 엘리자",
+            "character": "Eliza_Resistance_Despair30",
+            "text": "준비가 끝났으면 시작 버튼(Space)을 눌러 작전을 개시하세요."
+        },
+        {
+            "type": "result",
+            "speaker": "부관 엘리자",
+            "character": "Eliza_Resistance_Sad",
+            "text": "",
+            "calloutText": "총알이 아군까지 관통했습니다! 사선 뒤에 누가 서 있는지 확인하세요."
+        },
+        {
+            "type": "line",
+            "speaker": "부관 엘리자",
+            "character": "Eliza_Resistance_Joy",
+            "text": "적을 모두 제압했습니다. 사선만 읽으면 적이 어떻게 움직일지도 보입니다.",
+            "condition": "win"
+        },
+        {
+            "type": "waitRetry",
+            "speaker": "부관 엘리자",
+            "character": "Eliza_Resistance_Joy",
+            "text": "확정을 누르면 안쪽 방으로 이동합니다.",
+            "condition": "win",
+            "gotoId": "placeAll"
+        },
+        {
+            "type": "line",
+            "speaker": "부관 엘리자",
+            "character": "Eliza_Resistance_Sad",
+            "text": "적이 남았습니다. 사선이 막혔거나, 순서 때문에 표적이 바뀌었을 수 있어요.",
+            "condition": "fail"
+        },
+        {
+            "type": "line",
+            "speaker": "부관 엘리자",
+            "character": "Eliza_Resistance_Sad",
+            "text": "다시 하기를 누르면 배치가 그대로 남습니다. 대원 위에 마우스를 올려 사선을 다시 확인해 보세요.",
+            "condition": "fail"
+        },
+        {
+            "type": "waitRetry",
+            "speaker": "부관 엘리자",
+            "character": "Eliza_Resistance_Sad",
+            "text": "다시 하기 버튼을 눌러 배치를 고치세요.",
+            "condition": "fail",
+            "gotoId": "placeAll"
+        }
+    ],
     "entities": [
         {
             "entityKind": 2,

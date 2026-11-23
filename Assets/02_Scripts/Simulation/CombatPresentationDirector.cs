@@ -42,6 +42,16 @@ public sealed class CombatPresentationDirector : MonoBehaviour
     public bool IsRunActive { get; private set; }
     public IReadOnlyList<CombatPieceSnapshot> CurrentRunPieces { get; private set; } = System.Array.Empty<CombatPieceSnapshot>();
 
+    /// <summary>
+    /// 권총 기물이 발사 모션을 시작해도 되는지. 전투 카메라가 권총 기물에 포커스를 잡았거나,
+    /// 연출이 꺼져 있거나 스킵으로 카메라가 억제된 경우 true다.
+    /// </summary>
+    public bool IsGunmanFocusReady =>
+        !enableCombatPresentation ||
+        isCombatCameraSuppressed ||
+        cameraPresentation == null ||
+        cameraPresentation.IsGunmanFocusSettled;
+
     private void Awake()
     {
         TryGetComponent(out simulationController);

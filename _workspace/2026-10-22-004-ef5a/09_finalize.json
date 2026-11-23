@@ -1,0 +1,44 @@
+{
+  "decision": "accept",
+  "genre": "essay",
+  "fidelity_violations": [],
+  "overediting_findings": [],
+  "correction_count": 0,
+  "summary_updated": true,
+  "original_char_count": 833,
+  "final_char_count": 833,
+  "char_count_basis": "공백·문단 구분 포함, 말미 공백 제외, summary 제외",
+  "change_rate": 0.012,
+  "grade": "B",
+  "self_check": {
+    "passed": 6,
+    "total": 6
+  },
+  "remaining_findings": [
+    {
+      "category": "E-5",
+      "severity": "S2",
+      "type": "metric_warning",
+      "metric": "comma_segment_length",
+      "z_before": 2.25,
+      "z_after": 2.68,
+      "disposition": "retain",
+      "reason": "연결어미 뒤 쉼표를 제거해 지표는 올랐지만, 남은 쉼표는 전투·재시도 및 작성 양식·팀원 리뷰 요청의 열거를 구분한다. 국소 검토에서 부자연스러운 장문이나 의미 중첩을 발견하지 못해 추가 수정하지 않았다."
+    }
+  ],
+  "gate": {
+    "exit_code": 1,
+    "verdict": "WARN",
+    "resolved": [
+      "ending_comma_rate"
+    ],
+    "unresolved": [
+      "comma_segment_length"
+    ]
+  },
+  "notes": [
+    "원문과 윤문본을 문장별로 대조했으며 모든 사실·행위자·인과·주장 강도·내용 앵커를 보존했다.",
+    "원문의 열거 쉼표 2곳은 유지했으며 연결어미 뒤 쉼표 3곳은 모두 제거됐다.",
+    "finalize에서는 본문을 수정하지 않고 summary에 게이트 수치와 남은 정량 경고를 반영했다."
+  ]
+}

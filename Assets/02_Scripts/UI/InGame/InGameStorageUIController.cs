@@ -124,6 +124,12 @@ public sealed class InGameStorageUIController : MonoBehaviour
             return;
         }
 
+        // 모달(튜토리얼 대사, 팝업)이 떠 있는 동안이나 튜토리얼 단계가 잠근 슬롯은 배치를 시작하지 않는다.
+        if (slot == null || StageInputModalGate.IsBlocked || !StageTutorialGate.IsSlotAllowed(slot.UnitType))
+        {
+            return;
+        }
+
         if (placementController == null)
         {
             Debug.LogWarning("Placement controller is not assigned.", this);
@@ -149,6 +155,9 @@ public sealed class InGameStorageUIController : MonoBehaviour
 
     private void SubscribeSimulationState()
     {
+        StageTutorialGate.Changed -= HandleTutorialGateChanged;
+        StageTutorialGate.Changed += HandleTutorialGateChanged;
+
         if (simulationController == null)
         {
             return;
@@ -160,6 +169,8 @@ public sealed class InGameStorageUIController : MonoBehaviour
 
     private void UnsubscribeSimulationState()
     {
+        StageTutorialGate.Changed -= HandleTutorialGateChanged;
+
         if (simulationController != null)
         {
             simulationController.RunningStateChanged -= HandleSimulationRunningStateChanged;
@@ -175,6 +186,26 @@ public sealed class InGameStorageUIController : MonoBehaviour
     {
         bool isLocked = simulationController != null && simulationController._isRunning;
         view?.SetInteractionLocked(isLocked);
+
+        // 튜토리얼 단계가 허용하지 않은 슬롯은 실행 잠금과 같은 비활성 표시로 개별 잠근다.
+        if (isLocked || !StageTutorialGate.IsActive)
+        {
+            return;
+        }
+
+        for (int index = 0; index < subscribedSlots.Count; index++)
+        {
+            InGameUnitStorageSlotUI slot = subscribedSlots[index];
+            if (slot != null && !StageTutorialGate.IsSlotAllowed(slot.UnitType))
+            {
+                slot.SetInteractionLocked(true);
+            }
+        }
+    }
+
+    private void HandleTutorialGateChanged()
+    {
+        ApplyInteractionState();
     }
 
     private void SubscribeTutorialGhostState()
